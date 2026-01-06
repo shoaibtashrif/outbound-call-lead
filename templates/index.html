@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultravox Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full z-10">
+        <div class="p-6 border-b border-gray-100">
+            <h1 class="text-xl font-bold text-purple-600 flex items-center gap-2">
+                <i data-lucide="phone-outgoing"></i> Ultravox
+            </h1>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="showSection('new-call')"
+                class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition"
+                id="nav-new-call">
+                <i data-lucide="phone"></i> New Call
+            </button>
+            <button onclick="showSection('agents')"
+                class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition"
+                id="nav-agents">
+                <i data-lucide="users"></i> Agents
+            </button>
+            <button onclick="showSection('tools')"
+                class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition"
+                id="nav-tools">
+                <i data-lucide="wrench"></i> Tools
+            </button>
+            <button onclick="showSection('schedule')"
+                class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition"
+                id="nav-schedule">
+                <i data-lucide="calendar"></i> Schedule Batch
+            </button>
+            <button onclick="showSection('history')"
+                class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-600 rounded-lg transition"
+                id="nav-history">
+                <i data-lucide="history"></i> Call History
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 flex-1 p-8">
+
+        <!-- New Call Section -->
+        <div id="section-new-call" class="max-w-3xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Instant Outbound Call</h2>
+            <div class="glass rounded-xl shadow-sm p-6 bg-white">
+                <div class="flex space-x-4 mb-6 border-b pb-2">
+                    <button id="tabModePrompt" class="font-bold text-purple-600 border-b-2 border-purple-600 pb-2"
+                        onclick="switchCallMode('prompt')">Use Prompt</button>
+                    <button id="tabModeAgent" class="font-bold text-gray-500 hover:text-purple-600 pb-2"
+                        onclick="switchCallMode('agent')">Use Agent</button>
+                </div>
+
+                <form id="instantForm" class="space-y-6">
+                    <!-- Prompt Mode -->
+                    <div id="modePrompt">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">System Prompt</label>
+                        <textarea id="sys_prompt_instant" rows="3"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">You are a helpful assistant.</textarea>
+                    </div>
+
+                    <!-- Agent Mode -->
+                    <div id="modeAgent" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Agent</label>
+                        <select id="agent_select"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="">Loading agents...</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">To Number</label>
+                            <input type="tel" id="to_number_instant" value="{{ default_to }}"
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-sm font-medium text-gray-700 mb-1">Server Host</label>
+                            <input type="text" id="host_instant" value="{{ default_host }}"
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Call Timer -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Auto-End Call After (minutes, 0 = no
+                            limit)</label>
+                        <input type="number" id="call_timer" value="0" min="0" max="60"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                            placeholder="0 for no limit">
+                    </div>
+
+                    <button type="submit" id="startCallBtn"
+                        class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition">Start
+                        Call</button>
+
+                    <!-- End Call Button (hidden initially) -->
+                    <button type="button" id="endCallBtn" onclick="endActiveCall()"
+                        class="hidden w-full bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition">
+                        End Call
+                    </button>
+                </form>
+                <div id="instantLog" class="mt-4 text-sm font-mono"></div>
+
+                <!-- Active Call Info -->
+                <div id="activeCallInfo" class="hidden mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-sm font-medium text-green-800">Call Active</p>
+                            <p class="text-xs text-green-600" id="callDuration">Duration: 0:00</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-green-600" id="callId"></p>
+                            <p class="text-xs text-green-600" id="autoEndTimer"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agents Section -->
+        <div id="section-agents" class="max-w-5xl mx-auto hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Agents</h2>
+                <button onclick="openCreateAgentModal()"
+                    class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2">
+                    <i data-lucide="plus"></i> Create Agent
+                </button>
+            </div>
+            <div id="agentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Agents will be loaded here -->
+                <div class="text-center col-span-full text-gray-500">Loading agents...</div>
+            </div>
+        </div>
+
+        <!-- Tools Section -->
+        <div id="section-tools" class="max-w-5xl mx-auto hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Tools</h2>
+                <button onclick="openCreateToolModal()"
+                    class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2">
+                    <i data-lucide="plus"></i> Create Tool
+                </button>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase">
+                        <tr>
+                            <th class="p-4 border-b">Name</th>
+                            <th class="p-4 border-b">Method</th>
+                            <th class="p-4 border-b">URL Pattern</th>
+                            <th class="p-4 border-b">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="toolsList">
+                        <tr>
+                            <td colspan="4" class="p-4 text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Schedule Section -->
+        <div id="section-schedule" class="max-w-3xl mx-auto hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Schedule Batch Calls</h2>
+            <div class="glass rounded-xl shadow-sm p-6 bg-white">
+                <form id="scheduleForm" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">System Prompt</label>
+                        <textarea id="sys_prompt_sched" rows="3"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">You are a helpful assistant.</textarea>
+                    </div>
+
+                    <!-- CSV Upload Section -->
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                        <h4 class="font-bold text-blue-800 mb-3 flex items-center gap-2">
+                            <i data-lucide="upload"></i> Upload Phone Numbers
+                        </h4>
+                        <input type="file" id="csv_upload" accept=".csv,.xlsx,.xls"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none mb-2">
+                        <button type="button" onclick="uploadCSV()"
+                            class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition text-sm">
+                            Load from File
+                        </button>
+                        <p class="text-xs text-blue-600 mt-2">Upload CSV or Excel file with phone numbers</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">To Numbers (Comma separated or
+                            upload CSV)</label>
+                        <textarea id="to_numbers_sched" rows="2"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                            placeholder="+1234567890, +1987654321"></textarea>
+                        <p class="text-xs text-gray-500 mt-1" id="number_count">0 numbers</p>
+                    </div>
+
+                    <!-- Call Mode Selection -->
+                    <div class="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                        <h4 class="font-bold text-purple-800 mb-3">Call Mode</h4>
+                        <div class="flex gap-4">
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="call_mode" value="parallel" checked class="mr-2">
+                                <span class="font-medium">All at Once (Parallel)</span>
+                                <p class="text-xs text-gray-600 ml-6">All calls start simultaneously</p>
+                            </label>
+                            <label class="flex-1 cursor-pointer">
+                                <input type="radio" name="call_mode" value="sequential" class="mr-2">
+                                <span class="font-medium">One at a Time (Sequential)</span>
+                                <p class="text-xs text-gray-600 ml-6">Calls made one after another</p>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Start Time (UTC)</label>
+                            <input type="datetime-local" id="start_time"
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">End Time (UTC)</label>
+                            <input type="datetime-local" id="end_time"
+                                class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                        </div>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">Schedule
+                        Batch</button>
+                </form>
+                <div id="schedLog" class="mt-4 text-sm font-mono"></div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div id="section-history" class="max-w-6xl mx-auto hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Call History</h2>
+                <button onclick="loadHistory()" class="p-2 text-gray-600 hover:bg-gray-200 rounded-full"><i
+                        data-lucide="refresh-cw"></i></button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
+                        <tr>
+                            <th class="p-4 border-b">Status</th>
+                            <th class="p-4 border-b">Created</th>
+                            <th class="p-4 border-b">Duration</th>
+                            <th class="p-4 border-b">Satisfaction</th>
+                            <th class="p-4 border-b">Model</th>
+                            <th class="p-4 border-b">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTable" class="text-sm text-gray-700 divide-y divide-gray-100">
+                        <tr>
+                            <td colspan="6" class="p-4 text-center text-gray-500">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Create Agent Modal -->
+    <div id="createAgentModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50 sticky top-0 z-10">
+                <h3 class="text-xl font-bold">Create New Agent</h3>
+                <button onclick="document.getElementById('createAgentModal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-gray-800"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Agent Name</label>
+                    <input type="text" id="new_agent_name"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                        placeholder="My Sales Agent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">System Prompt</label>
+                    <textarea id="new_agent_prompt" rows="4"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                        placeholder="You are..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Voice</label>
+                        <select id="new_agent_voice"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="a656a751-b754-4621-b571-e1298cb7e5bb">Mark (Default)</option>
+                            <!-- Add more voices if needed -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                        <select id="new_agent_lang"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tool Selection -->
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        <i data-lucide="wrench"></i> Assign Tools
+                    </h4>
+                    <div id="agent_tools_list" class="space-y-2 max-h-48 overflow-y-auto">
+                        <p class="text-sm text-gray-500 italic">Loading tools...</p>
+                    </div>
+                </div>
+
+                <button onclick="createAgent()"
+                    class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition">Create
+                    Agent</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Agent Modal -->
+    <div id="editAgentModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50 sticky top-0 z-10">
+                <h3 class="text-xl font-bold">Edit Agent</h3>
+                <button onclick="document.getElementById('editAgentModal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-gray-800"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Agent Name</label>
+                    <input type="text" id="edit_agent_name"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                        placeholder="My Sales Agent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">System Prompt</label>
+                    <textarea id="edit_agent_prompt" rows="4"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                        placeholder="You are..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Voice</label>
+                        <select id="edit_agent_voice"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="a656a751-b754-4621-b571-e1298cb7e5bb">Mark (Default)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                        <select id="edit_agent_lang"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tool Selection -->
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-gray-700 mb-3 flex items-center gap-2">
+                        <i data-lucide="wrench"></i> Assign Tools
+                    </h4>
+                    <div id="edit_agent_tools_list" class="space-y-2 max-h-48 overflow-y-auto">
+                        <p class="text-sm text-gray-500 italic">Loading tools...</p>
+                    </div>
+                </div>
+
+                <button onclick="updateAgent()"
+                    class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition">Update
+                    Agent</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Tool Modal -->
+    <div id="createToolModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl w-full max-w-3xl shadow-2xl my-8">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50 sticky top-0 z-10 rounded-t-2xl">
+                <h3 class="text-xl font-bold">Create New Tool</h3>
+                <button onclick="document.getElementById('createToolModal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-gray-800"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tool Name</label>
+                        <input type="text" id="new_tool_name"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                            placeholder="getWeather">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">HTTP Method</label>
+                        <select id="new_tool_method"
+                            class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="GET">GET</option>
+                            <option value="POST" selected>POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="DELETE">DELETE</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="new_tool_desc" rows="2"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                        placeholder="Describe what this tool does..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Base URL Pattern</label>
+                    <input type="text" id="new_tool_url"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 outline-none"
+                        placeholder="https://api.example.com/v1/resource">
+                </div>
+
+                <!-- Parameters Section -->
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-bold text-gray-700">Parameters</h4>
+                        <button type="button" onclick="addParameter()"
+                            class="text-sm bg-white border border-gray-300 px-3 py-1 rounded-lg hover:bg-gray-100">+ Add
+                            Parameter</button>
+                    </div>
+                    <div id="parametersList" class="space-y-3">
+                        <p class="text-sm text-gray-500 italic text-center" id="noParamsMsg">No parameters defined</p>
+                    </div>
+                </div>
+
+                <!-- Auth Section -->
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-gray-700 mb-3">Authentication</h4>
+                    <div class="flex gap-2 mb-4">
+                        <button type="button" onclick="setAuthType('none')"
+                            class="auth-btn px-3 py-1 rounded-lg border border-gray-300 bg-white text-sm active"
+                            data-type="none">None</button>
+                        <button type="button" onclick="setAuthType('api_key')"
+                            class="auth-btn px-3 py-1 rounded-lg border border-gray-300 bg-white text-sm"
+                            data-type="api_key">API Key</button>
+                        <button type="button" onclick="setAuthType('bearer')"
+                            class="auth-btn px-3 py-1 rounded-lg border border-gray-300 bg-white text-sm"
+                            data-type="bearer">Bearer</button>
+                    </div>
+
+                    <div id="authConfig_api_key" class="hidden space-y-3">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="auth_header" placeholder="Header Name (e.g. X-API-Key)"
+                                class="w-full px-3 py-2 rounded border text-sm">
+                            <input type="text" id="auth_key" placeholder="API Key Value"
+                                class="w-full px-3 py-2 rounded border text-sm">
+                        </div>
+                    </div>
+                    <div id="authConfig_bearer" class="hidden">
+                        <input type="text" id="auth_token" placeholder="Bearer Token"
+                            class="w-full px-3 py-2 rounded border text-sm">
+                    </div>
+                </div>
+
+                <button onclick="createTool()"
+                    class="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition">Create
+                    Tool</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Call Detail Modal -->
+    <div id="callModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="text-xl font-bold" id="modalTitle">Call Details</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-800"><i
+                        data-lucide="x"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 space-y-6">
+
+                <!-- Recording Player -->
+                <div id="recordingSection" class="hidden bg-purple-50 p-4 rounded-xl border border-purple-100">
+                    <h4 class="font-bold text-purple-800 mb-3 flex items-center gap-2"><i data-lucide="mic"></i>
+                        Recording</h4>
+                    <audio id="modalAudio" controls class="w-full mb-3"></audio>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-purple-700 font-medium">Playback Speed:</span>
+                        <button onclick="setPlaybackSpeed(0.5)"
+                            class="px-3 py-1 text-xs bg-white border border-purple-200 rounded hover:bg-purple-100">0.5x</button>
+                        <button onclick="setPlaybackSpeed(1)"
+                            class="px-3 py-1 text-xs bg-white border border-purple-200 rounded hover:bg-purple-100">1x</button>
+                        <button onclick="setPlaybackSpeed(1.5)"
+                            class="px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700">1.5x</button>
+                        <button onclick="setPlaybackSpeed(2)"
+                            class="px-3 py-1 text-xs bg-white border border-purple-200 rounded hover:bg-purple-100">2x</button>
+                        <button onclick="setPlaybackSpeed(2.5)"
+                            class="px-3 py-1 text-xs bg-white border border-purple-200 rounded hover:bg-purple-100">2.5x</button>
+                        <span id="currentSpeed" class="text-xs text-purple-600 ml-2">Current: 1x</span>
+                    </div>
+                </div>
+
+
+                <div class="grid grid-cols-3 gap-4 text-sm">
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <span class="block text-gray-500">Status</span>
+                        <span class="font-mono font-bold" id="modalStatus">-</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <span class="block text-gray-500">Duration</span>
+                        <span class="font-mono font-bold" id="modalDuration">-</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <span class="block text-gray-500">Cost</span>
+                        <span class="font-mono font-bold" id="modalCost">-</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-3">Transcript</h4>
+                    <div id="modalTranscript" class="space-y-3"></div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-3">Raw Data</h4>
+                    <pre id="modalRaw" class="bg-gray-900 text-gray-100 p-4 rounded-xl text-xs overflow-x-auto"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function showSection(id) {
+            ['new-call', 'schedule', 'history', 'agents', 'tools'].forEach(s => {
+                const sec = document.getElementById(`section-${s}`);
+                const nav = document.getElementById(`nav-${s}`);
+                if (sec) sec.classList.add('hidden');
+                if (nav) nav.classList.remove('bg-purple-50', 'text-purple-600');
+            });
+            document.getElementById(`section-${id}`).classList.remove('hidden');
+            document.getElementById(`nav-${id}`).classList.add('bg-purple-50', 'text-purple-600');
+
+            if (id === 'history') loadHistory();
+            if (id === 'agents') loadAgents();
+            if (id === 'tools') loadTools();
+            if (id === 'new-call') loadAgentsDropdown();
+        }
+
+        // Call Mode Switching
+        let callMode = 'prompt';
+        function switchCallMode(mode) {
+            callMode = mode;
+            if (mode === 'prompt') {
+                document.getElementById('modePrompt').classList.remove('hidden');
+                document.getElementById('modeAgent').classList.add('hidden');
+                document.getElementById('tabModePrompt').classList.add('text-purple-600', 'border-purple-600');
+                document.getElementById('tabModePrompt').classList.remove('text-gray-500');
+                document.getElementById('tabModeAgent').classList.remove('text-purple-600', 'border-purple-600');
+                document.getElementById('tabModeAgent').classList.add('text-gray-500');
+            } else {
+                document.getElementById('modePrompt').classList.add('hidden');
+                document.getElementById('modeAgent').classList.remove('hidden');
+                document.getElementById('tabModeAgent').classList.add('text-purple-600', 'border-purple-600');
+                document.getElementById('tabModeAgent').classList.remove('text-gray-500');
+                document.getElementById('tabModePrompt').classList.remove('text-purple-600', 'border-purple-600');
+                document.getElementById('tabModePrompt').classList.add('text-gray-500');
+                loadAgentsDropdown();
+            }
+        }
+
+        // Instant Call
+        // Active call tracking
+        let activeCallId = null;
+        let callStartTime = null;
+        let durationInterval = null;
+        let autoEndTimeout = null;
+
+        document.getElementById('instantForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const log = document.getElementById('instantLog');
+            log.innerHTML = 'Sending...';
+
+            const toNumber = document.getElementById('to_number_instant').value;
+            const host = document.getElementById('host_instant').value;
+            const timerMinutes = parseInt(document.getElementById('call_timer').value) || 0;
+
+            try {
+                let url = 'api/call';
+                let body = {};
+
+                if (callMode === 'prompt') {
+                    body = {
+                        system_prompt: document.getElementById('sys_prompt_instant').value,
+                        to_number: toNumber,
+                        server_host: host
+                    };
+                } else {
+                    url = 'api/call-agent';
+                    const agentId = document.getElementById('agent_select').value;
+                    if (!agentId) {
+                        log.innerHTML = `<span class="text-red-600">❌ Please select an agent</span>`;
+                        return;
+                    }
+                    body = {
+                        agent_id: agentId,
+                        to_number: toNumber,
+                        server_host: host
+                    };
+                }
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    activeCallId = data.call_id;
+                    callStartTime = Date.now();
+
+                    log.innerHTML = `<span class="text-green-600">✅ Call Started: ${data.call_id}</span>`;
+
+                    // Show active call info
+                    document.getElementById('activeCallInfo').classList.remove('hidden');
+                    document.getElementById('callId').textContent = `ID: ${data.call_id.substring(0, 8)}...`;
+                    document.getElementById('startCallBtn').classList.add('hidden');
+                    document.getElementById('endCallBtn').classList.remove('hidden');
+
+                    // Start duration counter
+                    updateCallDuration();
+                    durationInterval = setInterval(updateCallDuration, 1000);
+
+                    // Set auto-end timer if specified
+                    if (timerMinutes > 0) {
+                        const endTime = timerMinutes * 60 * 1000; // Convert to milliseconds
+                        document.getElementById('autoEndTimer').textContent = `Auto-end in ${timerMinutes} min`;
+
+                        autoEndTimeout = setTimeout(async () => {
+                            await endActiveCall();
+                            log.innerHTML += `<br><span class="text-yellow-600">⏱️ Call auto-ended after ${timerMinutes} minutes</span>`;
+                        }, endTime);
+                    }
+                } else {
+                    log.innerHTML = `<span class="text-red-600">❌ Error: ${data.detail}</span>`;
+                }
+            } catch (err) {
+                log.innerHTML = `<span class="text-red-600">❌ Network Error: ${err.message}</span>`;
+            }
+        });
+
+        function updateCallDuration() {
+            if (!callStartTime) return;
+            const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('callDuration').textContent = `Duration: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        async function endActiveCall() {
+            if (!activeCallId) return;
+
+            const log = document.getElementById('instantLog');
+
+            try {
+                const res = await fetch(`api/calls/${activeCallId}/end`, {
+                    method: 'POST'
+                });
+
+                if (res.ok) {
+                    log.innerHTML += `<br><span class="text-blue-600">📞 Call ended successfully</span>`;
+                } else {
+                    log.innerHTML += `<br><span class="text-orange-600">⚠️ Call may have already ended</span>`;
+                }
+            } catch (err) {
+                log.innerHTML += `<br><span class="text-red-600">❌ Error ending call: ${err.message}</span>`;
+            } finally {
+                // Clean up
+                clearInterval(durationInterval);
+                clearTimeout(autoEndTimeout);
+                activeCallId = null;
+                callStartTime = null;
+
+                // Reset UI
+                document.getElementById('activeCallInfo').classList.add('hidden');
+                document.getElementById('startCallBtn').classList.remove('hidden');
+                document.getElementById('endCallBtn').classList.add('hidden');
+                document.getElementById('autoEndTimer').textContent = '';
+            }
+        }
+
+
+        // Agents Logic
+        async function loadAgents() {
+            const list = document.getElementById('agentsList');
+            list.innerHTML = '<div class="text-center col-span-full">Loading...</div>';
+            try {
+                const res = await fetch('api/agents');
+                const data = await res.json();
+                const agents = Array.isArray(data) ? data : (data.results || []);
+
+                if (agents.length === 0) {
+                    list.innerHTML = '<div class="text-center col-span-full text-gray-500">No agents found. Create one!</div>';
+                    return;
+                }
+
+                list.innerHTML = agents.map((a, index) => {
+                    // Store agent data in a global object for onclick access
+                    window[`agent_${index}`] = a;
+
+                    return `
+                    <div class="glass p-6 rounded-xl border border-gray-100 hover:shadow-md transition">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-800">${a.name || 'Unnamed Agent'}</h3>
+                                <p class="text-xs text-gray-500 font-mono">${a.agentId.substring(0, 8)}...</p>
+                            </div>
+                            <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">${a.model || 'ultravox'}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2 h-12 overflow-hidden">${(a.systemPrompt || 'No prompt').substring(0, 100)}${(a.systemPrompt || '').length > 100 ? '...' : ''}</p>
+                        ${a.selectedTools && a.selectedTools.length > 0 ? `
+                        <div class="mb-3">
+                            <p class="text-xs text-gray-500 mb-1">Tools:</p>
+                            <div class="flex flex-wrap gap-1">
+                                ${a.selectedTools.map(t => `<span class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded">${t.toolName}</span>`).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                        <div class="flex gap-2">
+                            <button onclick="initiateAgentCall('${a.agentId}')" class="flex-1 bg-purple-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition">Call</button>
+                            <button onclick="editAgentByIndex(${index})" class="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600" title="Edit"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                            <button onclick="deleteAgent('${a.agentId}', '${(a.name || 'Unnamed').replace(/'/g, "\\'")}')" class="px-3 py-2 border border-red-200 rounded-lg hover:bg-red-50 text-red-600" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                `}).join('');
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Error loading agents:', err);
+                list.innerHTML = '<div class="text-center col-span-full text-red-500">Failed to load agents</div>';
+            }
+        }
+
+        function editAgentByIndex(index) {
+            const agent = window[`agent_${index}`];
+            if (agent) {
+                openEditAgentModal(agent);
+            }
+        }
+
+        async function loadAgentsDropdown() {
+            const select = document.getElementById('agent_select');
+            try {
+                const res = await fetch('api/agents');
+                const data = await res.json();
+                const agents = data.results || [];
+                select.innerHTML = '<option value="">-- Select an Agent --</option>' +
+                    agents.map(a => `<option value="${a.agentId}">${a.name || 'Unnamed'} (${a.agentId.slice(0, 6)}...)</option>`).join('');
+            } catch (err) {
+                select.innerHTML = '<option value="">Error loading agents</option>';
+            }
+        }
+
+        function openCreateAgentModal() {
+            document.getElementById('createAgentModal').classList.remove('hidden');
+            loadToolsForAgent();
+        }
+
+        async function loadToolsForAgent() {
+            const list = document.getElementById('agent_tools_list');
+            try {
+                const res = await fetch('api/tools');
+                const data = await res.json();
+                const tools = Array.isArray(data) ? data : (data.results || []);
+
+                if (tools.length === 0) {
+                    list.innerHTML = '<p class="text-sm text-gray-500 italic">No tools available</p>';
+                    return;
+                }
+
+                list.innerHTML = tools.map(t => `
+                    <label class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer">
+                        <input type="checkbox" value="${t.name}" class="agent-tool-checkbox">
+                        <span class="text-sm font-medium">${t.name}</span>
+                        <span class="text-xs text-gray-500 ml-auto">${t.definition?.http?.httpMethod || ''}</span>
+                    </label>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = '<p class="text-sm text-red-500">Failed to load tools</p>';
+            }
+        }
+
+        async function createAgent() {
+            const name = document.getElementById('new_agent_name').value;
+            const prompt = document.getElementById('new_agent_prompt').value;
+            const voice = document.getElementById('new_agent_voice').value;
+            const lang = document.getElementById('new_agent_lang').value;
+
+            if (!name || !prompt) {
+                alert('Name and Prompt are required');
+                return;
+            }
+
+            // Get selected tools
+            const selectedTools = Array.from(document.querySelectorAll('.agent-tool-checkbox:checked'))
+                .map(cb => cb.value);
+
+            const payload = {
+                name,
+                system_prompt: prompt,
+                voice,
+                language: lang,
+                tool_names: selectedTools.length > 0 ? selectedTools : null
+            };
+
+            console.log('Creating agent with payload:', payload);
+
+            try {
+                const res = await fetch('api/agents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                console.log('Response:', res.status, data);
+
+                if (res.ok) {
+                    document.getElementById('createAgentModal').classList.add('hidden');
+                    // Clear form
+                    document.getElementById('new_agent_name').value = '';
+                    document.getElementById('new_agent_prompt').value = '';
+                    document.querySelectorAll('.agent-tool-checkbox').forEach(cb => cb.checked = false);
+
+                    // Force refresh agents list
+                    await loadAgents();
+
+                    // Show success message with agent details
+                    alert(`Agent "${data.name}" created successfully!\nAgent ID: ${data.agentId}`);
+
+                    // If we're on the agents page, it's already refreshed
+                    // If not, switch to agents page to show the new agent
+                    showSection('agents');
+                } else {
+                    console.error('Error response:', data);
+                    alert('Error creating agent: ' + (data.detail || JSON.stringify(data)));
+                }
+            } catch (e) {
+                console.error('Error creating agent:', e);
+                alert('Network Error: ' + e.message);
+            }
+        }
+
+        // Update Agent
+        let editingAgentId = null;
+
+        function openEditAgentModal(agent) {
+            editingAgentId = agent.agentId;
+            document.getElementById('edit_agent_name').value = agent.name || '';
+            document.getElementById('edit_agent_prompt').value = agent.systemPrompt || '';
+            document.getElementById('edit_agent_voice').value = agent.voice || 'a656a751-b754-4621-b571-e1298cb7e5bb';
+            document.getElementById('edit_agent_lang').value = agent.languageHint || 'en';
+
+            // Load and check selected tools
+            loadToolsForEditAgent(agent.selectedTools || []);
+
+            document.getElementById('editAgentModal').classList.remove('hidden');
+        }
+
+        async function loadToolsForEditAgent(selectedTools) {
+            const list = document.getElementById('edit_agent_tools_list');
+            try {
+                const res = await fetch('api/tools');
+                const data = await res.json();
+                const tools = Array.isArray(data) ? data : (data.results || []);
+
+                if (tools.length === 0) {
+                    list.innerHTML = '<p class="text-sm text-gray-500 italic">No tools available</p>';
+                    return;
+                }
+
+                const selectedToolNames = selectedTools.map(t => t.toolName || t.name);
+
+                list.innerHTML = tools.map(t => `
+                    <label class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded cursor-pointer">
+                        <input type="checkbox" value="${t.name}" class="edit-agent-tool-checkbox" ${selectedToolNames.includes(t.name) ? 'checked' : ''}>
+                        <span class="text-sm font-medium">${t.name}</span>
+                        <span class="text-xs text-gray-500 ml-auto">${t.definition?.http?.httpMethod || ''}</span>
+                    </label>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = '<p class="text-sm text-red-500">Failed to load tools</p>';
+            }
+        }
+
+        async function updateAgent() {
+            if (!editingAgentId) return;
+
+            const name = document.getElementById('edit_agent_name').value;
+            const prompt = document.getElementById('edit_agent_prompt').value;
+            const voice = document.getElementById('edit_agent_voice').value;
+            const lang = document.getElementById('edit_agent_lang').value;
+
+            if (!name || !prompt) {
+                alert('Name and Prompt are required');
+                return;
+            }
+
+            const selectedTools = Array.from(document.querySelectorAll('.edit-agent-tool-checkbox:checked'))
+                .map(cb => ({ toolName: cb.value }));
+
+            try {
+                const res = await fetch(`api/agents/${editingAgentId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        systemPrompt: prompt,
+                        voice,
+                        languageHint: lang,
+                        selectedTools: selectedTools.length > 0 ? selectedTools : []
+                    })
+                });
+
+                if (res.ok) {
+                    document.getElementById('editAgentModal').classList.add('hidden');
+                    await loadAgents();
+                    alert('Agent updated successfully!');
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + (err.detail || 'Unknown'));
+                }
+            } catch (e) {
+                alert('Network Error: ' + e.message);
+            }
+        }
+
+        async function deleteAgent(agentId, agentName) {
+            if (!confirm(`Are you sure you want to delete agent "${agentName}"?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`api/agents/${agentId}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    await loadAgents();
+                    alert('Agent deleted successfully!');
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + (err.detail || 'Failed to delete agent'));
+                }
+            } catch (e) {
+                alert('Network Error: ' + e.message);
+            }
+        }
+
+        // CSV Upload Function
+        async function uploadCSV() {
+            const fileInput = document.getElementById('csv_upload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('api/upload-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const textarea = document.getElementById('to_numbers_sched');
+                    textarea.value = data.numbers.join(', ');
+                    updateNumberCount();
+                    alert(`Loaded ${data.count} numbers from file`);
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + (err.detail || 'Failed to upload file'));
+                }
+            } catch (e) {
+                alert('Network Error: ' + e.message);
+            }
+        }
+
+        // Update number count
+        function updateNumberCount() {
+            const textarea = document.getElementById('to_numbers_sched');
+            const numbers = textarea.value.split(',').map(s => s.trim()).filter(s => s);
+            document.getElementById('number_count').innerText = `${numbers.length} numbers`;
+        }
+
+        // Add event listener to update count on input
+        document.getElementById('to_numbers_sched').addEventListener('input', updateNumberCount);
+
+        function initiateAgentCall(agentId) {
+            // Switch to New Call tab, set mode to Agent, select agent
+            showSection('new-call');
+            switchCallMode('agent');
+            // Wait for dropdown to load then select
+            setTimeout(() => {
+                document.getElementById('agent_select').value = agentId;
+            }, 500);
+        }
+
+        // Tools Logic
+        async function loadTools() {
+            const tbody = document.getElementById('toolsList');
+            tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center">Loading...</td></tr>';
+            try {
+                const res = await fetch('api/tools');
+                const data = await res.json();
+                const tools = data.results || [];
+
+                if (tools.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No tools found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = tools.map(t => {
+                    const def = t.definition || {};
+                    const http = def.http || {};
+                    const toolName = t.name.replace(/'/g, "\\'");
+                    return `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="p-4 font-medium text-gray-800">${t.name}</td>
+                        <td class="p-4"><span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded font-mono">${http.httpMethod || '-'}</span></td>
+                        <td class="p-4 text-sm font-mono text-gray-600 truncate max-w-xs" title="${http.baseUrlPattern}">${http.baseUrlPattern || '-'}</td>
+                        <td class="p-4">
+                            <button onclick="deleteTool('${toolName}')" class="text-red-600 hover:text-red-800 p-2 rounded hover:bg-red-50" title="Delete Tool">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `}).join('');
+                lucide.createIcons();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500">Failed to load tools</td></tr>';
+            }
+        }
+
+        async function deleteTool(toolName) {
+            if (!confirm(`Are you sure you want to delete tool "${toolName}"?`)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`api/tools/${encodeURIComponent(toolName)}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    await loadTools();
+                    alert('Tool deleted successfully!');
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + (err.detail || 'Failed to delete tool'));
+                }
+            } catch (e) {
+                alert('Network Error: ' + e.message);
+            }
+        }
+
+
+        // Parameter Management
+        let toolParams = [];
+        let currentAuth = 'none';
+
+        function addParameter() {
+            const id = Date.now();
+            toolParams.push({ id, name: '', location: 'BODY', type: 'string', required: false, description: '' });
+            renderParams();
+        }
+
+        function removeParam(id) {
+            toolParams = toolParams.filter(p => p.id !== id);
+            renderParams();
+        }
+
+        function updateParam(id, field, value) {
+            const p = toolParams.find(p => p.id === id);
+            if (p) p[field] = value;
+        }
+
+        function renderParams() {
+            const list = document.getElementById('parametersList');
+            const msg = document.getElementById('noParamsMsg');
+
+            if (toolParams.length === 0) {
+                msg.classList.remove('hidden');
+                list.innerHTML = '';
+                list.appendChild(msg);
+                return;
+            }
+
+            msg.classList.add('hidden');
+            list.innerHTML = toolParams.map(p => `
+                <div class="bg-white p-3 rounded border border-gray-200 text-sm space-y-2">
+                    <div class="flex gap-2">
+                        <input type="text" placeholder="Name" class="flex-1 px-2 py-1 border rounded" value="${p.name}" onchange="updateParam(${p.id}, 'name', this.value)">
+                        <select class="px-2 py-1 border rounded" onchange="updateParam(${p.id}, 'location', this.value)">
+                            <option value="BODY" ${p.location === 'BODY' ? 'selected' : ''}>Body</option>
+                            <option value="QUERY" ${p.location === 'QUERY' ? 'selected' : ''}>Query</option>
+                            <option value="HEADER" ${p.location === 'HEADER' ? 'selected' : ''}>Header</option>
+                        </select>
+                        <select class="px-2 py-1 border rounded" onchange="updateParam(${p.id}, 'type', this.value)">
+                            <option value="string" ${p.type === 'string' ? 'selected' : ''}>String</option>
+                            <option value="number" ${p.type === 'number' ? 'selected' : ''}>Number</option>
+                            <option value="boolean" ${p.type === 'boolean' ? 'selected' : ''}>Bool</option>
+                        </select>
+                        <button onclick="removeParam(${p.id})" class="text-red-500 hover:text-red-700 px-2">×</button>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <input type="text" placeholder="Description" class="flex-1 px-2 py-1 border rounded" value="${p.description}" onchange="updateParam(${p.id}, 'description', this.value)">
+                        <label class="flex items-center gap-1 text-xs text-gray-600">
+                            <input type="checkbox" ${p.required ? 'checked' : ''} onchange="updateParam(${p.id}, 'required', this.checked)"> Required
+                        </label>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setAuthType(type) {
+            currentAuth = type;
+            document.querySelectorAll('.auth-btn').forEach(b => {
+                if (b.dataset.type === type) b.classList.add('bg-purple-100', 'text-purple-700', 'border-purple-300');
+                else b.classList.remove('bg-purple-100', 'text-purple-700', 'border-purple-300');
+            });
+
+            document.getElementById('authConfig_api_key').classList.add('hidden');
+            document.getElementById('authConfig_bearer').classList.add('hidden');
+
+            if (type === 'api_key') document.getElementById('authConfig_api_key').classList.remove('hidden');
+            if (type === 'bearer') document.getElementById('authConfig_bearer').classList.remove('hidden');
+        }
+
+        function openCreateToolModal() {
+            document.getElementById('createToolModal').classList.remove('hidden');
+        }
+
+        async function createTool() {
+            const name = document.getElementById('new_tool_name').value;
+            const desc = document.getElementById('new_tool_desc').value;
+            const url = document.getElementById('new_tool_url').value;
+            const method = document.getElementById('new_tool_method').value;
+
+            if (!name || !url) {
+                alert('Name and URL are required');
+                return;
+            }
+
+            // Build Params
+            const params = toolParams.map(p => ({
+                name: p.name,
+                location: `PARAMETER_LOCATION_${p.location}`, // Ultravox expects this format
+                schema: { type: p.type, description: p.description },
+                required: p.required
+            }));
+
+            // Build Auth
+            let auth = null;
+            if (currentAuth === 'api_key') {
+                auth = {
+                    type: 'api_key',
+                    header_name: document.getElementById('auth_header').value,
+                    api_key: document.getElementById('auth_key').value
+                };
+            } else if (currentAuth === 'bearer') {
+                auth = {
+                    type: 'bearer',
+                    token: document.getElementById('auth_token').value
+                };
+            }
+
+            try {
+                const res = await fetch('api/tools', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name, description: desc, base_url: url, http_method: method,
+                        parameters: params, authentication: auth
+                    })
+                });
+
+                if (res.ok) {
+                    document.getElementById('createToolModal').classList.add('hidden');
+                    loadTools();
+                    alert('Tool Created!');
+                    // Reset form
+                    toolParams = [];
+                    renderParams();
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + (err.detail || 'Unknown'));
+                }
+            } catch (e) {
+                alert('Network Error');
+            }
+        }
+
+        // Schedule Batch
+        document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const log = document.getElementById('schedLog');
+            log.innerHTML = 'Scheduling...';
+
+            const numbers = document.getElementById('to_numbers_sched').value.split(',').map(s => s.trim()).filter(s => s);
+            const start = document.getElementById('start_time').value;
+            const end = document.getElementById('end_time').value;
+            const mode = document.querySelector('input[name="call_mode"]:checked').value;
+
+            try {
+                const res = await fetch('api/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        system_prompt: document.getElementById('sys_prompt_sched').value,
+                        to_numbers: numbers,
+                        window_start: start ? new Date(start).toISOString() : null,
+                        window_end: end ? new Date(end).toISOString() : null,
+                        mode: mode
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) log.innerHTML = `<span class="text-green-600">✅ Batch Created: ${data.batch_id}</span>`;
+                else log.innerHTML = `<span class="text-red-600">❌ Error: ${data.detail}</span>`;
+            } catch (err) {
+                log.innerHTML = `<span class="text-red-600">❌ Network Error</span>`;
+            }
+        });
+
+        // History Logic with Pagination
+        let currentPage = 1;
+        let cursorHistory = [null]; // Store cursors for each page. Index 0 is page 1 (null cursor).
+
+        async function loadHistory(page = 1, cursor = null) {
+            currentPage = page;
+            const tbody = document.getElementById('historyTable');
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center">Loading...</td></tr>';
+
+            try {
+                let url = `api/history?limit=15&page=${page}`;
+                if (cursor) url += `&cursor=${cursor}`;
+
+                const res = await fetch(url);
+                const data = await res.json();
+                const calls = data.results || [];
+
+                if (calls.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">No calls found</td></tr>';
+                    updatePaginationControls(data.pagination);
+                    return;
+                }
+
+                // Fetch satisfaction scores for completed calls
+                const callsWithScores = await Promise.all(calls.map(async (c) => {
+                    let status = c.status;
+                    if (!status) {
+                        if (c.ended) status = 'completed';
+                        else if (c.joined) status = 'active';
+                        else status = 'created';
+                    }
+
+                    let duration = c.duration;
+                    if (!duration && c.billedDuration) {
+                        duration = c.billedDuration;
+                    }
+
+                    // Fetch satisfaction score if completed
+                    let score = null;
+                    if (status === 'completed') {
+                        try {
+                            const scoreRes = await fetch(`api/calls/${c.callId}`);
+                            if (scoreRes.ok) {
+                                const callData = await scoreRes.json();
+                                score = callData.satisfactionScore;
+                            }
+                        } catch (e) {
+                            // Ignore errors
+                        }
+                    }
+
+                    return { ...c, status, duration, satisfactionScore: score };
+                }));
+
+                tbody.innerHTML = callsWithScores.map(c => {
+                    const scoreDisplay = c.satisfactionScore
+                        ? `<span class="px-2 py-1 rounded-full text-xs font-bold ${c.satisfactionScore >= 7 ? 'bg-green-100 text-green-700' : c.satisfactionScore >= 4 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">${c.satisfactionScore}/10</span>`
+                        : '<span class="text-gray-400 text-xs">-</span>';
+
+                    return `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded-full text-xs font-bold 
+                                ${c.status === 'active' ? 'bg-green-100 text-green-700 animate-pulse' :
+                            c.status === 'completed' ? 'bg-gray-100 text-gray-700' : 'bg-yellow-100 text-yellow-700'}">
+                                ${c.status || 'unknown'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-gray-600">${new Date(c.created).toLocaleString()}</td>
+                        <td class="p-4 font-mono text-gray-600">${c.duration || '0s'}</td>
+                        <td class="p-4">${scoreDisplay}</td>
+                        <td class="p-4"><span class="bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs">${c.model || 'ultravox'}</span></td>
+                        <td class="p-4">
+                            <button onclick="showCallDetails('${c.callId}')" class="text-purple-600 hover:text-purple-800 font-medium text-sm">View Details</button>
+                        </td>
+                    </tr>
+                `}).join('');
+
+                updatePaginationControls(data.pagination);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Error loading history: ${err.message}</td></tr>`;
+            }
+        }
+
+        function updatePaginationControls(pagination) {
+            const historySection = document.getElementById('section-history');
+
+            // Remove existing pagination
+            const existingPagination = historySection.querySelector('.pagination-controls');
+            if (existingPagination) existingPagination.remove();
+
+            if (pagination && (pagination.has_prev || pagination.has_next)) {
+                const paginationDiv = document.createElement('div');
+                paginationDiv.className = 'pagination-controls flex justify-between items-center mt-4 p-4 bg-gray-50 rounded-lg';
+                paginationDiv.innerHTML = `
+                    <button onclick="loadPreviousPage()" 
+                            ${!pagination.has_prev ? 'disabled' : ''} 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        Previous
+                    </button>
+                    <span class="text-sm text-gray-600">Page ${pagination.current_page} (${pagination.total_on_page} calls)</span>
+                    <button onclick="loadNextPage('${pagination.next_cursor || ''}')" 
+                            ${!pagination.has_next ? 'disabled' : ''} 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                `;
+                historySection.appendChild(paginationDiv);
+            }
+        }
+
+        function loadNextPage(nextCursor) {
+            if (nextCursor) {
+                // Store the cursor for the NEXT page
+                if (cursorHistory.length <= currentPage) {
+                    cursorHistory.push(nextCursor);
+                } else {
+                    cursorHistory[currentPage] = nextCursor;
+                }
+                loadHistory(currentPage + 1, nextCursor);
+            }
+        }
+
+        function loadPreviousPage() {
+            if (currentPage > 1) {
+                const prevPage = currentPage - 1;
+                const prevCursor = cursorHistory[prevPage - 1];
+                loadHistory(prevPage, prevCursor);
+            }
+        }
+
+        async function endCall(callId) {
+            if (!confirm('Are you sure you want to end this call?')) return;
+
+            try {
+                console.log('Attempting to end call:', callId);
+                const resp = await fetch(`api/calls/${callId}/end`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                console.log('End call response status:', resp.status);
+                const data = await resp.json();
+                console.log('End call response data:', data);
+
+                if (data.success) {
+                    showMessage('Call ended successfully', 'success');
+                    loadHistory(currentPage, currentCursor); // Refresh current page
+                } else {
+                    showMessage(`Failed to end call: ${data.message || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error ending call:', error);
+                showMessage(`Error ending call: ${error.message}`, 'error');
+            }
+        }
+
+        async function showCallDetails(callId) {
+            document.getElementById('callModal').classList.remove('hidden');
+            document.getElementById('modalTitle').innerText = 'Loading...';
+            document.getElementById('modalTranscript').innerHTML = '';
+            document.getElementById('recordingSection').classList.add('hidden');
+
+            try {
+                const res = await fetch(`api/calls/${callId}`);
+                const data = await res.json();
+
+                document.getElementById('modalTitle').innerText = 'Call Details';
+
+                // Status derivation
+                let status = data.status;
+                if (!status) {
+                    if (data.ended) status = 'completed';
+                    else if (data.joined) status = 'active';
+                    else status = 'created';
+                }
+                document.getElementById('modalStatus').innerText = status;
+
+                // Duration derivation
+                let duration = data.duration;
+                if (!duration && data.billedDuration) {
+                    duration = data.billedDuration;
+                }
+                document.getElementById('modalDuration').innerText = duration || '0s';
+
+                // Cost (if available)
+                document.getElementById('modalCost').innerText = data.cost ? '$' + data.cost.toFixed(4) : '-';
+
+                // Recording - check for recording URL regardless of call status
+                console.log('Recording URL:', data.recordingUrl);
+
+                // Always try to show recording section and use proxy endpoint
+                document.getElementById('recordingSection').classList.remove('hidden');
+                const audio = document.getElementById('modalAudio');
+
+                // Use proxy endpoint to avoid CORS issues
+                const proxyUrl = `api/calls/${callId}/recording-proxy`;
+                console.log('Using proxy URL:', proxyUrl);
+
+                audio.src = proxyUrl;
+
+                // Add error handling for audio loading
+                audio.onerror = function (e) {
+                    console.error('Audio loading error:', e);
+                    console.error('Failed to load audio from proxy:', proxyUrl);
+
+                    // If proxy fails and we have original URL, try that
+                    if (data.recordingUrl && data.recordingUrl !== proxyUrl) {
+                        console.log('Trying original URL:', data.recordingUrl);
+                        audio.src = data.recordingUrl;
+                        audio.load();
+                    } else {
+                        // Hide recording section if both fail
+                        document.getElementById('recordingSection').classList.add('hidden');
+                    }
+                };
+
+                audio.onloadstart = function () {
+                    console.log('Audio loading started');
+                };
+
+                audio.oncanplay = function () {
+                    console.log('Audio can play');
+                };
+
+                audio.onloadeddata = function () {
+                    console.log('Audio data loaded');
+                };
+
+                audio.load();
+
+                // Transcript
+                const msgs = data.messages || [];
+                document.getElementById('modalTranscript').innerHTML = msgs.map(m => `
+                    <div class="flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${m.role === 'user' ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-600'}">
+                            ${m.role === 'user' ? 'U' : 'A'}
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-xl text-sm max-w-[80%] ${m.role === 'user' ? 'bg-purple-50 text-purple-900' : ''}">
+                            ${m.text}
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('modalRaw').innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                document.getElementById('modalTitle').innerText = 'Error loading details';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('callModal').classList.add('hidden');
+            document.getElementById('modalAudio').pause();
+        }
+
+        function setPlaybackSpeed(speed) {
+            const audio = document.getElementById('modalAudio');
+            audio.playbackRate = speed;
+            document.getElementById('currentSpeed').textContent = `Current: ${speed}x`;
+        }
+
+        function showMessage(message, type = 'info') {
+            // Create toast notification
+            const toast = document.createElement('div');
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${type === 'success' ? 'bg-green-500 text-white' :
+                    type === 'error' ? 'bg-red-500 text-white' :
+                        'bg-blue-500 text-white'
+                }`;
+            toast.textContent = message;
+
+            document.body.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // Poll for history if active
+        setInterval(() => {
+            if (!document.getElementById('section-history').classList.contains('hidden')) {
+                // Ideally we'd only update if something changed, but simple reload is fine for now
+                // loadHistory(); 
+                // Disabled auto-reload to prevent jitter, user can click refresh
+            }
+        }, 10000);
+
+    </script>
+</body>
+
+</html>

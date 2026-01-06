@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+twilio
+python-dotenv
+requests
+jinja2
+python-multipart
+httpx
+pandas
+openpyxl
+sqlalchemy
+openai
+groq

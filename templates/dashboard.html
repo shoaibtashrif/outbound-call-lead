@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceBot AI - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.15) 0%, transparent 20%);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid var(--glass-border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-light);
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            color: var(--primary);
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--primary);
+        }
+
+        .user-profile {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* Grid Layouts */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        /* Typography & Elements */
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 16px;
+            color: var(--text-muted);
+            font-weight: 500;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .tab-btn {
+            padding: 12px 0;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        /* Utilities */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-success {
+            color: var(--success);
+        }
+
+        .text-danger {
+            color: var(--danger);
+        }
+
+        .text-warning {
+            color: var(--warning);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* Loading */
+        .loader {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+        }
+
+        /* Parameter Builder */
+        .param-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            align-items: end;
+        }
+
+        .param-builder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-switch input {
+            display: none;
+        }
+
+        .toggle-slider {
+            width: 40px;
+            height: 20px;
+            background: #475569;
+            border-radius: 20px;
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .toggle-slider::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: 0.3s;
+        }
+
+        input:checked+.toggle-slider {
+            background: var(--primary);
+        }
+
+        input:checked+.toggle-slider::after {
+            left: 22px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-card {
+            animation: fadeIn 0.5s ease-out forwards;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .stats-grid .glass-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .stats-grid .glass-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .stats-grid .glass-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .nav-item i {
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item:hover i {
+            transform: scale(1.2);
+        }
+
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn:active::after {
+            width: 200%;
+            height: 200%;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo"><i class="fas fa-robot"></i> VoiceBot AI</div>
+
+        <div class="nav-item active" onclick="showSection('dashboard')" id="nav-dashboard">
+            <i class="fas fa-home"></i> Dashboard
+        </div>
+        <div class="nav-item" onclick="showSection('new-call')" id="nav-new-call">
+            <i class="fas fa-phone"></i> New Call
+        </div>
+        <div class="nav-item" onclick="showSection('schedule')" id="nav-schedule">
+            <i class="fas fa-calendar-alt"></i> Schedule Batch
+        </div>
+        <div class="nav-item" onclick="showSection('agents')" id="nav-agents">
+            <i class="fas fa-users"></i> Agents
+        </div>
+        <div class="nav-item" onclick="showSection('history')" id="nav-history">
+            <i class="fas fa-history"></i> Call History
+        </div>
+        <div class="nav-item" onclick="showSection('tools')" id="nav-tools">
+            <i class="fas fa-tools"></i> Tools
+        </div>
+        <div class="nav-item" onclick="showSection('numbers')" id="nav-numbers">
+            <i class="fas fa-phone-square"></i> Phone Numbers
+        </div>
+        <div class="nav-item" onclick="showSection('billing')" id="nav-billing">
+            <i class="fas fa-credit-card"></i> Billing
+        </div>
+
+        <div class="user-profile" onclick="openProfileModal()" style="cursor: pointer;">
+            <div class="avatar" id="userAvatar">U</div>
+            <div>
+                <div style="font-weight: 600;" id="userName">User</div>
+                <div style="font-size: 12px; color: var(--text-muted); cursor: pointer;"
+                    onclick="event.stopPropagation(); logout()">Logout</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+        <!-- DASHBOARD SECTION -->
+        <div id="section-dashboard">
+            <div class="header">
+                <h1>Dashboard Overview</h1>
+                <div class="btn btn-primary" onclick="showSection('new-call')"><i class="fas fa-plus"></i> New Call
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="glass-card">
+                    <div class="stat-label">Available Balance</div>
+                    <div class="stat-value" id="balanceDisplay">$0.00</div>
+                    <div style="color: var(--success); font-size: 13px;">+0% this month</div>
+                </div>
+                <div class="glass-card">
+                    <div class="stat-label">Active Agents</div>
+                    <div class="stat-value" id="agentCount">0</div>
+                    <div style="color: var(--text-muted); font-size: 13px;">Ready to deploy</div>
+                </div>
+                <div class="glass-card">
+                    <div class="stat-label">Live Calls</div>
+                    <div class="stat-value" id="liveCalls">0</div>
+                    <div style="color: var(--warning); font-size: 13px;" id="liveCallsLabel">Currently active</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <h2>Call Volume</h2>
+                    <canvas id="usageChart" height="200"></canvas>
+                </div>
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <h2>Satisfaction Score</h2>
+                    <canvas id="satisfactionChart" height="200"></canvas>
+                </div>
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <h2>Call Success Rate</h2>
+                    <canvas id="successPieChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW CALL SECTION -->
+        <div id="section-new-call" class="hidden">
+            <div class="header">
+                <h1>Instant Outbound Call</h1>
+            </div>
+
+            <div class="glass-card" style="max-width: 800px; margin: 0 auto;">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchCallMode('prompt')" id="tabModePrompt">Use
+                        Prompt</button>
+                    <button class="tab-btn" onclick="switchCallMode('agent')" id="tabModeAgent">Use Agent</button>
+                </div>
+
+                <form id="instantForm">
+                    <!-- Prompt Mode -->
+                    <div id="modePrompt">
+                        <div class="form-group">
+                            <label>System Prompt</label>
+                            <textarea id="sys_prompt_instant" rows="4">You are a helpful assistant.</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Voice</label>
+                            <select id="voice_instant">
+                                <option value="a656a751-b754-4621-b571-e1298cb7e5bb">Mark (Male)</option>
+                                <option value="724d6ca3-1763-4700-9851-f748d5314f8d">Jessica (Female)</option>
+                                <option value="0489849f-945f-40b0-bcc4-ee5720a42291">Kira (Female)</option>
+                                <option value="b9a779ca-5174-453b-994d-36f1ca9f83b4">Terrence (Male)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Agent Mode -->
+                    <div id="modeAgent" class="hidden">
+                        <div class="form-group">
+                            <label>Select Agent</label>
+                            <select id="agent_select">
+                                <option value="">Loading agents...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>To Number</label>
+                            <input type="tel" id="to_number_instant" placeholder="+1234567890">
+                            <div id="recentNumbersContainer" style="margin-top: 8px;">
+                                <select id="recent_numbers_select" onchange="useRecentNumber(this.value)"
+                                    style="font-size: 12px; padding: 8px;">
+                                    <option value="">-- Pick Recent Number --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Server Host (Optional)</label>
+                            <input type="text" id="host_instant" placeholder="wss://your-server.com">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="startCallBtn" class="btn btn-primary"
+                        style="width: 100%; justify-content: center; padding: 16px;">
+                        <i class="fas fa-phone"></i> Start Call
+                    </button>
+
+                    <button type="button" id="endCallBtn" onclick="endActiveCall()" class="btn btn-danger hidden"
+                        style="width: 100%; justify-content: center; padding: 16px;">
+                        <i class="fas fa-phone-slash"></i> End Call
+                    </button>
+                </form>
+
+                <div id="instantLog" style="margin-top: 20px; font-family: monospace; font-size: 14px;"></div>
+
+                <!-- Active Call Info -->
+                <div id="activeCallInfo" class="hidden"
+                    style="margin-top: 20px; padding: 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="color: var(--success); font-weight: 600;">Call Active</div>
+                        <div style="font-size: 12px; color: var(--text-muted);" id="callDuration">Duration: 0:00</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 12px; color: var(--text-muted);" id="callId"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCHEDULE SECTION -->
+        <div id="section-schedule" class="hidden">
+            <div class="header">
+                <h1>Schedule Batch Calls</h1>
+            </div>
+
+            <div class="glass-card" style="max-width: 800px; margin: 0 auto;">
+                <form id="scheduleForm">
+                    <div class="form-group">
+                        <label>System Prompt</label>
+                        <textarea id="schedule_prompt"
+                            rows="4">You are a helpful assistant making a scheduled call.</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>To Numbers (comma separated)</label>
+                        <textarea id="schedule_numbers" rows="3" placeholder="+1234567890, +1987654321"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Upload CSV/Excel (Optional)</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="file" id="schedule_file" accept=".csv, .xlsx, .xls" style="flex: 1;">
+                            <button type="button" class="btn btn-secondary" onclick="uploadScheduleFile()">Extract
+                                Numbers</button>
+                        </div>
+                        <div id="uploadStatus" style="font-size: 12px; margin-top: 5px;"></div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Window Start (UTC)</label>
+                            <input type="datetime-local" id="window_start">
+                        </div>
+                        <div class="form-group">
+                            <label>Window End (UTC)</label>
+                            <input type="datetime-local" id="window_end">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary"
+                        style="width: 100%; justify-content: center; padding: 16px;">
+                        <i class="fas fa-clock"></i> Schedule Batch
+                    </button>
+                </form>
+                <div id="scheduleLog" style="margin-top: 20px; font-family: monospace; font-size: 14px;"></div>
+            </div>
+        </div>
+
+        <!-- AGENTS SECTION -->
+        <div id="section-agents" class="hidden">
+            <div class="header">
+                <h1>My Agents</h1>
+                <button class="btn btn-primary" onclick="openCreateAgentModal()"><i class="fas fa-plus"></i> Create
+                    Agent</button>
+            </div>
+
+            <div id="agentsList" class="agents-grid">
+                <!-- Agents loaded here -->
+                <div class="loader">Loading agents...</div>
+            </div>
+        </div>
+
+        <!-- HISTORY SECTION -->
+        <div id="section-history" class="hidden">
+            <div class="header">
+                <h1>Call History</h1>
+                <button class="btn btn-secondary" onclick="loadHistory()"><i class="fas fa-sync"></i> Refresh</button>
+            </div>
+
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Agent Name</th>
+                            <th>From Number</th>
+                            <th>To Number</th>
+                            <th>Status</th>
+                            <th>Duration</th>
+                            <th>Satisfaction</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td colspan="6" class="loader">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="paginationControls" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+            </div>
+        </div>
+
+        <!-- TOOLS SECTION -->
+        <div id="section-tools" class="hidden">
+            <div class="header">
+                <h1>Tools</h1>
+                <button class="btn btn-primary" onclick="openCreateToolModal()"><i class="fas fa-plus"></i> Create
+                    Tool</button>
+            </div>
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Method</th>
+                            <th>URL Pattern</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="toolsList">
+                        <tr>
+                            <td colspan="4" class="loader">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- NUMBERS SECTION -->
+        <div id="section-numbers" class="hidden">
+            <div class="header">
+                <h1>Phone Numbers</h1>
+                <button class="btn btn-primary" onclick="openAddNumberModal()"><i class="fas fa-plus"></i> Add
+                    Number</button>
+            </div>
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Label</th>
+                            <th>Number</th>
+                            <th>Account SID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="numbersList">
+                        <tr>
+                            <td colspan="4" class="loader">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BILLING SECTION -->
+        <div id="section-billing" class="hidden">
+            <div class="header">
+                <h1>Upgrade Plan</h1>
+            </div>
+            <div class="stats-grid" id="plansContainer">
+                <!-- Plans loaded here -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Create Agent Modal -->
+    <div id="createAgentModal" class="modal">
+        <div class="modal-content">
+            <div class="close-modal" onclick="closeModal('createAgentModal')"><i class="fas fa-times"></i></div>
+            <h2>Create New Agent</h2>
+            <div class="form-group">
+                <label>Agent Name</label>
+                <input type="text" id="newAgentName" placeholder="e.g. Sales Rep">
+            </div>
+            <div class="form-group">
+                <label>System Prompt</label>
+                <textarea id="newAgentPrompt" rows="5" placeholder="You are a helpful assistant..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Voice</label>
+                <select id="newAgentVoice">
+                    <option value="a656a751-b754-4621-b571-e1298cb7e5bb">Mark (Default)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tools</label>
+                <div id="agentToolsList"
+                    style="max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                    <!-- Tools checkboxes -->
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Assigned Phone Number</label>
+                <select id="newAgentNumber">
+                    <option value="">Default (System Default)</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="width: 100%" onclick="createAgent()">Create Agent</button>
+        </div>
+    </div>
+
+    <!-- Create Tool Modal -->
+    <div id="createToolModal" class="modal">
+        <div class="modal-content">
+            <div class="close-modal" onclick="closeModal('createToolModal')"><i class="fas fa-times"></i></div>
+            <h2>Create New Tool</h2>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="newToolName">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="newToolDesc" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Base URL</label>
+                <input type="text" id="newToolUrl">
+            </div>
+            <div class="form-group">
+                <label>Method</label>
+                <select id="newToolMethod">
+                    <option value="POST">POST</option>
+                    <option value="GET">GET</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Authentication Type</label>
+                <select id="newToolAuthType" onchange="toggleToolAuthFields()">
+                    <option value="none">None</option>
+                    <option value="api_key">API Key</option>
+                    <option value="bearer">Bearer Token</option>
+                    <option value="basic">Basic Auth</option>
+                </select>
+            </div>
+            <div id="toolAuthFields"></div>
+            <div class="form-group">
+                <div class="param-builder-header">
+                    <label>Parameters</label>
+                    <label class="toggle-switch">
+                        <span style="font-size: 12px;">Visual</span>
+                        <input type="checkbox" id="paramModeToggle" onchange="toggleParamMode()">
+                        <div class="toggle-slider"></div>
+                        <span style="font-size: 12px;">JSON</span>
+                    </label>
+                </div>
+
+                <div id="visualParamBuilder">
+                    <div id="paramRows"></div>
+                    <button type="button" class="btn btn-secondary" style="width: 100%; margin-top: 10px;"
+                        onclick="addParamRow()">
+                        <i class="fas fa-plus"></i> Add Parameter
+                    </button>
+                </div>
+
+                <div id="jsonParamBuilder" class="hidden">
+                    <textarea id="newToolParams" rows="5"
+                        placeholder='[{"name": "id", "location": "query", "schema": {"type": "string"}, "required": true}]'></textarea>
+                </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%" onclick="createTool()">Create Tool</button>
+        </div>
+    </div>
+
+    <!-- Add Number Modal -->
+    <div id="addNumberModal" class="modal">
+        <div class="modal-content">
+            <div class="close-modal" onclick="closeModal('addNumberModal')"><i class="fas fa-times"></i></div>
+            <h2>Add Twilio Number</h2>
+            <div class="form-group">
+                <label>Label</label>
+                <input type="text" id="newNumberLabel" placeholder="e.g. Main Sales Line">
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" id="newNumberValue" placeholder="+1234567890">
+            </div>
+            <div class="form-group">
+                <label>Account SID</label>
+                <input type="text" id="newNumberSid">
+            </div>
+            <div class="form-group">
+                <label>Auth Token</label>
+                <input type="password" id="newNumberToken">
+            </div>
+            <button class="btn btn-primary" style="width: 100%" onclick="addNumber()">Add Number</button>
+        </div>
+    </div>
+
+    <!-- Call Details Modal -->
+    <div id="callModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="close-modal" onclick="closeModal('callModal')"><i class="fas fa-times"></i></div>
+            <h2>Call Details</h2>
+            <div id="recordingSection" class="hidden"
+                style="margin-bottom: 20px; padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 12px;">
+                <label>Recording</label>
+                <audio id="modalAudio" controls style="width: 100%; margin-top: 5px;"></audio>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <div class="glass-card" style="padding: 15px; margin: 0;">
+                    <div class="stat-label">Status</div>
+                    <div id="modalStatus" style="font-weight: bold;">-</div>
+                </div>
+                <div class="glass-card" style="padding: 15px; margin: 0;">
+                    <div class="stat-label">Duration</div>
+                    <div id="modalDuration" style="font-weight: bold;">-</div>
+                </div>
+                <div class="glass-card" style="padding: 15px; margin: 0;">
+                    <div class="stat-label">Cost</div>
+                    <div id="modalCost" style="font-weight: bold;">-</div>
+                </div>
+                <div class="glass-card" style="padding: 15px; margin: 0;">
+                    <div class="stat-label">Created</div>
+                    <div id="modalCreated" style="font-weight: bold; font-size: 13px;">-</div>
+                </div>
+                <div class="glass-card" style="padding: 15px; margin: 0;">
+                    <div class="stat-label">Model</div>
+                    <div id="modalModel" style="font-weight: bold;">-</div>
+                </div>
+                <div class="glass-card" style="padding: 15px; margin: 0;">
+                    <div class="stat-label">Score</div>
+                    <div id="modalScore" style="font-weight: bold;">-</div>
+                </div>
+            </div>
+            <h3>Transcript</h3>
+            <div id="modalTranscript"
+                style="margin-top: 15px; max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <div class="close-modal" onclick="closeModal('profileModal')"><i class="fas fa-times"></i></div>
+            <h2>User Profile</h2>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="profileFullName">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="profileEmail">
+            </div>
+            <div class="form-group">
+                <label>Business Type</label>
+                <input type="text" id="profileBusinessType">
+            </div>
+            <button class="btn btn-primary" style="width: 100%" onclick="updateProfile()">Update Profile</button>
+        </div>
+    </div>
+
+    <!-- Edit Agent Modal -->
+    <div id="editAgentModal" class="modal">
+        <div class="modal-content">
+            <div class="close-modal" onclick="closeModal('editAgentModal')"><i class="fas fa-times"></i></div>
+            <h2>Edit Agent</h2>
+            <input type="hidden" id="editAgentId">
+            <input type="hidden" id="editAgentUltravoxId">
+            <div class="form-group">
+                <label>Agent Name</label>
+                <input type="text" id="editAgentName">
+            </div>
+            <div class="form-group">
+                <label>System Prompt</label>
+                <textarea id="editAgentPrompt" rows="5"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Voice</label>
+                <select id="editAgentVoice">
+                    <option value="a656a751-b754-4621-b571-e1298cb7e5bb">Mark (Default)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Assigned Phone Number</label>
+                <select id="editAgentNumber">
+                    <option value="">Default (System Default)</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="width: 100%" onclick="updateAgent()">Save Changes</button>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/';
+
+        // Navigation
+        function showSection(id) {
+            document.querySelectorAll('.main-content > div').forEach(div => div.classList.add('hidden'));
+            document.getElementById(`section-${id}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.getElementById(`nav-${id}`).classList.add('active');
+
+            if (id === 'agents') loadAgents();
+            if (id === 'history') loadHistory();
+            if (id === 'new-call') loadAgentsDropdown();
+            if (id === 'tools') loadTools();
+            if (id === 'numbers') loadNumbers();
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = './';
+        }
+
+        // Modals
+        function openCreateAgentModal() {
+            document.getElementById('createAgentModal').classList.add('active');
+            loadToolsForAgent();
+            loadNumbersForAgent();
+        }
+        function openCreateToolModal() {
+            document.getElementById('createToolModal').classList.add('active');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            if (id === 'callModal') {
+                document.getElementById('modalAudio').pause();
+            }
+        }
+
+        // Dashboard Data
+        async function fetchData() {
+            try {
+                const [userResp, statsResp, recentResp] = await Promise.all([
+                    fetch('api/dashboard', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('api/stats', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('api/recent-numbers', { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+
+                if (userResp.status === 401) return logout();
+                const userData = await userResp.json();
+                const statsData = await statsResp.json();
+                const recentNumbers = await recentResp.json();
+
+                if (userData.username) {
+                    document.getElementById('userName').textContent = userData.username;
+                    document.getElementById('userAvatar').textContent = userData.username.charAt(0).toUpperCase();
+
+                    // Pre-fill profile modal
+                    document.getElementById('profileFullName').value = userData.full_name || '';
+                    document.getElementById('profileEmail').value = userData.email || '';
+                    document.getElementById('profileBusinessType').value = userData.business_type || '';
+                }
+                document.getElementById('balanceDisplay').textContent = `$${(userData.balance || 0).toFixed(2)}`;
+                document.getElementById('agentCount').textContent = statsData.activeAgents || 0;
+                document.getElementById('liveCalls').textContent = statsData.liveCalls || 0;
+
+                if (userData.usage_data) renderChart(userData.usage_data);
+                if (userData.satisfaction_data) renderSatisfactionChart(userData.satisfaction_data);
+                if (userData.satisfaction_dist) renderSuccessPieChart(userData.satisfaction_dist);
+                renderPlans(userData.upgrade_options || []);
+                renderRecentNumbers(recentNumbers);
+            } catch (e) {
+                console.error("Fetch error:", e);
+            }
+        }
+
+        function renderSuccessPieChart(dist) {
+            const ctx = document.getElementById('successPieChart').getContext('2d');
+            if (window.successPieChartInstance) window.successPieChartInstance.destroy();
+            window.successPieChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Successful', 'Unsuccessful', 'Neutral'],
+                    datasets: [{
+                        data: [dist.successful, dist.unsuccessful, dist.neutral],
+                        backgroundColor: ['#10b981', '#ef4444', '#94a3b8'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', font: { size: 12 } }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function renderRecentNumbers(numbers) {
+            const select = document.getElementById('recent_numbers_select');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Pick Recent Number --</option>' +
+                numbers.map(n => `<option value="${n}">${n}</option>`).join('');
+        }
+
+        function useRecentNumber(num) {
+            if (num) document.getElementById('to_number_instant').value = num;
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('usageChart').getContext('2d');
+            if (window.usageChartInstance) window.usageChartInstance.destroy();
+            window.usageChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.day),
+                    datasets: [{
+                        label: 'Calls',
+                        data: data.map(d => d.calls),
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function renderSatisfactionChart(data) {
+            const ctx = document.getElementById('satisfactionChart').getContext('2d');
+            if (window.satisfactionChartInstance) window.satisfactionChartInstance.destroy();
+            window.satisfactionChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.day),
+                    datasets: [{
+                        label: 'Score',
+                        data: data.map(d => d.score),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 5, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function renderPlans(plans) {
+            const container = document.getElementById('plansContainer');
+            container.innerHTML = plans.map(p => `
+                <div class="glass-card" style="text-align: center;">
+                    <h2>${p.name}</h2>
+                    <div class="stat-value">${p.price}</div>
+                    <ul style="list-style: none; margin: 20px 0; text-align: left; color: var(--text-muted);">
+                        ${p.features.map(f => `<li style="margin-bottom: 8px;"><i class="fas fa-check" style="color: var(--success); margin-right: 8px;"></i>${f}</li>`).join('')}
+                    </ul>
+                    <button class="btn btn-primary" style="width: 100%">Upgrade</button>
+                </div>
+            `).join('');
+        }
+
+        // Agents
+        async function loadAgents() {
+            const list = document.getElementById('agentsList');
+            try {
+                const resp = await fetch('api/agents', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                const agents = data.results || [];
+
+                if (agents.length === 0) {
+                    list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No agents found. Create one!</div>';
+                    return;
+                }
+
+                list.innerHTML = agents.map(a => `
+                    <div class="glass-card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                            <div>
+                                <h3 style="font-weight: 600; font-size: 18px;">${a.name}</h3>
+                                <div style="font-size: 12px; color: var(--text-muted); font-family: monospace;">${a.agentId.substring(0, 8)}...</div>
+                            </div>
+                            <span class="badge badge-success">${a.model || 'Ultravox'}</span>
+                        </div>
+                        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px; height: 40px; overflow: hidden;">
+                            ${(a.systemPrompt || 'No prompt').substring(0, 80)}...
+                        </p>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" style="flex: 1; font-size: 14px;" onclick="initiateCall('${a.agentId}')">Call</button>
+                            <button class="btn btn-secondary" style="padding: 10px;" onclick="openEditAgentModal('${a.id}', '${a.agentId}')"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger" style="padding: 10px;" onclick="deleteAgent('${a.agentId}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { list.innerHTML = 'Error loading agents'; }
+        }
+
+        async function createAgent() {
+            const name = document.getElementById('newAgentName').value;
+            const prompt = document.getElementById('newAgentPrompt').value;
+            const voice = document.getElementById('newAgentVoice').value;
+
+            // Get selected tools
+            const selectedTools = Array.from(document.querySelectorAll('.agent-tool-checkbox:checked')).map(cb => cb.value);
+
+            const numberId = document.getElementById('newAgentNumber').value;
+
+            try {
+                const resp = await fetch('api/agents', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        system_prompt: prompt,
+                        voice,
+                        tool_names: selectedTools,
+                        twilio_number_id: numberId ? parseInt(numberId) : null
+                    })
+                });
+                if (resp.ok) {
+                    closeModal('createAgentModal');
+                    loadAgents();
+                    fetchData(); // Update count
+                } else {
+                    alert('Failed to create agent');
+                }
+            } catch (e) { alert('Error creating agent'); }
+        }
+
+        async function deleteAgent(id) {
+            if (!confirm('Delete this agent?')) return;
+            try {
+                const resp = await fetch(`api/agents/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (resp.ok) {
+                    loadAgents();
+                    fetchData();
+                }
+            } catch (e) { alert('Error deleting agent'); }
+        }
+
+        async function openEditAgentModal(id, ultravoxId) {
+            document.getElementById('editAgentModal').classList.add('active');
+            document.getElementById('editAgentId').value = id;
+            document.getElementById('editAgentUltravoxId').value = ultravoxId;
+
+            // Load numbers for dropdown
+            await loadNumbersForEditAgent();
+
+            try {
+                const resp = await fetch(`api/agents`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                const agent = data.results.find(a => a.id === id);
+                if (agent) {
+                    document.getElementById('editAgentName').value = agent.name;
+                    document.getElementById('editAgentPrompt').value = agent.systemPrompt;
+                    document.getElementById('editAgentVoice').value = agent.voice;
+                    document.getElementById('editAgentNumber').value = agent.twilio_number_id || '';
+                }
+            } catch (e) { console.error("Error loading agent details:", e); }
+        }
+
+        async function updateAgent() {
+            const id = document.getElementById('editAgentId').value;
+            const ultravoxId = document.getElementById('editAgentUltravoxId').value;
+            const name = document.getElementById('editAgentName').value;
+            const prompt = document.getElementById('editAgentPrompt').value;
+            const voice = document.getElementById('editAgentVoice').value;
+            const numberId = document.getElementById('editAgentNumber').value;
+
+            try {
+                const resp = await fetch(`api/agents/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        system_prompt: prompt,
+                        voice,
+                        twilio_number_id: numberId ? parseInt(numberId) : null
+                    })
+                });
+                if (resp.ok) {
+                    closeModal('editAgentModal');
+                    loadAgents();
+                } else {
+                    alert('Failed to update agent');
+                }
+            } catch (e) { alert('Error updating agent'); }
+        }
+
+        async function loadNumbersForEditAgent() {
+            const select = document.getElementById('editAgentNumber');
+            try {
+                const resp = await fetch('api/numbers', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                const numbers = data.results || [];
+                select.innerHTML = '<option value="">Default (System Default)</option>' +
+                    numbers.map(n => `<option value="${n.id}">${n.label || n.phone_number} (${n.phone_number})</option>`).join('');
+            } catch (e) { }
+        }
+
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.add('active');
+        }
+
+        async function updateProfile() {
+            const fullName = document.getElementById('profileFullName').value;
+            const email = document.getElementById('profileEmail').value;
+            const businessType = document.getElementById('profileBusinessType').value;
+
+            try {
+                const resp = await fetch('api/user/profile', {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        full_name: fullName,
+                        email: email,
+                        business_type: businessType
+                    })
+                });
+                if (resp.ok) {
+                    closeModal('profileModal');
+                    fetchData();
+                } else {
+                    alert('Failed to update profile');
+                }
+            } catch (e) { alert('Error updating profile'); }
+        }
+
+        async function loadToolsForAgent() {
+            const list = document.getElementById('agentToolsList');
+            try {
+                const resp = await fetch('api/tools', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                const tools = data.results || [];
+                list.innerHTML = tools.map(t => `
+                    <label style="display: flex; gap: 10px; padding: 5px; cursor: pointer;">
+                        <input type="checkbox" value="${t.name}" class="agent-tool-checkbox">
+                        <span>${t.name}</span>
+                    </label>
+                `).join('');
+            } catch (e) { list.innerHTML = 'Error loading tools'; }
+        }
+
+        // New Call
+        let callMode = 'prompt';
+        function switchCallMode(mode) {
+            callMode = mode;
+            document.getElementById('modePrompt').classList.toggle('hidden', mode !== 'prompt');
+            document.getElementById('modeAgent').classList.toggle('hidden', mode !== 'agent');
+            document.getElementById('tabModePrompt').classList.toggle('active', mode === 'prompt');
+            document.getElementById('tabModeAgent').classList.toggle('active', mode === 'agent');
+            if (mode === 'agent') loadAgentsDropdown();
+        }
+
+        async function loadAgentsDropdown() {
+            const select = document.getElementById('agent_select');
+            try {
+                const resp = await fetch('api/agents', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                const agents = data.results || [];
+                select.innerHTML = '<option value="">-- Select Agent --</option>' +
+                    agents.map(a => `<option value="${a.agentId}">${a.name}</option>`).join('');
+            } catch (e) { }
+        }
+
+        function initiateCall(agentId) {
+            showSection('new-call');
+            switchCallMode('agent');
+            setTimeout(() => { document.getElementById('agent_select').value = agentId; }, 500);
+        }
+
+        // Instant Call Logic
+        let activeCallId = null;
+        let callInterval = null;
+
+        document.getElementById('instantForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const log = document.getElementById('instantLog');
+            log.innerHTML = 'Initiating call...';
+
+            const toNumber = document.getElementById('to_number_instant').value;
+            const host = document.getElementById('host_instant').value;
+
+            let url = 'api/call';
+            let body = { to_number: toNumber, server_host: host };
+
+            if (callMode === 'prompt') {
+                body.system_prompt = document.getElementById('sys_prompt_instant').value;
+                body.voice = document.getElementById('voice_instant').value;
+            } else {
+                url = 'api/call-agent';
+                body.agent_id = document.getElementById('agent_select').value;
+            }
+
+            try {
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await resp.json();
+
+                if (resp.ok) {
+                    activeCallId = data.call_id;
+                    log.innerHTML = `<span class="text-success">Call Started: ${activeCallId}</span>`;
+                    document.getElementById('startCallBtn').classList.add('hidden');
+                    document.getElementById('endCallBtn').classList.remove('hidden');
+                    document.getElementById('activeCallInfo').classList.remove('hidden');
+                    document.getElementById('callId').textContent = activeCallId;
+
+                    let seconds = 0;
+                    callInterval = setInterval(async () => {
+                        seconds++;
+                        const min = Math.floor(seconds / 60);
+                        const sec = seconds % 60;
+                        document.getElementById('callDuration').textContent = `Duration: ${min}:${sec.toString().padStart(2, '0')}`;
+
+                        // Poll for call status every 5 seconds
+                        if (seconds % 5 === 0) {
+                            try {
+                                const statusResp = await fetch(`api/calls/${activeCallId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                                const statusData = await statusResp.json();
+                                if (statusData.status === 'ended' || statusData.ended) {
+                                    endActiveCallUI();
+                                }
+                            } catch (e) { }
+                        }
+                    }, 1000);
+                } else {
+                    if (resp.status === 402) {
+                        alert("Insufficient balance. Please top up your account to make calls.");
+                    }
+                    log.innerHTML = `<span class="text-danger">Error: ${data.detail || 'Failed to initiate call'}</span>`;
+                }
+            } catch (e) { log.innerHTML = `<span class="text-danger">Network Error</span>`; }
+        });
+
+        async function endActiveCall() {
+            if (!activeCallId) return;
+            try {
+                await fetch(`api/calls/${activeCallId}/end`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                endActiveCallUI();
+            } catch (e) { }
+        }
+
+        function endActiveCallUI() {
+            if (callInterval) clearInterval(callInterval);
+            document.getElementById('instantLog').innerHTML += '<br><span class="text-success">Call Ended</span>';
+            document.getElementById('startCallBtn').classList.remove('hidden');
+            document.getElementById('endCallBtn').classList.add('hidden');
+            document.getElementById('activeCallInfo').classList.add('hidden');
+            activeCallId = null;
+            callInterval = null;
+            fetchData(); // Refresh stats
+        }
+
+        // Schedule Batch
+        document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const log = document.getElementById('scheduleLog');
+            log.innerHTML = 'Scheduling batch...';
+
+            const prompt = document.getElementById('schedule_prompt').value;
+            const numbersStr = document.getElementById('schedule_numbers').value;
+            const winStart = document.getElementById('window_start').value;
+            const winEnd = document.getElementById('window_end').value;
+
+            const numbers = numbersStr.split(',').map(n => n.trim()).filter(n => n);
+
+            if (numbers.length === 0) {
+                log.innerHTML = '<span class="text-danger">Please enter at least one phone number</span>';
+                return;
+            }
+
+            try {
+                const resp = await fetch('api/schedule', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        system_prompt: prompt,
+                        to_numbers: numbers,
+                        window_start: winStart || null,
+                        window_end: winEnd || null
+                    })
+                });
+
+                const data = await resp.json();
+                if (resp.ok) {
+                    log.innerHTML = `<span class="text-success">Batch Scheduled! ID: ${data.batch_id}</span>`;
+                } else {
+                    if (resp.status === 402) {
+                        alert("Insufficient balance. Please top up your account to make calls.");
+                    }
+                    log.innerHTML = `<span class="text-danger">Error: ${data.detail || 'Failed to initiate call'}</span>`;
+                }
+            } catch (e) {
+                log.innerHTML = `<span class="text-danger">Network Error: ${e.message}</span>`;
+            }
+        });
+
+        // History
+        let currentPage = 1;
+        let cursorHistory = [null];
+
+        async function loadHistory(page = 1, cursor = null) {
+            currentPage = page;
+            const tbody = document.getElementById('historyTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="6" class="loader">Loading...</td></tr>';
+
+            let url = `api/history?limit=20&page=${page}`;
+            if (cursor) url += `&cursor=${cursor}`;
+
+            try {
+                const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!resp.ok) {
+                    throw new Error(`HTTP error! status: ${resp.status}`);
+                }
+                const data = await resp.json();
+                const calls = data.results || [];
+
+                if (calls.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">No calls found</td></tr>';
+                    document.getElementById('paginationControls').innerHTML = '';
+                    return;
+                }
+
+                tbody.innerHTML = calls.map(c => {
+                    let scoreHtml = '-';
+                    if (c.satisfactionScore) {
+                        const score = c.satisfactionScore;
+                        const color = score >= 8 ? '#10b981' : (score >= 5 ? '#f59e0b' : '#ef4444');
+                        scoreHtml = `
+                            <div style="width: 100px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                                <div style="width: ${score * 10}%; height: 100%; background: ${color};"></div>
+                            </div>
+                            <span style="font-size: 11px; color: ${color}">${score}/10</span>
+                        `;
+                    }
+
+                    return `
+                    <tr>
+                        <td style="font-weight: 500;">${c.agentName || 'Instant Call'}</td>
+                        <td style="font-family: monospace; color: var(--text-muted);">${c.fromNumber || '-'}</td>
+                        <td style="font-family: monospace; color: var(--text-muted);">${c.toNumber || '-'}</td>
+                        <td><span class="badge ${c.status === 'active' || c.status === 'started' ? 'badge-success' : 'badge-warning'}">${c.status || 'ended'}</span></td>
+                        <td style="font-family: monospace;">${c.duration || '0s'}</td>
+                        <td>${scoreHtml}</td>
+                        <td style="display: flex; gap: 5px;">
+                            <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="showCallDetails('${c.callId}')">Details</button>
+                            ${(c.status === 'active' || c.status === 'started') ? `<button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="endCallFromHistory('${c.callId}')">End</button>` : ''}
+                        </td>
+                    </tr>
+                `}).join('');
+
+                updatePagination(data.pagination);
+            } catch (e) {
+                console.error("Load history error:", e);
+                tbody.innerHTML = `<tr><td colspan="6" class="text-danger" style="text-align:center; padding: 20px;">Error loading history: ${e.message}</td></tr>`;
+            }
+        }
+
+        function updatePagination(pagination) {
+            const container = document.getElementById('paginationControls');
+            if (!pagination || (!pagination.has_prev && !pagination.has_next)) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <button class="btn btn-secondary" ${!pagination.has_prev ? 'disabled style="opacity:0.5"' : ''} onclick="loadPreviousPage()">Previous</button>
+                <span style="align-self: center; color: var(--text-muted);">Page ${pagination.current_page}</span>
+                <button class="btn btn-secondary" ${!pagination.has_next ? 'disabled style="opacity:0.5"' : ''} onclick="loadNextPage('${pagination.next_cursor || ''}')">Next</button>
+            `;
+        }
+
+        function loadNextPage(nextCursor) {
+            if (nextCursor) {
+                if (cursorHistory.length <= currentPage) cursorHistory.push(nextCursor);
+                else cursorHistory[currentPage] = nextCursor;
+            }
+            // Always load next page, cursor is optional/ignored for offset pagination
+            loadHistory(currentPage + 1, nextCursor);
+        }
+
+        function loadPreviousPage() {
+            if (currentPage > 1) {
+                const prevPage = currentPage - 1;
+                const prevCursor = cursorHistory[prevPage - 1];
+                loadHistory(prevPage, prevCursor);
+            }
+        }
+
+        async function showCallDetails(id) {
+            document.getElementById('callModal').classList.add('active');
+            try {
+                const resp = await fetch(`api/calls/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+
+                document.getElementById('modalStatus').textContent = data.status || (data.ended ? 'completed' : 'active');
+                document.getElementById('modalDuration').textContent = data.duration || data.billedDuration || '0s';
+                document.getElementById('modalCost').textContent = data.cost ? '$' + data.cost.toFixed(4) : '-';
+                document.getElementById('modalCreated').textContent = data.created ? new Date(data.created).toLocaleString() : '-';
+                document.getElementById('modalModel').textContent = data.model || 'ultravox';
+                document.getElementById('modalScore').textContent = data.satisfactionScore ? data.satisfactionScore + '/10' : '-';
+
+                // Recording
+                const audio = document.getElementById('modalAudio');
+                if (data.recordingUrl) {
+                    document.getElementById('recordingSection').classList.remove('hidden');
+                    audio.src = `api/calls/${id}/recording-proxy`; // Use proxy
+                } else {
+                    document.getElementById('recordingSection').classList.add('hidden');
+                }
+
+                // Transcript
+                const transcript = document.getElementById('modalTranscript');
+                transcript.innerHTML = (data.messages || []).map(m => `
+                    <div style="display: flex; gap: 10px; ${m.role === 'user' ? 'flex-direction: row-reverse' : ''}">
+                        <div style="background: ${m.role === 'user' ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding: 10px 15px; border-radius: 12px; max-width: 80%; font-size: 14px;">
+                            ${m.text}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (e) { }
+        }
+
+        // Numbers
+        async function loadNumbers() {
+            const tbody = document.getElementById('numbersList');
+            try {
+                const resp = await fetch('api/numbers', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                const numbers = data.results || [];
+
+                if (numbers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No numbers found. Add one!</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = numbers.map(n => `
+                    <tr>
+                        <td style="font-weight: 500;">${n.label || 'No Label'}</td>
+                        <td style="font-family: monospace;">${n.phone_number}</td>
+                        <td style="font-family: monospace; font-size: 12px; color: var(--text-muted);">${n.account_sid}</td>
+                        <td><button class="btn btn-danger" style="padding: 5px;" onclick="deleteNumber(${n.id})"><i class="fas fa-trash"></i></button></td>
+                    </tr>
+                `).join('');
+            } catch (e) { }
+        }
+
+        async function addNumber() {
+            const label = document.getElementById('newNumberLabel').value;
+            const phone_number = document.getElementById('newNumberValue').value;
+            const account_sid = document.getElementById('newNumberSid').value;
+            const auth_token = document.getElementById('newNumberToken').value;
+
+            try {
+                const resp = await fetch('api/numbers', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ label, phone_number, account_sid, auth_token })
+                });
+                if (resp.ok) {
+                    closeModal('addNumberModal');
+                    loadNumbers();
+                } else {
+                    alert('Failed to add number');
+                }
+            } catch (e) { alert('Error adding number'); }
+        }
+
+        async function deleteNumber(id) {
+            if (!confirm('Delete this number?')) return;
+            try {
+                await fetch(`api/numbers/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                loadNumbers();
+            } catch (e) { }
+        }
+
+        async function loadNumbersForAgent() {
+            const select = document.getElementById('newAgentNumber');
+            try {
+                const resp = await fetch('api/numbers', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                const numbers = data.results || [];
+                select.innerHTML = '<option value="">Default (System Default)</option>' +
+                    numbers.map(n => `<option value="${n.id}">${n.label || n.phone_number} (${n.phone_number})</option>`).join('');
+            } catch (e) { }
+        }
+
+        function openAddNumberModal() {
+            document.getElementById('addNumberModal').classList.add('active');
+        }
+
+        // Tools
+        function toggleToolAuthFields() {
+            const type = document.getElementById('newToolAuthType').value;
+            const container = document.getElementById('toolAuthFields');
+            container.innerHTML = '';
+
+            if (type === 'api_key') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Header Name</label>
+                        <input type="text" id="toolAuthHeader" value="X-API-Key">
+                    </div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <input type="password" id="toolAuthKey">
+                    </div>
+                `;
+            } else if (type === 'bearer') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Token</label>
+                        <input type="password" id="toolAuthToken">
+                    </div>
+                `;
+            } else if (type === 'basic') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="toolAuthUser">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="toolAuthPass">
+                    </div>
+                `;
+            }
+        }
+
+        // Tool Parameters
+        function toggleParamMode() {
+            const isJson = document.getElementById('paramModeToggle').checked;
+            document.getElementById('visualParamBuilder').classList.toggle('hidden', isJson);
+            document.getElementById('jsonParamBuilder').classList.toggle('hidden', !isJson);
+        }
+
+        function addParamRow(data = { name: '', type: 'string', required: false }) {
+            const container = document.getElementById('paramRows');
+            const div = document.createElement('div');
+            div.className = 'param-row';
+            div.innerHTML = `
+                <div>
+                    <label>Name</label>
+                    <input type="text" class="param-name" value="${data.name}" placeholder="e.g. user_id">
+                </div>
+                <div>
+                    <label>Type</label>
+                    <select class="param-type">
+                        <option value="string" ${data.type === 'string' ? 'selected' : ''}>String</option>
+                        <option value="number" ${data.type === 'number' ? 'selected' : ''}>Number</option>
+                        <option value="boolean" ${data.type === 'boolean' ? 'selected' : ''}>Boolean</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 12px;">
+                    <input type="checkbox" class="param-required" ${data.required ? 'checked' : ''} style="width: auto;">
+                    <label style="margin: 0;">Required</label>
+                </div>
+                <button type="button" class="btn btn-danger" style="padding: 10px;" onclick="this.parentElement.remove()">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        async function createTool() {
+            const name = document.getElementById('newToolName').value;
+            const desc = document.getElementById('newToolDesc').value;
+            const url = document.getElementById('newToolUrl').value;
+            const method = document.getElementById('newToolMethod').value;
+            const authType = document.getElementById('newToolAuthType').value;
+
+            const isJson = document.getElementById('paramModeToggle').checked;
+            let parameters = [];
+
+            if (isJson) {
+                const paramsStr = document.getElementById('newToolParams').value;
+                try {
+                    if (paramsStr) parameters = JSON.parse(paramsStr);
+                } catch (e) {
+                    return alert('Invalid JSON in parameters');
+                }
+            } else {
+                const rows = document.querySelectorAll('.param-row');
+                rows.forEach(row => {
+                    const pName = row.querySelector('.param-name').value;
+                    const pType = row.querySelector('.param-type').value;
+                    const pReq = row.querySelector('.param-required').checked;
+                    if (pName) {
+                        parameters.push({
+                            name: pName,
+                            location: method === 'GET' ? 'query' : 'body',
+                            schema: { type: pType },
+                            required: pReq
+                        });
+                    }
+                });
+            }
+
+            let authentication = null;
+            if (authType === 'api_key') {
+                authentication = { type: 'api_key', header_name: document.getElementById('toolAuthHeader').value, api_key: document.getElementById('toolAuthKey').value };
+            } else if (authType === 'bearer') {
+                authentication = { type: 'bearer', token: document.getElementById('toolAuthToken').value };
+            } else if (authType === 'basic') {
+                authentication = { type: 'basic', username: document.getElementById('toolAuthUser').value, password: document.getElementById('toolAuthPass').value };
+            }
+
+            try {
+                const resp = await fetch('api/tools', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name, description: desc, base_url: url, http_method: method,
+                        parameters, authentication
+                    })
+                });
+                if (resp.ok) {
+                    closeModal('createToolModal');
+                    loadTools();
+                    // Reset builder
+                    document.getElementById('paramRows').innerHTML = '';
+                    document.getElementById('newToolParams').value = '';
+                } else {
+                    const err = await resp.json();
+                    alert('Failed to create tool: ' + (err.detail || 'Unknown error'));
+                }
+            } catch (e) { alert('Error creating tool'); }
+        }
+
+        async function loadTools() {
+            const tbody = document.getElementById('toolsList');
+            try {
+                const resp = await fetch('api/tools', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                const tools = data.results || [];
+
+                if (tools.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No tools found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = tools.map(t => `
+                    <tr>
+                        <td style="font-weight: 500;">${t.name}</td>
+                        <td><span class="badge badge-success">${t.definition?.http?.httpMethod || 'POST'}</span></td>
+                        <td style="font-family: monospace; font-size: 12px; color: var(--text-muted);">${t.definition?.http?.baseUrlPattern || '-'}</td>
+                        <td><button class="btn btn-danger" style="padding: 5px;" onclick="deleteTool('${t.name}')"><i class="fas fa-trash"></i></button></td>
+                    </tr>
+                `).join('');
+            } catch (e) { }
+        }
+
+        async function deleteTool(name) {
+            if (!confirm('Delete tool?')) return;
+            try {
+                await fetch(`api/tools/${name}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                loadTools();
+            } catch (e) { }
+        }
+
+        async function uploadScheduleFile() {
+            const fileInput = document.getElementById('schedule_file');
+            const status = document.getElementById('uploadStatus');
+            if (!fileInput.files[0]) return alert('Please select a file');
+
+            status.textContent = 'Uploading...';
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const resp = await fetch('api/upload-csv', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                const data = await resp.json();
+                if (resp.ok) {
+                    document.getElementById('schedule_numbers').value = data.numbers.join(', ');
+                    status.innerHTML = `<span class="text-success">Extracted ${data.count} numbers</span>`;
+                } else {
+                    status.innerHTML = `<span class="text-danger">Error: ${data.detail}</span>`;
+                }
+            } catch (e) {
+                status.innerHTML = `<span class="text-danger">Upload failed</span>`;
+            }
+        }
+
+        async function endCallFromHistory(callId) {
+            if (!confirm('Are you sure you want to end this call?')) return;
+            try {
+                const resp = await fetch(`api/calls/${callId}/end`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (resp.ok) {
+                    loadHistory(currentPage);
+                } else {
+                    const data = await resp.json();
+                    alert('Failed to end call: ' + (data.detail || 'Unknown error'));
+                }
+            } catch (e) {
+                alert('Error ending call');
+            }
+        }
+
+        // Init
+        fetchData();
+    </script>
+</body>
+
+</html>
