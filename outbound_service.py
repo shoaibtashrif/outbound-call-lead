@@ -22,6 +22,7 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from google_sheets_service import google_sheets_service
 
 
 load_dotenv()
@@ -71,6 +72,41 @@ async def monitor_calls_and_balance():
                                     if isinstance(dur, str): dur = float(dur.replace("s", ""))
                                     call.duration = int(dur)
                                 db.commit()
+                                
+                                # Send SMS if data collected and not sent yet
+                                if call.collected_data and not call.sms_sent and call.to_number:
+                                    try:
+                                        from twilio.rest import Client
+                                        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+                                        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+                                        twilio_client = Client(account_sid, auth_token)
+                                        
+                                        collected = json.loads(call.collected_data)
+                                        msg_body = "Call Summary:\n"
+                                        for k, v in collected.items():
+                                            msg_body += f"{k}: {v}\n"
+                                            
+                                        sender = os.getenv("TWILIO_PHONE_NUMBER")
+                                        recipient = call.to_number
+                                        
+                                        print(f"📨 Sending SMS to {recipient}: {msg_body}")
+                                        twilio_client.messages.create(
+                                            body=msg_body,
+                                            from_=sender,
+                                            to=recipient
+                                        )
+                                        call.sms_sent = True
+                                        db.commit()
+                                        print(f"✅ SMS sent successfully to {recipient}")
+                                    except Exception as e:
+                                        error_msg = str(e)
+                                        print(f"❌ Error sending SMS: {error_msg}")
+                                        # Mark as sent anyway to avoid retry loops
+                                        if "Permission to send" in error_msg or "not enabled for the region" in error_msg:
+                                            call.sms_sent = True
+                                            db.commit()
+                                            print(f"⚠️ SMS disabled for region, marking as sent to avoid retries")
+                                
                                 continue
                 except: pass
 
@@ -97,6 +133,59 @@ async def monitor_calls_and_balance():
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(monitor_calls_and_balance())
+    
+    # Register Google Sheets Tool if not exists
+    db = SessionLocal()
+    try:
+        tool_name = "googleSheetsAppend"
+        db_tool = db.query(Tool).filter(Tool.name == tool_name).first()
+        if not db_tool:
+            # Get server host for webhook
+            host = os.getenv("SERVER_HOST")
+            if host:
+                if not host.startswith("http"): host = f"https://{host}"
+                path_prefix = "/outbound"
+                if path_prefix not in host:
+                    tool_url = f"{host}{path_prefix}/api/tools/google-sheets/append"
+                else:
+                    tool_url = f"{host}/api/tools/google-sheets/append"
+                
+                print(f"🛠️ Registering Google Sheets Tool at {tool_url}")
+                
+                # Register in local DB
+                new_tool = Tool(
+                    name=tool_name,
+                    description="Append data (name, phone, email, etc.) to a Google Sheet. Requires spreadsheet_id and sheet_name.",
+                    base_url=tool_url,
+                    http_method="POST"
+                )
+                db.add(new_tool)
+                db.commit()
+                
+                # Register in Ultravox
+                api_key = os.getenv("ULTRAVOX_API_KEY")
+                payload = {
+                    "name": tool_name,
+                    "definition": {
+                        "description": "Append data to a Google Sheet. Use this to save contact info or lead data.",
+                        "dynamicParameters": [
+                            {"name": "spreadsheet_id", "location": "body", "schema": {"type": "string"}, "required": True},
+                            {"name": "sheet_name", "location": "body", "schema": {"type": "string"}, "required": True},
+                            {"name": "data", "location": "body", "schema": {"type": "object"}, "required": True}
+                        ],
+                        "http": {
+                            "baseUrlPattern": tool_url,
+                            "httpMethod": "POST"
+                        }
+                    }
+                }
+                async with httpx.AsyncClient() as client:
+                    resp = await client.post("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key}, json=payload)
+                    print(f"🛠️ Ultravox Tool Registration Response: {resp.status_code} - {resp.text}")
+    except Exception as e:
+        print(f"Error registering tool: {e}")
+    finally:
+        db.close()
 
 # --- Auth Setup ---
 SECRET_KEY = "super-secret-key-change-this-in-prod"
@@ -152,6 +241,10 @@ async def get_current_user_optional(token: Optional[str] = None, db: Session = D
 
 # Models
 # Models
+class GoogleSheetsAppendRequest(BaseModel):
+    spreadsheet_id: Optional[str] = None
+    sheet_name: Optional[str] = None
+    data: Dict[str, Any]
 class CallRequest(BaseModel):
     system_prompt: str
     to_number: str
@@ -410,6 +503,40 @@ async def delete_number(number_id: int, db: Session = Depends(get_db), user: Use
 
 # --- Agents API ---
 
+async def update_twilio_webhook(db: Session, twilio_number_id: int):
+    """Update Twilio number's VoiceUrl to point to our inbound endpoint"""
+    num = db.query(TwilioNumber).filter(TwilioNumber.id == twilio_number_id).first()
+    if not num:
+        return
+    
+    try:
+        client = Client(num.account_sid, num.auth_token)
+        # Get server host
+        host = os.getenv("SERVER_HOST")
+        if not host:
+            print("⚠️ SERVER_HOST not set, cannot update Twilio webhook")
+            return
+            
+        if not host.startswith("http"):
+            host = f"https://{host}"
+            
+        # Ensure path prefix
+        path_prefix = "/outbound"
+        if path_prefix not in host:
+            webhook_url = f"{host}{path_prefix}/api/inbound"
+        else:
+            webhook_url = f"{host}/api/inbound"
+            
+        # Find the number on Twilio and update it
+        incoming_numbers = client.incoming_phone_numbers.list(phone_number=num.phone_number)
+        if incoming_numbers:
+            incoming_numbers[0].update(voice_url=webhook_url, voice_method='POST')
+            print(f"✅ Updated Twilio webhook for {num.phone_number} to {webhook_url}")
+        else:
+            print(f"⚠️ Could not find number {num.phone_number} on Twilio account")
+    except Exception as e:
+        print(f"❌ Error updating Twilio webhook: {e}")
+
 @app.get("/api/agents")
 async def list_agents(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     agents = db.query(Agent).filter(Agent.user_id == user.id).all()
@@ -424,6 +551,10 @@ async def list_agents(db: Session = Depends(get_db), user: User = Depends(get_cu
             "voice": agent.voice,
             "languageHint": agent.language,
             "twilio_number_id": agent.twilio_number_id,
+            "twilio_phone_number": agent.twilio_number.phone_number if agent.twilio_number else None,
+            "google_spreadsheet_id": agent.google_spreadsheet_id,
+            "google_sheet_name": agent.google_sheet_name,
+            "google_webhook_url": agent.google_webhook_url,
             "selectedTools": [{"toolName": t.name} for t in agent.tools],
             "created": agent.created_at.isoformat() if agent.created_at else None
         })
@@ -431,15 +562,28 @@ async def list_agents(db: Session = Depends(get_db), user: User = Depends(get_cu
 
 @app.post("/api/agents")
 async def create_agent(req: AgentCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    # Check if number is already assigned to another agent
+    if req.twilio_number_id:
+        existing = db.query(Agent).filter(Agent.twilio_number_id == req.twilio_number_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail=f"Phone number is already assigned to agent: {existing.name}")
+
+    # Ensure name is in system prompt
+    system_prompt = req.system_prompt
+    if req.name.lower() not in system_prompt.lower():
+        system_prompt = f"Your name is {req.name}. {system_prompt}"
 
     # Create agent in database
     db_agent = Agent(
         name=req.name,
-        system_prompt=req.system_prompt,
+        system_prompt=system_prompt,
         voice=req.voice,
         language=req.language,
         user_id=user.id,
-        twilio_number_id=req.twilio_number_id
+        twilio_number_id=req.twilio_number_id,
+        google_spreadsheet_id=req.google_spreadsheet_id,
+        google_sheet_name=req.google_sheet_name or "Sheet1",
+        google_webhook_url=req.google_webhook_url
     )
     
     # Add tools if provided
@@ -451,6 +595,10 @@ async def create_agent(req: AgentCreate, db: Session = Depends(get_db), user: Us
     db.commit()
     db.refresh(db_agent)
     
+    # Update Twilio Webhook if number assigned
+    if db_agent.twilio_number_id:
+        await update_twilio_webhook(db, db_agent.twilio_number_id)
+    
     return {
         "agentId": str(db_agent.id),
         "name": db_agent.name,
@@ -459,6 +607,9 @@ async def create_agent(req: AgentCreate, db: Session = Depends(get_db), user: Us
         "voice": db_agent.voice,
         "languageHint": db_agent.language,
         "twilio_number_id": db_agent.twilio_number_id,
+        "google_spreadsheet_id": db_agent.google_spreadsheet_id,
+        "google_sheet_name": db_agent.google_sheet_name,
+        "google_webhook_url": db_agent.google_webhook_url,
         "selectedTools": [{"toolName": t.name} for t in db_agent.tools]
     }
 
@@ -475,10 +626,26 @@ async def update_agent_full(agent_id: int, req: AgentCreate, db: Session = Depen
     if not db_agent:
         raise HTTPException(status_code=404, detail="Agent not found")
     
+    # Check if number is already assigned to another agent
+    if req.twilio_number_id and req.twilio_number_id != db_agent.twilio_number_id:
+        existing = db.query(Agent).filter(Agent.twilio_number_id == req.twilio_number_id, Agent.id != agent_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail=f"Phone number is already assigned to agent: {existing.name}")
+
+    # Ensure name is in system prompt
+    system_prompt = req.system_prompt
+    if req.name.lower() not in system_prompt.lower():
+        system_prompt = f"Your name is {req.name}. {system_prompt}"
+
     db_agent.name = req.name
-    db_agent.system_prompt = req.system_prompt
+    db_agent.system_prompt = system_prompt
     db_agent.voice = req.voice
     db_agent.language = req.language
+    db_agent.google_spreadsheet_id = req.google_spreadsheet_id
+    db_agent.google_sheet_name = req.google_sheet_name or "Sheet1"
+    db_agent.google_webhook_url = req.google_webhook_url
+    
+    old_number_id = db_agent.twilio_number_id
     db_agent.twilio_number_id = req.twilio_number_id
     
     if req.tool_names is not None:
@@ -487,6 +654,11 @@ async def update_agent_full(agent_id: int, req: AgentCreate, db: Session = Depen
         
     db.commit()
     db.refresh(db_agent)
+
+    # Update Twilio Webhook if number changed or assigned
+    if db_agent.twilio_number_id and db_agent.twilio_number_id != old_number_id:
+        await update_twilio_webhook(db, db_agent.twilio_number_id)
+
     return db_agent
 
 @app.patch("/api/agents/{agent_id}")
@@ -546,14 +718,19 @@ async def delete_agent(agent_id: str, db: Session = Depends(get_db), user: User 
 # --- Tools API ---
 
 @app.get("/api/tools")
-async def list_tools():
-    api_key = os.getenv("ULTRAVOX_API_KEY")
-    async with httpx.AsyncClient() as client:
-        resp = await client.get("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key})
-        data = resp.json()
-        if isinstance(data, list):
-            return {"results": data}
-        return data
+async def list_tools(db: Session = Depends(get_db)):
+    tools = db.query(Tool).all()
+    results = []
+    for t in tools:
+        results.append({
+            "id": t.id,
+            "name": t.name,
+            "description": t.description,
+            "base_url": t.base_url,
+            "http_method": t.http_method,
+            "created": t.created_at.isoformat() if t.created_at else None
+        })
+    return {"results": results}
 
 @app.post("/api/tools")
 @app.post("/api/tools")
@@ -635,6 +812,98 @@ async def delete_tool(tool_name: str):
         if resp.status_code not in [200, 204]:
             raise HTTPException(status_code=resp.status_code, detail=resp.text)
         return {"success": True}
+
+@app.post("/api/tools/google-sheets/append")
+async def google_sheets_append(request: Request, db: Session = Depends(get_db)):
+    """Tool endpoint to append data to Google Sheets (via Webhook or Direct API)"""
+    body = await request.json()
+    headers = request.headers
+    # Extract Call ID (Ultravox sends it as X-Call-Id)
+    call_id = headers.get("x-call-id") or headers.get("X-Call-Id")
+    
+    print(f"📥 Received Google Sheets Tool Call. Call ID: {call_id}")
+    print(f"📦 Body: {body}")
+    
+    # Extract data. If 'data' key exists, use it, otherwise use the whole body
+    if "data" in body and isinstance(body["data"], dict):
+        data = body["data"]
+        spreadsheet_id = body.get("spreadsheet_id")
+        sheet_name = body.get("sheet_name")
+    else:
+        data = body
+        spreadsheet_id = None
+        sheet_name = None
+
+    # 1. Try to find the agent to get configuration
+    agent = None
+    call_record = None
+    
+    if call_id:
+        call_record = db.query(Call).filter(Call.ultravox_call_id == call_id).first()
+        if call_record:
+            agent = call_record.agent
+    else:
+        # Fallback: Try to find the most recent active call
+        print("⚠️ No Call ID found in headers. Trying to find most recent active call...")
+        call_record = db.query(Call).filter(Call.status == "started").order_by(Call.created_at.desc()).first()
+        if call_record:
+            print(f"🔄 Using Agent from recent call: {call_record.id} (Agent: {call_record.agent.name})")
+            agent = call_record.agent
+            call_id = call_record.ultravox_call_id
+
+    # Save collected data to the call record (for both paths)
+    if call_record:
+        # Check if this exact data was already saved to prevent duplicates
+        existing_data = call_record.collected_data
+        new_data_str = json.dumps(data, sort_keys=True)
+        
+        if existing_data:
+            existing_data_str = json.dumps(json.loads(existing_data), sort_keys=True)
+            if existing_data_str == new_data_str:
+                print(f"⚠️ Duplicate data detected for Call {call_record.id}, skipping save")
+            else:
+                # Data is different, update it
+                try:
+                    call_record.collected_data = new_data_str
+                    db.commit()
+                    print(f"💾 Updated collected data for Call {call_record.id}")
+                except Exception as e:
+                    print(f"⚠️ Failed to update collected data: {e}")
+        else:
+            # First time saving data
+            try:
+                call_record.collected_data = new_data_str
+                db.commit()
+                print(f"💾 Saved collected data to Call {call_record.id}")
+            except Exception as e:
+                print(f"⚠️ Failed to save collected data to DB: {e}")
+
+    # 2. Priority 1: Use Webhook URL if configured
+    webhook_url = agent.google_webhook_url if agent else None
+    if webhook_url:
+        print(f"🚀 Forwarding data to Google Webhook: {webhook_url}")
+        async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+            try:
+                # Forward the data dictionary to the Apps Script webhook
+                resp = await client.post(webhook_url, json=data, timeout=10.0)
+                print(f"✅ Webhook Response ({resp.status_code}): {resp.text}")
+                return {"success": True, "message": "Data saved successfully"}
+            except Exception as e:
+                print(f"❌ Webhook Error: {e}")
+                return {"success": True, "message": "Data received"}
+
+    # 3. Priority 2: Use Direct API (requires service-account.json)
+    spreadsheet_id = spreadsheet_id or (agent.google_spreadsheet_id if agent else None)
+    sheet_name = sheet_name or (agent.google_sheet_name if agent else "Sheet1")
+    
+    if not spreadsheet_id:
+        raise HTTPException(status_code=400, detail="Neither Google Webhook URL nor Spreadsheet ID is configured for this agent.")
+
+    print(f"📊 Appending to Google Sheets via API: {spreadsheet_id} / {sheet_name}")
+    result = google_sheets_service.append_data_dict(spreadsheet_id, sheet_name, data)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    return result
 
 @app.post("/api/calls/{call_id}/end")
 async def end_call(call_id: str, db: Session = Depends(get_db)):
@@ -973,7 +1242,8 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
             to_number=req.to_number,
             from_number=from_number,
             status="started",
-            twilio_sid=call.sid
+            twilio_sid=call.sid,
+            direction="outbound"
         )
         db.add(new_call)
         db.commit()
@@ -1081,7 +1351,8 @@ async def make_call(call_request: CallRequest, db: Session = Depends(get_db), us
             to_number=call_request.to_number,
             from_number=from_number,
             status="started",
-            twilio_sid=call.sid
+            twilio_sid=call.sid,
+            direction="outbound"
         )
         db.add(new_call)
         db.commit()
@@ -1104,6 +1375,103 @@ async def get_twiml(joinUrl: str):
     </Connect>
 </Response>"""
     return Response(content=xml, media_type="application/xml")
+
+@app.post("/api/inbound")
+@app.get("/api/inbound")
+async def handle_inbound(request: Request, db: Session = Depends(get_db)):
+    """Handle inbound calls from Twilio"""
+    # Twilio sends data as form parameters
+    form_data = await request.form()
+    # Twilio uses 'To' for the number dialed (our Twilio number)
+    # and 'From' for the caller's number
+    to_number = form_data.get("To")
+    from_number = form_data.get("From")
+    call_sid = form_data.get("CallSid")
+    
+    print(f"📞 Incoming call to {to_number} from {from_number} (SID: {call_sid})")
+    
+    if not to_number:
+        return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Error: No destination number.</Say></Response>', media_type="application/xml")
+
+    # Find agent associated with this number
+    # We need to match the phone number. Twilio usually sends it with '+'.
+    # We check both with and without '+' to be safe.
+    agent = db.query(Agent).join(TwilioNumber).filter(
+        (TwilioNumber.phone_number == to_number) | 
+        (TwilioNumber.phone_number == to_number.replace("+", ""))
+    ).first()
+    
+    if not agent:
+        print(f"⚠️ No agent found for number {to_number}")
+        # Try a more flexible search if needed, but for now exact match
+        return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Sorry, no agent is assigned to this number.</Say></Response>', media_type="application/xml")
+
+    # Check user balance
+    user = agent.user
+    if not user or user.balance <= 0:
+        print(f"⚠️ User {user.username if user else 'unknown'} has insufficient balance for inbound call")
+        return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Sorry, this service is currently unavailable.</Say></Response>', media_type="application/xml")
+
+    # Create Ultravox Call
+    ultravox_api_key = os.getenv("ULTRAVOX_API_KEY")
+    if not ultravox_api_key:
+         return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Configuration error.</Say></Response>', media_type="application/xml")
+
+    url = "https://api.ultravox.ai/api/calls"
+    payload = {
+        "systemPrompt": agent.system_prompt,
+        "model": agent.model,
+        "voice": agent.voice,
+        "languageHint": agent.language,
+        "temperature": 0.3,
+        "medium": {"twilio": {}},
+        "firstSpeakerSettings": {"agent": {}}, # Agent speaks first for inbound
+        "recordingEnabled": True
+    }
+    
+    # Add tools if agent has them
+    if agent.tools:
+        payload["selectedTools"] = [{"toolName": tool.name} for tool in agent.tools]
+        
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, headers={"X-API-Key": ultravox_api_key}, json=payload)
+            if resp.status_code != 201:
+                print(f"❌ Ultravox Error: {resp.text}")
+                return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Error connecting to AI agent.</Say></Response>', media_type="application/xml")
+            
+            data = resp.json()
+            join_url = data["joinUrl"]
+            ultravox_call_id = data["callId"]
+            
+            # Save call to DB
+            new_call = Call(
+                ultravox_call_id=ultravox_call_id,
+                user_id=user.id,
+                agent_id=agent.id,
+                to_number=to_number,
+                from_number=from_number,
+                status="started",
+                twilio_sid=call_sid,
+                direction="inbound"
+            )
+            db.add(new_call)
+            db.commit()
+            
+            print(f"✅ Inbound call connected. Ultravox Call ID: {ultravox_call_id}")
+            
+            # Return TwiML
+            xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Connect>
+        <Stream url="{join_url}" />
+    </Connect>
+</Response>"""
+            return Response(content=xml, media_type="application/xml")
+            
+    except Exception as e:
+        print(f"❌ Inbound error: {str(e)}")
+        return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Internal server error.</Say></Response>', media_type="application/xml")
 
 # Models
 class ScheduleRequest(BaseModel):
@@ -1250,6 +1618,7 @@ async def get_call_history(
             "toNumber": call.to_number,
             "fromNumber": call.from_number,
             "agentName": agent_name,
+            "direction": call.direction,
             "satisfactionScore": call.satisfaction_score,
             "medium": {"twilio": {"to": call.to_number, "from": call.from_number}} if call.to_number else {},
         })
@@ -1375,13 +1744,21 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
                 try:
                     duration = data.get("billedDuration", 0)
                     if isinstance(duration, str):
-                        # Handle "12s" format if applicable, or just parse string
                         duration = float(duration.replace("s", ""))
                     duration_minutes = float(duration) / 60
                     data["cost"] = round(duration_minutes * 0.05, 4)
                 except Exception as e:
                     print(f"⚠️ Error calculating cost: {e}")
                     data["cost"] = 0.0
+
+            # Add local DB info
+            db_call = db.query(Call).filter(Call.ultravox_call_id == call_id).first()
+            if db_call:
+                data["direction"] = db_call.direction
+                if db_call.agent:
+                    data["agentName"] = db_call.agent.name
+                else:
+                    data["agentName"] = "Instant Call"
             
             return data
     
