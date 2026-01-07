@@ -762,6 +762,7 @@
                     <thead>
                         <tr>
                             <th>Agent Name</th>
+                            <th>Direction</th>
                             <th>From Number</th>
                             <th>To Number</th>
                             <th>Status</th>
@@ -876,6 +877,22 @@
                 <select id="newAgentNumber">
                     <option value="">Default (System Default)</option>
                 </select>
+            </div>
+            <div class="form-group">
+                <label>Google Webhook URL (Recommended)</label>
+                <input type="text" id="newAgentWebhookUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">
+                    <a href="#" onclick="showWebhookGuide()" style="color: var(--primary);">How to get this?</a>
+                </div>
+            </div>
+            <div class="form-group" style="opacity: 0.6;">
+                <label>Google Spreadsheet ID (Legacy API)</label>
+                <input type="text" id="newAgentSpreadsheetId"
+                    placeholder="1tK_a-kzuIkgsnYL0fjWbxfxZxaf15LgM1eq1ECm70tI">
+            </div>
+            <div class="form-group" style="opacity: 0.6;">
+                <label>Google Sheet Name</label>
+                <input type="text" id="newAgentSheetName" value="Sheet1">
             </div>
             <button class="btn btn-primary" style="width: 100%" onclick="createAgent()">Create Agent</button>
         </div>
@@ -1054,12 +1071,67 @@
                 </select>
             </div>
             <div class="form-group">
+                <label>Tools</label>
+                <div id="editAgentToolsList"
+                    style="max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                    <!-- Tools checkboxes -->
+                </div>
+            </div>
+            <div class="form-group">
                 <label>Assigned Phone Number</label>
                 <select id="editAgentNumber">
                     <option value="">Default (System Default)</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label>Google Webhook URL (Recommended)</label>
+                <input type="text" id="editAgentWebhookUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">
+                    <a href="#" onclick="showWebhookGuide()" style="color: var(--primary);">How to get this?</a>
+                </div>
+            </div>
+            <div class="form-group" style="opacity: 0.6;">
+                <label>Google Spreadsheet ID (Legacy API)</label>
+                <input type="text" id="editAgentSpreadsheetId">
+            </div>
+            <div class="form-group" style="opacity: 0.6;">
+                <label>Google Sheet Name</label>
+                <input type="text" id="editAgentSheetName">
+            </div>
             <button class="btn btn-primary" style="width: 100%" onclick="updateAgent()">Save Changes</button>
+        </div>
+    </div>
+
+    <!-- Webhook Guide Modal -->
+    <div id="webhookGuideModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="close-modal" onclick="closeModal('webhookGuideModal')"><i class="fas fa-times"></i></div>
+            <h2>How to get Google Webhook URL</h2>
+            <div style="font-size: 14px; line-height: 1.6; color: var(--text-muted);">
+                <ol style="padding-left: 20px;">
+                    <li>Open your Google Sheet.</li>
+                    <li>Go to <b>Extensions > Apps Script</b>.</li>
+                    <li>Paste the following code:
+                        <pre
+                            style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 11px; overflow-x: auto;">
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
+  var data = JSON.parse(e.postData.contents);
+  if (sheet.getLastRow() == 0) { sheet.appendRow(Object.keys(data)); }
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var row = headers.map(function(h) { return data[h] || ""; });
+  sheet.appendRow(row);
+  return ContentService.createTextOutput(JSON.stringify({"success": true})).setMimeType(ContentService.MimeType.JSON);
+}</pre>
+                    </li>
+                    <li>Click <b>Deploy > New Deployment</b>.</li>
+                    <li>Select <b>Type: Web App</b>.</li>
+                    <li>Set <b>Execute as: Me</b> and <b>Who has access: Anyone</b>.</li>
+                    <li>Click <b>Deploy</b> and copy the <b>Web App URL</b>.</li>
+                </ol>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 20px;"
+                onclick="closeModal('webhookGuideModal')">Got it!</button>
         </div>
     </div>
 
@@ -1093,8 +1165,11 @@
             loadToolsForAgent();
             loadNumbersForAgent();
         }
-        function openCreateToolModal() {
-            document.getElementById('createToolModal').classList.add('active');
+        function openAddNumberModal() {
+            document.getElementById('addNumberModal').classList.add('active');
+        }
+        function showWebhookGuide() {
+            document.getElementById('webhookGuideModal').classList.add('active');
         }
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
@@ -1267,9 +1342,13 @@
                             </div>
                             <span class="badge badge-success">${a.model || 'Ultravox'}</span>
                         </div>
-                        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 20px; height: 40px; overflow: hidden;">
+                        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 10px; height: 40px; overflow: hidden;">
                             ${(a.systemPrompt || 'No prompt').substring(0, 80)}...
                         </p>
+                        <div style="font-size: 12px; color: var(--primary); margin-bottom: 15px;">
+                            <i class="fas fa-phone-alt" style="margin-right: 5px;"></i>
+                            ${a.twilio_phone_number || 'No number assigned'}
+                        </div>
                         <div style="display: flex; gap: 10px;">
                             <button class="btn btn-primary" style="flex: 1; font-size: 14px;" onclick="initiateCall('${a.agentId}')">Call</button>
                             <button class="btn btn-secondary" style="padding: 10px;" onclick="openEditAgentModal('${a.id}', '${a.agentId}')"><i class="fas fa-edit"></i></button>
@@ -1299,7 +1378,10 @@
                         system_prompt: prompt,
                         voice,
                         tool_names: selectedTools,
-                        twilio_number_id: numberId ? parseInt(numberId) : null
+                        twilio_number_id: numberId ? parseInt(numberId) : null,
+                        google_spreadsheet_id: document.getElementById('newAgentSpreadsheetId').value,
+                        google_sheet_name: document.getElementById('newAgentSheetName').value,
+                        google_webhook_url: document.getElementById('newAgentWebhookUrl').value
                     })
                 });
                 if (resp.ok) {
@@ -1333,6 +1415,8 @@
 
             // Load numbers for dropdown
             await loadNumbersForEditAgent();
+            // Load tools for dropdown
+            await loadToolsForAgent('editAgentToolsList');
 
             try {
                 const resp = await fetch(`api/agents`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -1343,17 +1427,30 @@
                     document.getElementById('editAgentPrompt').value = agent.systemPrompt;
                     document.getElementById('editAgentVoice').value = agent.voice;
                     document.getElementById('editAgentNumber').value = agent.twilio_number_id || '';
+                    document.getElementById('editAgentSpreadsheetId').value = agent.google_spreadsheet_id || '';
+                    document.getElementById('editAgentSheetName').value = agent.google_sheet_name || 'Sheet1';
+                    document.getElementById('editAgentWebhookUrl').value = agent.google_webhook_url || '';
+
+                    // Check the tools the agent already has
+                    if (agent.selectedTools) {
+                        const toolNames = agent.selectedTools.map(t => t.toolName);
+                        document.querySelectorAll('#editAgentToolsList .agent-tool-checkbox').forEach(cb => {
+                            if (toolNames.includes(cb.value)) cb.checked = true;
+                        });
+                    }
                 }
             } catch (e) { console.error("Error loading agent details:", e); }
         }
 
         async function updateAgent() {
             const id = document.getElementById('editAgentId').value;
-            const ultravoxId = document.getElementById('editAgentUltravoxId').value;
             const name = document.getElementById('editAgentName').value;
             const prompt = document.getElementById('editAgentPrompt').value;
             const voice = document.getElementById('editAgentVoice').value;
             const numberId = document.getElementById('editAgentNumber').value;
+
+            // Get selected tools
+            const selectedTools = Array.from(document.querySelectorAll('#editAgentToolsList .agent-tool-checkbox:checked')).map(cb => cb.value);
 
             try {
                 const resp = await fetch(`api/agents/${id}`, {
@@ -1363,14 +1460,19 @@
                         name,
                         system_prompt: prompt,
                         voice,
-                        twilio_number_id: numberId ? parseInt(numberId) : null
+                        tool_names: selectedTools,
+                        twilio_number_id: numberId ? parseInt(numberId) : null,
+                        google_spreadsheet_id: document.getElementById('editAgentSpreadsheetId').value,
+                        google_sheet_name: document.getElementById('editAgentSheetName').value,
+                        google_webhook_url: document.getElementById('editAgentWebhookUrl').value
                     })
                 });
                 if (resp.ok) {
                     closeModal('editAgentModal');
                     loadAgents();
                 } else {
-                    alert('Failed to update agent');
+                    const err = await resp.json();
+                    alert('Failed to update agent: ' + (err.detail || 'Unknown error'));
                 }
             } catch (e) { alert('Error updating agent'); }
         }
@@ -1414,8 +1516,8 @@
             } catch (e) { alert('Error updating profile'); }
         }
 
-        async function loadToolsForAgent() {
-            const list = document.getElementById('agentToolsList');
+        async function loadToolsForAgent(containerId = 'agentToolsList') {
+            const list = document.getElementById(containerId);
             try {
                 const resp = await fetch('api/tools', { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await resp.json();
@@ -1632,6 +1734,12 @@
                     return `
                     <tr>
                         <td style="font-weight: 500;">${c.agentName || 'Instant Call'}</td>
+                        <td>
+                            <span class="badge ${c.direction === 'inbound' ? 'badge-success' : 'badge-primary'}" style="background: ${c.direction === 'inbound' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(139, 92, 246, 0.1)'}; color: ${c.direction === 'inbound' ? 'var(--success)' : 'var(--primary)'}">
+                                <i class="fas ${c.direction === 'inbound' ? 'fa-arrow-down' : 'fa-arrow-up'}" style="font-size: 10px; margin-right: 4px;"></i>
+                                ${c.direction || 'outbound'}
+                            </span>
+                        </td>
                         <td style="font-family: monospace; color: var(--text-muted);">${c.fromNumber || '-'}</td>
                         <td style="font-family: monospace; color: var(--text-muted);">${c.toNumber || '-'}</td>
                         <td><span class="badge ${c.status === 'active' || c.status === 'started' ? 'badge-success' : 'badge-warning'}">${c.status || 'ended'}</span></td>
@@ -1642,7 +1750,8 @@
                             ${(c.status === 'active' || c.status === 'started') ? `<button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" onclick="endCallFromHistory('${c.callId}')">End</button>` : ''}
                         </td>
                     </tr>
-                `}).join('');
+                `
+                }).join('');
 
                 updatePagination(data.pagination);
             } catch (e) {

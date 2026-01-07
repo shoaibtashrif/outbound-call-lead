@@ -42,7 +42,11 @@ class Call(Base):
     status = Column(String, default="started")
     duration = Column(Integer, nullable=True) # Duration in seconds
     twilio_sid = Column(String, nullable=True)
+    direction = Column(String, default="outbound") # "inbound" or "outbound"
+    direction = Column(String, default="outbound") # "inbound" or "outbound"
     satisfaction_score = Column(Integer, nullable=True)
+    collected_data = Column(Text, nullable=True) # JSON string of data collected by tools
+    sms_sent = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="calls")
@@ -74,6 +78,9 @@ class Agent(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True) # Nullable for backward compatibility/existing agents
     twilio_number_id = Column(Integer, ForeignKey('twilio_numbers.id'), nullable=True)
+    google_spreadsheet_id = Column(String, nullable=True)
+    google_sheet_name = Column(String, default="Sheet1")
+    google_webhook_url = Column(String, nullable=True)
     
     user = relationship("User", back_populates="agents")
     tools = relationship("Tool", secondary=agent_tools, back_populates="agents")
@@ -141,6 +148,9 @@ class AgentCreate(BaseModel):
     language: Optional[str] = "en"
     tool_names: Optional[List[str]] = None
     twilio_number_id: Optional[int] = None
+    google_spreadsheet_id: Optional[str] = None
+    google_sheet_name: Optional[str] = "Sheet1"
+    google_webhook_url: Optional[str] = None
 
 class AgentResponse(BaseModel):
     id: int
@@ -153,6 +163,9 @@ class AgentResponse(BaseModel):
     tools: List[str] = []
     user_id: Optional[int]
     twilio_number_id: Optional[int]
+    google_spreadsheet_id: Optional[str]
+    google_sheet_name: Optional[str]
+    google_webhook_url: Optional[str]
     
     class Config:
         from_attributes = True
