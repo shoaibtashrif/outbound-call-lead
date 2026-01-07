@@ -1,6 +1,8 @@
 import os
 import asyncio
 import json
+import logging
+import sys
 from openai import OpenAI
 from groq import Groq
 import requests
@@ -27,6 +29,25 @@ from google_sheets_service import google_sheets_service
 
 load_dotenv()
 
+# Configure logging for real-time monitoring
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('service.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Ensure logs are flushed immediately
+for handler in logger.handlers:
+    handler.setLevel(logging.INFO)
+    if isinstance(handler, logging.FileHandler):
+        handler.flush()
+
+logger.info("🚀 Starting Outbound Call Service with enhanced SMS logging...")
+
 # Database setup
 DATABASE_URL = "sqlite:///./outbound_agents_v2.db"
 
@@ -47,6 +68,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 async def monitor_calls_and_balance():
     """Background task to monitor active calls and deduct balance every minute"""
+    logger.info("📊 Starting call monitoring and SMS service...")
     while True:
         await asyncio.sleep(60)
         db = SessionLocal()
@@ -55,9 +77,13 @@ async def monitor_calls_and_balance():
             active_calls = db.query(Call).filter(Call.status.in_(["started", "active"])).all()
             api_key = os.getenv("ULTRAVOX_API_KEY")
             
+            logger.info(f"🔍 Monitoring {len(active_calls)} active calls...")
+            
             for call in active_calls:
                 user = db.query(User).filter(User.id == call.user_id).first()
-                if not user: continue
+                if not user: 
+                    logger.warning(f"⚠️ No user found for call {call.id}")
+                    continue
                 
                 # Check actual status from Ultravox first
                 try:
@@ -66,6 +92,7 @@ async def monitor_calls_and_balance():
                         if resp.status_code == 200:
                             data = resp.json()
                             if data.get("ended"):
+                                logger.info(f"📞 Call {call.ultravox_call_id} has ended, processing...")
                                 call.status = "ended"
                                 if data.get("billedDuration"):
                                     dur = data.get("billedDuration")
@@ -74,61 +101,125 @@ async def monitor_calls_and_balance():
                                 db.commit()
                                 
                                 # Send SMS if data collected and not sent yet
-                                if call.collected_data and not call.sms_sent and call.to_number:
-                                    try:
-                                        from twilio.rest import Client
-                                        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
-                                        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
-                                        twilio_client = Client(account_sid, auth_token)
-                                        
-                                        collected = json.loads(call.collected_data)
-                                        msg_body = "Call Summary:\n"
-                                        for k, v in collected.items():
-                                            msg_body += f"{k}: {v}\n"
-                                            
-                                        sender = os.getenv("TWILIO_PHONE_NUMBER")
-                                        recipient = call.to_number
-                                        
-                                        print(f"📨 Sending SMS to {recipient}: {msg_body}")
-                                        twilio_client.messages.create(
-                                            body=msg_body,
-                                            from_=sender,
-                                            to=recipient
-                                        )
-                                        call.sms_sent = True
-                                        db.commit()
-                                        print(f"✅ SMS sent successfully to {recipient}")
-                                    except Exception as e:
-                                        error_msg = str(e)
-                                        print(f"❌ Error sending SMS: {error_msg}")
-                                        # Mark as sent anyway to avoid retry loops
-                                        if "Permission to send" in error_msg or "not enabled for the region" in error_msg:
-                                            call.sms_sent = True
-                                            db.commit()
-                                            print(f"⚠️ SMS disabled for region, marking as sent to avoid retries")
-                                
+                                await send_call_summary_sms(call, db, logger)
                                 continue
-                except: pass
+                except Exception as e:
+                    logger.error(f"❌ Error checking call status for {call.ultravox_call_id}: {e}")
 
                 # If still active, deduct cost
                 cost_per_min = 0.05
                 user.balance -= cost_per_min
+                logger.info(f"💰 Deducted ${cost_per_min} from user {user.username}, balance: ${user.balance:.2f}")
                 
                 if user.balance <= 0:
                     user.balance = 0
+                    logger.warning(f"⚠️ User {user.username} balance exhausted, terminating call {call.ultravox_call_id}")
                     # Terminate call
                     try:
                         async with httpx.AsyncClient() as client:
                             await client.post(f"https://api.ultravox.ai/api/calls/{call.ultravox_call_id}/end", headers={"X-API-Key": api_key})
                         call.status = "ended"
+                        logger.info(f"✅ Call {call.ultravox_call_id} terminated due to insufficient balance")
                     except Exception as e:
-                        print(f"Error terminating call {call.ultravox_call_id}: {e}")
+                        logger.error(f"❌ Error terminating call {call.ultravox_call_id}: {e}")
                 
                 db.commit()
         except Exception as e:
-            print(f"Monitor error: {e}")
+            logger.error(f"❌ Monitor error: {e}")
         finally:
             db.close()
+
+async def send_call_summary_sms(call: Call, db: Session, logger):
+    """Send SMS with collected call data"""
+    if not call.collected_data or call.sms_sent or not call.to_number:
+        if not call.collected_data:
+            logger.info(f"📝 No data collected for call {call.id}, skipping SMS")
+        elif call.sms_sent:
+            logger.info(f"📨 SMS already sent for call {call.id}")
+        elif not call.to_number:
+            logger.warning(f"⚠️ No recipient number for call {call.id}")
+        return
+
+    try:
+        # Get Twilio credentials
+        account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+        auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+        sender_number = call.to_number
+        
+        if not all([account_sid, auth_token, sender_number]):
+            logger.error("❌ Missing Twilio credentials in environment variables")
+            return
+
+        # Initialize Twilio client
+        twilio_client = Client(account_sid, auth_token)
+        
+        # Parse collected data
+        try:
+            collected = json.loads(call.collected_data)
+            logger.info(f"📋 Collected data for call {call.id}: {collected}")
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ Invalid JSON in collected_data for call {call.id}: {e}")
+            return
+        
+        # Build SMS message
+        msg_body = "📞 Call Summary:\n"
+        for key, value in collected.items():
+            # Clean up the key name for better readability
+            clean_key = key.replace('_', ' ').title()
+            msg_body += f"• {clean_key}: {value}\n"
+        
+        # Add call details
+        if call.duration:
+            minutes = call.duration // 60
+            seconds = call.duration % 60
+            msg_body += f"• Duration: {minutes}m {seconds}s\n"
+        
+        msg_body += f"• Call ID: {call.id}\n"
+        msg_body += "Thank you for your time!"
+        
+        recipient = call.from_number
+        
+        logger.info(f"📨 Sending SMS to {recipient}")
+        logger.info(f"📝 SMS Content: {msg_body}")
+        
+        # Send SMS
+        message = twilio_client.messages.create(
+            body=msg_body,
+            from_=sender_number,
+            to=recipient
+            # to="+923040610720"
+        )
+        
+        # Mark as sent
+        call.sms_sent = True
+        db.commit()
+        
+        logger.info(f"✅ SMS sent successfully!")
+        logger.info(f"📨 Message SID: {message.sid}")
+        logger.info(f"📱 Status: {message.status}")
+        logger.info(f"📞 From: {message.from_}")
+        logger.info(f"📞 To: {message.to}")
+        
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"❌ Error sending SMS for call {call.id}: {error_msg}")
+        
+        # Check for specific Twilio errors
+        if "Permission to send" in error_msg or "not enabled for the region" in error_msg:
+            logger.warning(f"⚠️ SMS not enabled for region {call.to_number}, marking as sent to avoid retries")
+            call.sms_sent = True
+            db.commit()
+        elif "not SMS-capable" in error_msg:
+            logger.warning(f"⚠️ Sender number {sender_number} is not SMS-capable")
+            call.sms_sent = True
+            db.commit()
+        elif "Invalid 'To' phone number" in error_msg:
+            logger.warning(f"⚠️ Invalid recipient number {call.to_number}, marking as sent")
+            call.sms_sent = True
+            db.commit()
+        else:
+            logger.error(f"❌ Unhandled SMS error: {error_msg}")
+            # Don't mark as sent for unknown errors to allow retry
 
 @app.on_event("startup")
 async def startup_event():
