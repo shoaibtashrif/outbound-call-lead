@@ -1793,39 +1793,114 @@ async def receive_sms(request: Request, db: Session = Depends(get_db)):
             if not phone:
                 return ""
             # Remove +, spaces, dashes, parentheses
-            normalized = phone.replace("+", "").replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+            normalized = phone.replace("+", "").replace(" ", "").replace("-", "").replace("(", "").replace(")", "").replace(".", "")
             return normalized
-        
+
         your_number_normalized = normalize_phone(your_number)
         logger.info(f"🔍 Looking for agent with number: {your_number} (normalized: {your_number_normalized})")
-        
-        # Find agent associated with this number - try multiple formats
+
+        # Find agent associated with this number - try multiple matching strategies
         agent = None
-        # First try exact match
+
+        # Strategy 1: Exact match with stored numbers
         agent = db.query(Agent).join(TwilioNumber).filter(
-            (TwilioNumber.phone_number == your_number) | 
-            (TwilioNumber.phone_number == your_number_normalized)
+            (TwilioNumber.phone_number == your_number)
         ).first()
-        
-        # If not found, try normalized matching
+
+        # Strategy 2: If no exact match, try normalized matching
         if not agent:
-            # Get all twilio numbers and normalize them for comparison
-            all_numbers = db.query(TwilioNumber).all()
-            for tn in all_numbers:
-                tn_normalized = normalize_phone(tn.phone_number)
-                if tn_normalized == your_number_normalized:
+            logger.info("🔄 No exact match found, trying normalized matching...")
+            all_twilio_numbers = db.query(TwilioNumber).all()
+            logger.info(f"📋 Checking against {len(all_twilio_numbers)} Twilio numbers in database")
+
+            for tn in all_twilio_numbers:
+                stored_normalized = normalize_phone(tn.phone_number)
+                logger.info(f"  Comparing: stored '{tn.phone_number}' -> '{stored_normalized}' vs incoming '{your_number}' -> '{your_number_normalized}'")
+
+                if stored_normalized == your_number_normalized:
                     agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
                     if agent:
                         logger.info(f"✅ Found agent '{agent.name}' via normalized number matching")
                         break
+
+        # Strategy 3: Last resort - try partial matching for common formatting issues
+        if not agent:
+            logger.info("🔄 Still no match, trying partial matching...")
+            for tn in all_twilio_numbers:
+                stored_normalized = normalize_phone(tn.phone_number)
+
+                # Try multiple partial matching strategies
+                # Strategy 3a: Last 9 digits (skip area code differences)
+                if len(stored_normalized) >= 9 and len(your_number_normalized) >= 9:
+                    stored_last9 = stored_normalized[-9:]
+                    incoming_last9 = your_number_normalized[-9:]
+                    logger.info(f"  Partial match (last 9): stored '{stored_last9}', incoming '{incoming_last9}'")
+                    if stored_last9 == incoming_last9:
+                        agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
+                        if agent:
+                            logger.info(f"✅ Found agent '{agent.name}' via last 9 digits matching")
+                            break
+
+                # Strategy 3b: Last 8 digits
+                if not agent and len(stored_normalized) >= 8 and len(your_number_normalized) >= 8:
+                    stored_last8 = stored_normalized[-8:]
+                    incoming_last8 = your_number_normalized[-8:]
+                    logger.info(f"  Partial match (last 8): stored '{stored_last8}', incoming '{incoming_last8}'")
+                    if stored_last8 == incoming_last8:
+                        agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
+                        if agent:
+                            logger.info(f"✅ Found agent '{agent.name}' via last 8 digits matching")
+                            break
+
+                # Strategy 3c: Last 7 digits (very lenient matching)
+                if not agent and len(stored_normalized) >= 7 and len(your_number_normalized) >= 7:
+                    stored_last7 = stored_normalized[-7:]
+                    incoming_last7 = your_number_normalized[-7:]
+                    logger.info(f"  Partial match (last 7): stored '{stored_last7}', incoming '{incoming_last7}'")
+                    if stored_last7 == incoming_last7:
+                        agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
+                        if agent:
+                            logger.info(f"✅ Found agent '{agent.name}' via last 7 digits matching")
+                            break
+
+                # Strategy 3d: Fuzzy matching - check if one number contains the other
+                if not agent:
+                    # Check if the shorter number is contained in the longer one
+                    shorter = min(stored_normalized, your_number_normalized, key=len)
+                    longer = max(stored_normalized, your_number_normalized, key=len)
+                    logger.info(f"  Fuzzy match: checking if '{shorter}' is in '{longer}'")
+                    if shorter in longer:
+                        agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
+                        if agent:
+                            logger.info(f"✅ Found agent '{agent.name}' via fuzzy substring matching")
+                            break
+
         
         agent_id = agent.id if agent else None
         agent_name = agent.name if agent else "Unknown"
-        
+
         if agent:
-            logger.info(f"✅ Agent found: {agent_name} (ID: {agent_id})")
+            logger.info(f"✅ Agent found: {agent.name} (ID: {agent.id})")
+            logger.info(f"📊 Agent Google Sheets config: Webhook={agent.google_webhook_url}, SheetID={agent.google_spreadsheet_id}")
         else:
             logger.warning(f"⚠️ No agent found for number {your_number}. SMS will be saved without agent association.")
+            # Log all available Twilio numbers for debugging
+            all_numbers = db.query(TwilioNumber).all()
+            logger.info(f"📋 Available Twilio numbers in database: {[f'{tn.phone_number} (ID:{tn.id})' for tn in all_numbers]}")
+
+            # Strategy 4: Fallback - if there's only one agent with a Twilio number, use it
+            agents_with_numbers = db.query(Agent).filter(Agent.twilio_number_id != None).all()
+            logger.info(f"  Fallback check: Found {len(agents_with_numbers)} agents with Twilio numbers")
+            if len(agents_with_numbers) == 1:
+                agent = agents_with_numbers[0]
+                agent_id = agent.id
+                agent_name = agent.name
+                logger.info(f"✅ Fallback: Using the only agent with Twilio number: '{agent.name}' (ID: {agent.id})")
+                logger.info(f"📊 Fallback agent Google Sheets config: Webhook={agent.google_webhook_url}, SheetID={agent.google_spreadsheet_id}")
+            elif len(agents_with_numbers) > 1:
+                logger.warning(f"⚠️ Multiple agents with Twilio numbers found ({len(agents_with_numbers)}), cannot determine which one to use")
+            else:
+                logger.warning(f"⚠️ No agents with Twilio numbers found in database")
         
         # Save SMS to database
         sms_record = SMS(
@@ -1872,13 +1947,16 @@ async def receive_sms(request: Request, db: Session = Depends(get_db)):
                 elif agent.google_spreadsheet_id:
                     sheet_name = agent.google_sheet_name or "Sheet1"
                     logger.info(f"📊 Appending SMS to Google Sheets via API: {agent.google_spreadsheet_id} / {sheet_name}")
-                    result = google_sheets_service.append_data_dict(agent.google_spreadsheet_id, sheet_name, sms_data)
-                    if not result.get("success"):
-                        logger.error(f"❌ Google Sheets Error: {result.get('error')}")
-                    else:
-                        logger.info(f"✅ SMS saved to Google Sheets")
+                    try:
+                        result = google_sheets_service.append_data_dict(agent.google_spreadsheet_id, sheet_name, sms_data)
+                        if not result.get("success"):
+                            logger.error(f"❌ Google Sheets Error: {result.get('error')}")
+                        else:
+                            logger.info(f"✅ SMS saved to Google Sheets successfully")
+                    except Exception as gs_error:
+                        logger.error(f"❌ Exception saving SMS to Google Sheets: {gs_error}", exc_info=True)
                 else:
-                    logger.warning(f"⚠️ Agent '{agent_name}' has no Google Sheets configuration (no webhook URL or spreadsheet ID)")
+                    logger.warning(f"⚠️ Agent '{agent.name}' has no Google Sheets configuration (no webhook URL or spreadsheet ID)")
             except Exception as e:
                 logger.error(f"❌ Error saving SMS to Google Sheets: {e}", exc_info=True)
         else:
