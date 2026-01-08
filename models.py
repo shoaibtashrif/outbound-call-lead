@@ -99,6 +99,20 @@ class Tool(Base):
     
     agents = relationship("Agent", secondary=agent_tools, back_populates="tools")
 
+class SMS(Base):
+    __tablename__ = 'sms'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    agent_id = Column(Integer, ForeignKey('agents.id'), nullable=True)
+    from_number = Column(String, nullable=False)
+    to_number = Column(String, nullable=False)
+    body = Column(Text, nullable=False)
+    direction = Column(String, default="inbound")  # "inbound" or "outbound"
+    message_sid = Column(String, unique=True, index=True, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    agent = relationship("Agent")
+
 # Pydantic models
 class UserCreate(BaseModel):
     username: str
@@ -166,6 +180,20 @@ class AgentResponse(BaseModel):
     google_spreadsheet_id: Optional[str]
     google_sheet_name: Optional[str]
     google_webhook_url: Optional[str]
+    
+    class Config:
+        from_attributes = True
+
+class SMSResponse(BaseModel):
+    id: int
+    agent_id: Optional[int]
+    agent_name: Optional[str]
+    from_number: str
+    to_number: str
+    body: str
+    direction: str
+    message_sid: Optional[str]
+    created_at: datetime
     
     class Config:
         from_attributes = True

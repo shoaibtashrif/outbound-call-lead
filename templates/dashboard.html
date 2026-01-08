@@ -347,6 +347,78 @@
             display: none !important;
         }
 
+        /* Notifications */
+        .notification {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: slideInRight 0.3s ease-out;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .notification:hover {
+            transform: translateX(-5px);
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-close:hover {
+            color: var(--text-light);
+        }
+
+        .notification-body {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .notification-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
         .text-success {
             color: var(--success);
         }
@@ -537,6 +609,9 @@
         <div class="nav-item" onclick="showSection('history')" id="nav-history">
             <i class="fas fa-history"></i> Call History
         </div>
+        <div class="nav-item" onclick="showSection('sms-inbox')" id="nav-sms-inbox">
+            <i class="fas fa-inbox"></i> SMS Inbox
+        </div>
         <div class="nav-item" onclick="showSection('tools')" id="nav-tools">
             <i class="fas fa-tools"></i> Tools
         </div>
@@ -559,6 +634,8 @@
 
     <!-- Main Content -->
     <div class="main-content">
+        <!-- Notification Container (Top Right) -->
+        <div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;"></div>
 
         <!-- DASHBOARD SECTION -->
         <div id="section-dashboard">
@@ -779,6 +856,36 @@
                 </table>
             </div>
             <div id="paginationControls" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+            </div>
+        </div>
+
+        <!-- SMS INBOX SECTION -->
+        <div id="section-sms-inbox" class="hidden">
+            <div class="header">
+                <h1>SMS Inbox</h1>
+                <button class="btn btn-secondary" onclick="loadSMS()"><i class="fas fa-sync"></i> Refresh</button>
+            </div>
+
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <table id="smsTable">
+                    <thead>
+                        <tr>
+                            <th>Agent Name</th>
+                            <th>Direction</th>
+                            <th>From Number</th>
+                            <th>To Number</th>
+                            <th>Date/Time</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="smsTableBody">
+                        <tr>
+                            <td colspan="6" class="loader">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="smsPaginationControls" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
             </div>
         </div>
 
@@ -1152,6 +1259,7 @@ function doPost(e) {
             if (id === 'new-call') loadAgentsDropdown();
             if (id === 'tools') loadTools();
             if (id === 'numbers') loadNumbers();
+            if (id === 'sms-inbox') loadSMS();
         }
 
         function logout() {
@@ -2108,8 +2216,167 @@ function doPost(e) {
             }
         }
 
+        // SMS Functions
+        let lastSMSId = 0;
+        let smsPollInterval = null;
+
+        async function loadSMS() {
+            const tbody = document.getElementById('smsTableBody');
+            try {
+                const resp = await fetch('api/sms', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (resp.status === 401) return logout();
+                const data = await resp.json();
+                const smsList = data.results || [];
+
+                if (smsList.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No SMS messages found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = smsList.map(sms => `
+                    <tr>
+                        <td>${sms.agent_name || 'N/A'}</td>
+                        <td><span class="badge ${sms.direction === 'inbound' ? 'badge-success' : 'badge-warning'}">${sms.direction}</span></td>
+                        <td>${sms.from_number}</td>
+                        <td>${sms.to_number}</td>
+                        <td>${new Date(sms.created_at).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="showSMSBody(${sms.id}, '${sms.from_number}', '${sms.to_number}', ${JSON.stringify(sms.body).replace(/"/g, '&quot;')})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Update last SMS ID for polling (only if we haven't set it yet)
+                if (smsList.length > 0) {
+                    if (lastSMSId === 0) {
+                        // First load - set to the latest SMS ID to avoid showing old notifications
+                        lastSMSId = smsList[0].id;
+                    } else if (smsList[0].id > lastSMSId) {
+                        lastSMSId = smsList[0].id;
+                    }
+                }
+            } catch (e) {
+                console.error("Error loading SMS:", e);
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Error loading SMS messages.</td></tr>';
+            }
+        }
+
+        function showSMSBody(id, from, to, body) {
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="close-modal" onclick="this.closest('.modal').remove()"><i class="fas fa-times"></i></div>
+                    <h2>SMS Message</h2>
+                    <div style="margin-bottom: 20px;">
+                        <div style="margin-bottom: 10px;"><strong>From:</strong> ${from}</div>
+                        <div style="margin-bottom: 10px;"><strong>To:</strong> ${to}</div>
+                        <div style="margin-bottom: 10px;"><strong>Date/Time:</strong> ${new Date().toLocaleString()}</div>
+                    </div>
+                    <div style="background: rgba(15, 23, 42, 0.5); padding: 16px; border-radius: 12px; border: 1px solid var(--glass-border);">
+                        <div style="color: var(--text-muted); font-size: 12px; margin-bottom: 8px;">Message Body:</div>
+                        <div style="color: var(--text-light); white-space: pre-wrap; line-height: 1.6;">${body}</div>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 20px;" onclick="this.closest('.modal').remove()">Close</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function showSMSNotification(from, to, body) {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <div class="notification-title"><i class="fas fa-sms"></i> New SMS Received</div>
+                    <button class="notification-close" onclick="this.closest('.notification').remove()"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="notification-body">
+                    <div><strong>From:</strong> ${from}</div>
+                    <div><strong>To:</strong> ${to}</div>
+                    <div style="margin-top: 8px; padding: 8px; background: rgba(15, 23, 42, 0.5); border-radius: 8px; font-size: 12px;">${body.length > 100 ? body.substring(0, 100) + '...' : body}</div>
+                </div>
+                <div class="notification-meta">${new Date().toLocaleTimeString()}</div>
+            `;
+            container.insertBefore(notification, container.firstChild);
+
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideInRight 0.3s ease-out reverse';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 10000);
+
+            // Click to view in SMS Inbox
+            notification.addEventListener('click', () => {
+                showSection('sms-inbox');
+                notification.remove();
+            });
+        }
+
+        async function checkForNewSMS() {
+            try {
+                const resp = await fetch('api/sms?limit=1', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (resp.status === 401) {
+                    console.log("Unauthorized, stopping SMS polling");
+                    if (smsPollInterval) clearInterval(smsPollInterval);
+                    return;
+                }
+                if (!resp.ok) {
+                    console.error("Error fetching SMS:", resp.status, resp.statusText);
+                    return;
+                }
+                const data = await resp.json();
+                const smsList = data.results || [];
+
+                if (smsList.length > 0) {
+                    const latestSMS = smsList[0];
+                    // Initialize lastSMSId on first check if not set
+                    if (lastSMSId === 0) {
+                        lastSMSId = latestSMS.id;
+                        console.log(`Initialized lastSMSId to ${lastSMSId}`);
+                        return;
+                    }
+                    
+                    if (latestSMS.id > lastSMSId) {
+                        // New SMS received
+                        console.log(`New SMS detected! ID: ${latestSMS.id}, Previous: ${lastSMSId}`);
+                        showSMSNotification(latestSMS.from_number, latestSMS.to_number, latestSMS.body);
+                        lastSMSId = latestSMS.id;
+
+                        // Reload SMS if on SMS Inbox page
+                        if (!document.getElementById('section-sms-inbox').classList.contains('hidden')) {
+                            loadSMS();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error checking for new SMS:", e);
+            }
+        }
+
+        // Start polling for new SMS every 5 seconds
+        function startSMSPolling() {
+            if (smsPollInterval) clearInterval(smsPollInterval);
+            smsPollInterval = setInterval(checkForNewSMS, 5000);
+        }
+
+        // Stop polling when page is hidden
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (smsPollInterval) clearInterval(smsPollInterval);
+            } else {
+                startSMSPolling();
+            }
+        });
+
         // Init
         fetchData();
+        startSMSPolling();
     </script>
 </body>
 
