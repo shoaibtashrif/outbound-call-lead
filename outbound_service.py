@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 import sys
+from urllib.parse import unquote
 from openai import OpenAI
 from groq import Groq
 import requests
@@ -19,7 +20,7 @@ from typing import Optional, List, Dict, Any
 import httpx
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, Session
-from models import Base, Agent, Tool, AgentCreate, AgentResponse, User, UserCreate, UserLogin, UserResponse, Call, TwilioNumber, TwilioNumberCreate, TwilioNumberResponse
+from models import Base, Agent, Tool, AgentCreate, AgentResponse, User, UserCreate, UserLogin, UserResponse, Call, TwilioNumber, TwilioNumberCreate, TwilioNumberResponse, SMS, SMSResponse
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -100,6 +101,9 @@ async def monitor_calls_and_balance():
                                     call.duration = int(dur)
                                 db.commit()
                                 
+                                # Check if call is missed and send qualifying SMS
+                                await check_and_handle_missed_call(call, data, db, logger)
+                                
                                 # Send SMS if data collected and not sent yet
                                 await send_call_summary_sms(call, db, logger)
                                 continue
@@ -128,6 +132,118 @@ async def monitor_calls_and_balance():
             logger.error(f"❌ Monitor error: {e}")
         finally:
             db.close()
+
+async def check_and_handle_missed_call(call: Call, ultravox_data: dict, db: Session, logger):
+    """Check if call is missed and send qualifying SMS"""
+    try:
+        # Check duration
+        duration = call.duration or 0
+        is_short_call = duration < 7
+        
+        # Check if user spoke (has user messages)
+        has_user_input = False
+        try:
+            api_key = os.getenv("ULTRAVOX_API_KEY")
+            async with httpx.AsyncClient() as client:
+                msg_resp = await client.get(
+                    f"https://api.ultravox.ai/api/calls/{call.ultravox_call_id}/messages",
+                    headers={"X-API-Key": api_key}
+                )
+                if msg_resp.status_code == 200:
+                    messages = msg_resp.json().get("results", [])
+                    # Check if there are any messages from user
+                    has_user_input = any(msg.get('role') == 'user' and msg.get('text', '').strip() for msg in messages)
+        except Exception as e:
+            logger.warning(f"⚠️ Could not check user input for call {call.ultravox_call_id}: {e}")
+        
+        # Call is missed if duration < 7 seconds OR no user input
+        is_missed_call = is_short_call or not has_user_input
+        
+        if is_missed_call:
+            logger.info(f"📞 Call {call.ultravox_call_id} is MISSED (duration: {duration}s, user_input: {has_user_input})")
+            
+            # Get agent first
+            agent = None
+            if call.agent_id:
+                agent = db.query(Agent).filter(Agent.id == call.agent_id).first()
+            
+            # For missed calls, use same logic as call summary SMS
+            # Get Twilio credentials (same as send_call_summary_sms)
+            account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+            auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+            sender_number = call.to_number  # Same as call summary SMS
+            
+            if not all([account_sid, auth_token, sender_number]):
+                logger.error("❌ Missing Twilio credentials in environment variables")
+                return
+            
+            # Recipient is from_number (same as call summary SMS)
+            recipient = call.from_number
+            
+            if not recipient:
+                logger.warning(f"⚠️ No recipient number for missed call {call.id}")
+                return
+            
+            # Qualifying questions SMS
+            qualifying_questions = (
+                "Hi! We tried reaching you but couldn't connect. "
+                "Would you be interested in learning more about our services? "
+                "Please reply YES if interested, or let us know a better time to call."
+            )
+            
+            logger.info(f"📨 Sending missed call qualifying SMS from {sender_number} to {recipient}")
+            logger.info(f"📝 SMS Content: {qualifying_questions}")
+            
+            # Send SMS via Twilio (same way as call summary SMS)
+            try:
+                twilio_client = Client(account_sid, auth_token)
+                message = twilio_client.messages.create(
+                    body=qualifying_questions,
+                    from_=sender_number,
+                    to=recipient
+                )
+                
+                logger.info(f"✅ Missed call SMS sent successfully!")
+                logger.info(f"📨 Message SID: {message.sid}")
+                logger.info(f"📱 Status: {message.status}")
+                logger.info(f"📞 From: {message.from_}")
+                logger.info(f"📞 To: {message.to}")
+            except Exception as e:
+                error_msg = str(e)
+                logger.error(f"❌ Error sending missed call SMS: {error_msg}")
+                # Check for specific Twilio errors
+                if "Permission to send" in error_msg or "not enabled for the region" in error_msg:
+                    logger.warning(f"⚠️ SMS not enabled for region {recipient}")
+                elif "not SMS-capable" in error_msg:
+                    logger.warning(f"⚠️ Sender number {sender_number} is not SMS-capable")
+                elif "Invalid 'To' phone number" in error_msg:
+                    logger.warning(f"⚠️ Invalid recipient number {recipient}")
+                else:
+                    logger.error(f"❌ Unhandled SMS error: {error_msg}")
+                # Don't save to DB if SMS failed to send
+                return
+            
+            # Save outbound SMS to database (only if SMS was sent successfully)
+            sms_record = SMS(
+                agent_id=call.agent_id,
+                from_number=sender_number,
+                to_number=recipient,
+                body=qualifying_questions,
+                direction="outbound",
+                message_sid=message.sid
+            )
+            db.add(sms_record)
+            db.commit()
+            db.refresh(sms_record)
+            
+            logger.info(f"✅ Outbound SMS saved to database with ID: {sms_record.id}")
+            
+            # Note: Missed call SMS are NOT saved to Google Sheets per user requirement
+        else:
+            logger.info(f"✅ Call {call.ultravox_call_id} is NOT missed (duration: {duration}s, user_input: {has_user_input})")
+            
+    except Exception as e:
+        logger.error(f"❌ Error handling missed call for {call.ultravox_call_id}: {e}", exc_info=True)
 
 async def send_call_summary_sms(call: Call, db: Session, logger):
     """Send SMS with collected call data"""
@@ -177,44 +293,106 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
         msg_body += f"• Call ID: {call.id}\n"
         msg_body += "Thank you for your time!"
         
-        recipient = call.from_number
+        # Hardcode recipient for now
+        recipient = "+923040610720"
         
-        logger.info(f"📨 Sending SMS to {recipient}")
+        logger.info(f"📨 Sending call summary SMS to {recipient}")
         logger.info(f"📝 SMS Content: {msg_body}")
         
         # Send SMS
-        message = twilio_client.messages.create(
-            body=msg_body,
-            from_=sender_number,
-            to=recipient
-            # to="+923040610720"
-        )
+        try:
+            message = twilio_client.messages.create(
+                body=msg_body,
+                from_=sender_number,
+                to=recipient
+            )
+            
+            # Mark as sent
+            call.sms_sent = True
+            db.commit()
+            
+            logger.info(f"✅ Call summary SMS sent successfully!")
+            logger.info(f"📨 Message SID: {message.sid}")
+            logger.info(f"📱 Status: {message.status}")
+            logger.info(f"📞 From: {message.from_}")
+            logger.info(f"📞 To: {message.to}")
+            
+            # Save outbound SMS to database (only if SMS sent successfully)
+            agent = None
+            if call.agent_id:
+                agent = db.query(Agent).filter(Agent.id == call.agent_id).first()
+            
+            sms_record = SMS(
+                agent_id=call.agent_id,
+                from_number=sender_number,
+                to_number=recipient,  # Use hardcoded number for database too
+                body=msg_body,
+                direction="outbound",
+                message_sid=message.sid
+            )
+            db.add(sms_record)
+            db.commit()
+            db.refresh(sms_record)
+            
+            logger.info(f"✅ Call summary SMS saved to database with ID: {sms_record.id}")
+        except Exception as sms_error:
+            error_msg = str(sms_error)
+            logger.error(f"❌ Error sending call summary SMS: {error_msg}")
+            # Re-raise to be caught by outer exception handler
+            raise
         
-        # Mark as sent
-        call.sms_sent = True
-        db.commit()
-        
-        logger.info(f"✅ SMS sent successfully!")
-        logger.info(f"📨 Message SID: {message.sid}")
-        logger.info(f"📱 Status: {message.status}")
-        logger.info(f"📞 From: {message.from_}")
-        logger.info(f"📞 To: {message.to}")
+        # Save to Google Sheets if agent is configured
+        if agent:
+            try:
+                sms_data = {
+                    "Agent Name": agent.name or "Unknown",
+                    "Direction": "outbound",
+                    "From Number": sender_number,
+                    "To Number": recipient,
+                    "Message Body": msg_body,
+                    "Date/Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "Message SID": message.sid,
+                    "Call ID": call.ultravox_call_id,
+                    "Type": "Call Summary"
+                }
+                
+                # Priority 1: Use Webhook URL if configured
+                if agent.google_webhook_url:
+                    logger.info(f"🚀 Forwarding call summary SMS data to Google Webhook")
+                    async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+                        try:
+                            resp = await client.post(agent.google_webhook_url, json=sms_data, timeout=10.0)
+                            logger.info(f"✅ Webhook Response ({resp.status_code}): {resp.text}")
+                        except Exception as e:
+                            logger.error(f"❌ Webhook Error: {e}")
+                
+                # Priority 2: Use Direct API
+                elif agent.google_spreadsheet_id:
+                    sheet_name = agent.google_sheet_name or "Sheet1"
+                    logger.info(f"📊 Appending call summary SMS to Google Sheets")
+                    result = google_sheets_service.append_data_dict(agent.google_spreadsheet_id, sheet_name, sms_data)
+                    if not result.get("success"):
+                        logger.error(f"❌ Google Sheets Error: {result.get('error')}")
+                    else:
+                        logger.info(f"✅ Call summary SMS saved to Google Sheets")
+            except Exception as e:
+                logger.error(f"❌ Error saving call summary SMS to Google Sheets: {e}", exc_info=True)
         
     except Exception as e:
         error_msg = str(e)
-        logger.error(f"❌ Error sending SMS for call {call.id}: {error_msg}")
+        logger.error(f"❌ Error sending call summary SMS for call {call.id}: {error_msg}", exc_info=True)
         
         # Check for specific Twilio errors
         if "Permission to send" in error_msg or "not enabled for the region" in error_msg:
-            logger.warning(f"⚠️ SMS not enabled for region {call.to_number}, marking as sent to avoid retries")
+            logger.warning(f"⚠️ SMS not enabled for region +923040610720, marking as sent to avoid retries")
             call.sms_sent = True
             db.commit()
         elif "not SMS-capable" in error_msg:
             logger.warning(f"⚠️ Sender number {sender_number} is not SMS-capable")
             call.sms_sent = True
             db.commit()
-        elif "Invalid 'To' phone number" in error_msg:
-            logger.warning(f"⚠️ Invalid recipient number {call.to_number}, marking as sent")
+        elif "Invalid 'To' phone number" in error_msg or "cannot be the same" in error_msg:
+            logger.warning(f"⚠️ Invalid recipient number +923040610720 or same as sender, marking as sent")
             call.sms_sent = True
             db.commit()
         else:
@@ -912,8 +1090,8 @@ async def google_sheets_append(request: Request, db: Session = Depends(get_db)):
     # Extract Call ID (Ultravox sends it as X-Call-Id)
     call_id = headers.get("x-call-id") or headers.get("X-Call-Id")
     
-    print(f"📥 Received Google Sheets Tool Call. Call ID: {call_id}")
-    print(f"📦 Body: {body}")
+    logger.info(f"📥 Received Google Sheets Tool Call. Call ID: {call_id}")
+    logger.info(f"📦 Body: {body}")
     
     # Extract data. If 'data' key exists, use it, otherwise use the whole body
     if "data" in body and isinstance(body["data"], dict):
@@ -935,11 +1113,15 @@ async def google_sheets_append(request: Request, db: Session = Depends(get_db)):
             agent = call_record.agent
     else:
         # Fallback: Try to find the most recent active call
-        print("⚠️ No Call ID found in headers. Trying to find most recent active call...")
+        logger.info("⚠️ No Call ID found in headers. Trying to find most recent active call...")
         call_record = db.query(Call).filter(Call.status == "started").order_by(Call.created_at.desc()).first()
         if call_record:
-            print(f"🔄 Using Agent from recent call: {call_record.id} (Agent: {call_record.agent.name})")
-            agent = call_record.agent
+            logger.info(f"🔄 Using Agent from recent call: {call_record.id}")
+            if call_record.agent:
+                agent = call_record.agent
+                logger.info(f"✅ Found Agent: {agent.name}")
+            else:
+                logger.warning(f"⚠️ Call {call_record.id} has no agent assigned")
             call_id = call_record.ultravox_call_id
 
     # Save collected data to the call record (for both paths)
@@ -949,52 +1131,72 @@ async def google_sheets_append(request: Request, db: Session = Depends(get_db)):
         new_data_str = json.dumps(data, sort_keys=True)
         
         if existing_data:
-            existing_data_str = json.dumps(json.loads(existing_data), sort_keys=True)
-            if existing_data_str == new_data_str:
-                print(f"⚠️ Duplicate data detected for Call {call_record.id}, skipping save")
-            else:
-                # Data is different, update it
-                try:
-                    call_record.collected_data = new_data_str
-                    db.commit()
-                    print(f"💾 Updated collected data for Call {call_record.id}")
-                except Exception as e:
-                    print(f"⚠️ Failed to update collected data: {e}")
+            try:
+                existing_data_str = json.dumps(json.loads(existing_data), sort_keys=True)
+                if existing_data_str == new_data_str:
+                    logger.info(f"⚠️ Duplicate data detected for Call {call_record.id}, skipping save")
+                else:
+                    # Data is different, update it
+                    try:
+                        call_record.collected_data = new_data_str
+                        db.commit()
+                        logger.info(f"💾 Updated collected data for Call {call_record.id}")
+                    except Exception as e:
+                        logger.error(f"⚠️ Failed to update collected data: {e}")
+            except json.JSONDecodeError:
+                # Invalid existing data, overwrite it
+                call_record.collected_data = new_data_str
+                db.commit()
+                logger.info(f"💾 Saved collected data to Call {call_record.id} (overwrote invalid data)")
         else:
             # First time saving data
             try:
                 call_record.collected_data = new_data_str
                 db.commit()
-                print(f"💾 Saved collected data to Call {call_record.id}")
+                logger.info(f"💾 Saved collected data to Call {call_record.id}")
             except Exception as e:
-                print(f"⚠️ Failed to save collected data to DB: {e}")
+                logger.error(f"⚠️ Failed to save collected data to DB: {e}")
 
     # 2. Priority 1: Use Webhook URL if configured
     webhook_url = agent.google_webhook_url if agent else None
     if webhook_url:
-        print(f"🚀 Forwarding data to Google Webhook: {webhook_url}")
+        logger.info(f"🚀 Forwarding data to Google Webhook: {webhook_url}")
         async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
             try:
                 # Forward the data dictionary to the Apps Script webhook
                 resp = await client.post(webhook_url, json=data, timeout=10.0)
-                print(f"✅ Webhook Response ({resp.status_code}): {resp.text}")
+                logger.info(f"✅ Webhook Response ({resp.status_code}): {resp.text}")
                 return {"success": True, "message": "Data saved successfully"}
             except Exception as e:
-                print(f"❌ Webhook Error: {e}")
-                return {"success": True, "message": "Data received"}
+                logger.error(f"❌ Webhook Error: {e}")
+                # Still return success to Ultravox so tool doesn't retry
+                return {"success": True, "message": "Data received, webhook failed"}
 
     # 3. Priority 2: Use Direct API (requires service-account.json)
     spreadsheet_id = spreadsheet_id or (agent.google_spreadsheet_id if agent else None)
     sheet_name = sheet_name or (agent.google_sheet_name if agent else "Sheet1")
     
     if not spreadsheet_id:
-        raise HTTPException(status_code=400, detail="Neither Google Webhook URL nor Spreadsheet ID is configured for this agent.")
+        if not agent:
+            logger.warning("⚠️ No agent found and no spreadsheet_id provided in request")
+        else:
+            logger.warning(f"⚠️ Agent '{agent.name}' has no Google Sheets configuration")
+        # Return success anyway so Ultravox doesn't retry, but log the issue
+        return {"success": True, "message": "No Google Sheets configuration found. Data saved to call record only."}
 
-    print(f"📊 Appending to Google Sheets via API: {spreadsheet_id} / {sheet_name}")
-    result = google_sheets_service.append_data_dict(spreadsheet_id, sheet_name, data)
-    if not result.get("success"):
-        raise HTTPException(status_code=500, detail=result.get("error"))
-    return result
+    logger.info(f"📊 Appending to Google Sheets via API: {spreadsheet_id} / {sheet_name}")
+    try:
+        result = google_sheets_service.append_data_dict(spreadsheet_id, sheet_name, data)
+        if not result.get("success"):
+            logger.error(f"❌ Google Sheets API Error: {result.get('error')}")
+            # Return success anyway so Ultravox doesn't retry, but log the error
+            return {"success": True, "message": f"Data received but Google Sheets save failed: {result.get('error')}"}
+        logger.info(f"✅ Successfully appended data to Google Sheets")
+        return result
+    except Exception as e:
+        logger.error(f"❌ Exception while saving to Google Sheets: {e}", exc_info=True)
+        # Return success anyway so Ultravox doesn't retry
+        return {"success": True, "message": f"Data received but Google Sheets save failed: {str(e)}"}
 
 @app.post("/api/calls/{call_id}/end")
 async def end_call(call_id: str, db: Session = Depends(get_db)):
@@ -1564,6 +1766,272 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
         print(f"❌ Inbound error: {str(e)}")
         return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Internal server error.</Say></Response>', media_type="application/xml")
 
+@app.post("/sms")
+@app.get("/sms")
+async def receive_sms(request: Request, db: Session = Depends(get_db)):
+    """Receive inbound SMS from Twilio"""
+    try:
+        # Twilio sends data as form parameters
+        form_data = await request.form()
+        
+        # Get and normalize phone numbers (handle URL encoding)
+        sender_raw = form_data.get('From', 'Unknown')
+        your_number_raw = form_data.get('To', 'Unknown')
+        
+        # Decode URL encoding if present
+        sender = unquote(sender_raw) if sender_raw else 'Unknown'
+        your_number = unquote(your_number_raw) if your_number_raw else 'Unknown'
+        
+        message_body = form_data.get('Body', '')
+        message_sid = form_data.get('MessageSid', '')
+        direction = form_data.get('MessageStatus', 'inbound')  # Usually 'inbound' for received messages
+        
+        logger.info(f"📱 SMS received - From: {sender}, To: {your_number}, Body: {message_body[:50]}...")
+        
+        # Normalize phone numbers for matching (remove +, spaces, dashes, etc.)
+        def normalize_phone(phone):
+            if not phone:
+                return ""
+            # Remove +, spaces, dashes, parentheses
+            normalized = phone.replace("+", "").replace(" ", "").replace("-", "").replace("(", "").replace(")", "").replace(".", "")
+            return normalized
+
+        your_number_normalized = normalize_phone(your_number)
+        logger.info(f"🔍 Looking for agent with number: {your_number} (normalized: {your_number_normalized})")
+
+        # Find agent associated with this number - try multiple matching strategies
+        agent = None
+
+        # Strategy 1: Exact match with stored numbers
+        agent = db.query(Agent).join(TwilioNumber).filter(
+            (TwilioNumber.phone_number == your_number)
+        ).first()
+
+        # Strategy 2: If no exact match, try normalized matching
+        if not agent:
+            logger.info("🔄 No exact match found, trying normalized matching...")
+            all_twilio_numbers = db.query(TwilioNumber).all()
+            logger.info(f"📋 Checking against {len(all_twilio_numbers)} Twilio numbers in database")
+
+            for tn in all_twilio_numbers:
+                stored_normalized = normalize_phone(tn.phone_number)
+                logger.info(f"  Comparing: stored '{tn.phone_number}' -> '{stored_normalized}' vs incoming '{your_number}' -> '{your_number_normalized}'")
+
+                if stored_normalized == your_number_normalized:
+                    agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
+                    if agent:
+                        logger.info(f"✅ Found agent '{agent.name}' via normalized number matching")
+                        break
+
+        # Strategy 3: Last resort - try partial matching for common formatting issues
+        if not agent:
+            logger.info("🔄 Still no match, trying partial matching...")
+            for tn in all_twilio_numbers:
+                stored_normalized = normalize_phone(tn.phone_number)
+
+                # Try multiple partial matching strategies
+                # Strategy 3a: Last 9 digits (skip area code differences)
+                if len(stored_normalized) >= 9 and len(your_number_normalized) >= 9:
+                    stored_last9 = stored_normalized[-9:]
+                    incoming_last9 = your_number_normalized[-9:]
+                    logger.info(f"  Partial match (last 9): stored '{stored_last9}', incoming '{incoming_last9}'")
+                    if stored_last9 == incoming_last9:
+                        agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
+                        if agent:
+                            logger.info(f"✅ Found agent '{agent.name}' via last 9 digits matching")
+                            break
+
+                # Strategy 3b: Last 8 digits
+                if not agent and len(stored_normalized) >= 8 and len(your_number_normalized) >= 8:
+                    stored_last8 = stored_normalized[-8:]
+                    incoming_last8 = your_number_normalized[-8:]
+                    logger.info(f"  Partial match (last 8): stored '{stored_last8}', incoming '{incoming_last8}'")
+                    if stored_last8 == incoming_last8:
+                        agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
+                        if agent:
+                            logger.info(f"✅ Found agent '{agent.name}' via last 8 digits matching")
+                            break
+
+                # Strategy 3c: Last 7 digits (very lenient matching)
+                if not agent and len(stored_normalized) >= 7 and len(your_number_normalized) >= 7:
+                    stored_last7 = stored_normalized[-7:]
+                    incoming_last7 = your_number_normalized[-7:]
+                    logger.info(f"  Partial match (last 7): stored '{stored_last7}', incoming '{incoming_last7}'")
+                    if stored_last7 == incoming_last7:
+                        agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
+                        if agent:
+                            logger.info(f"✅ Found agent '{agent.name}' via last 7 digits matching")
+                            break
+
+                # Strategy 3d: Fuzzy matching - check if one number contains the other
+                if not agent:
+                    # Check if the shorter number is contained in the longer one
+                    shorter = min(stored_normalized, your_number_normalized, key=len)
+                    longer = max(stored_normalized, your_number_normalized, key=len)
+                    logger.info(f"  Fuzzy match: checking if '{shorter}' is in '{longer}'")
+                    if shorter in longer:
+                        agent = db.query(Agent).filter(Agent.twilio_number_id == tn.id).first()
+                        if agent:
+                            logger.info(f"✅ Found agent '{agent.name}' via fuzzy substring matching")
+                            break
+
+        
+        agent_id = agent.id if agent else None
+        agent_name = agent.name if agent else "Unknown"
+
+        if agent:
+            logger.info(f"✅ Agent found: {agent.name} (ID: {agent.id})")
+            logger.info(f"📊 Agent Google Sheets config: Webhook={agent.google_webhook_url}, SheetID={agent.google_spreadsheet_id}")
+        else:
+            logger.warning(f"⚠️ No agent found for number {your_number}. SMS will be saved without agent association.")
+            # Log all available Twilio numbers for debugging
+            all_numbers = db.query(TwilioNumber).all()
+            logger.info(f"📋 Available Twilio numbers in database: {[f'{tn.phone_number} (ID:{tn.id})' for tn in all_numbers]}")
+
+            # Strategy 4: Fallback - if there's only one agent with a Twilio number, use it
+            agents_with_numbers = db.query(Agent).filter(Agent.twilio_number_id != None).all()
+            logger.info(f"  Fallback check: Found {len(agents_with_numbers)} agents with Twilio numbers")
+            if len(agents_with_numbers) == 1:
+                agent = agents_with_numbers[0]
+                agent_id = agent.id
+                agent_name = agent.name
+                logger.info(f"✅ Fallback: Using the only agent with Twilio number: '{agent.name}' (ID: {agent.id})")
+                logger.info(f"📊 Fallback agent Google Sheets config: Webhook={agent.google_webhook_url}, SheetID={agent.google_spreadsheet_id}")
+            elif len(agents_with_numbers) > 1:
+                logger.warning(f"⚠️ Multiple agents with Twilio numbers found ({len(agents_with_numbers)}), cannot determine which one to use")
+            else:
+                logger.warning(f"⚠️ No agents with Twilio numbers found in database")
+        
+        # Save SMS to database
+        sms_record = SMS(
+            agent_id=agent_id,
+            from_number=sender,
+            to_number=your_number,
+            body=message_body,
+            direction="inbound",
+            message_sid=message_sid
+        )
+        db.add(sms_record)
+        db.commit()
+        db.refresh(sms_record)
+        
+        logger.info(f"✅ SMS saved to database with ID: {sms_record.id}, Agent: {agent_name}")
+        
+        # Save to Google Sheets if agent is configured
+        if agent:
+            try:
+                # Prepare data for Google Sheets
+                sms_data = {
+                    "Agent Name": agent_name or "Unknown",
+                    "Direction": "inbound",
+                    "From Number": sender,
+                    "To Number": your_number,
+                    "Message Body": message_body,
+                    "Date/Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "Message SID": message_sid
+                }
+                
+                logger.info(f"📊 Agent Google Sheets config - Webhook: {agent.google_webhook_url}, Spreadsheet ID: {agent.google_spreadsheet_id}, Sheet: {agent.google_sheet_name}")
+                
+                # Priority 1: Use Webhook URL if configured
+                if agent.google_webhook_url:
+                    logger.info(f"🚀 Forwarding SMS data to Google Webhook: {agent.google_webhook_url}")
+                    async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
+                        try:
+                            resp = await client.post(agent.google_webhook_url, json=sms_data, timeout=10.0)
+                            logger.info(f"✅ Webhook Response ({resp.status_code}): {resp.text}")
+                        except Exception as e:
+                            logger.error(f"❌ Webhook Error: {e}")
+                
+                # Priority 2: Use Direct API (requires service-account.json)
+                elif agent.google_spreadsheet_id:
+                    sheet_name = agent.google_sheet_name or "Sheet1"
+                    logger.info(f"📊 Appending SMS to Google Sheets via API: {agent.google_spreadsheet_id} / {sheet_name}")
+                    try:
+                        result = google_sheets_service.append_data_dict(agent.google_spreadsheet_id, sheet_name, sms_data)
+                        if not result.get("success"):
+                            logger.error(f"❌ Google Sheets Error: {result.get('error')}")
+                        else:
+                            logger.info(f"✅ SMS saved to Google Sheets successfully")
+                    except Exception as gs_error:
+                        logger.error(f"❌ Exception saving SMS to Google Sheets: {gs_error}", exc_info=True)
+                else:
+                    logger.warning(f"⚠️ Agent '{agent.name}' has no Google Sheets configuration (no webhook URL or spreadsheet ID)")
+            except Exception as e:
+                logger.error(f"❌ Error saving SMS to Google Sheets: {e}", exc_info=True)
+        else:
+            logger.warning(f"⚠️ No agent found, skipping Google Sheets save")
+        
+        # Return TwiML response to Twilio
+        from twilio.twiml.messaging_response import MessagingResponse
+        resp = MessagingResponse()
+        return Response(content=str(resp), media_type="text/xml", status_code=200)
+        
+    except Exception as e:
+        logger.error(f"❌ Error processing SMS: {e}")
+        # Still return valid TwiML
+        from twilio.twiml.messaging_response import MessagingResponse
+        resp = MessagingResponse()
+        return Response(content=str(resp), media_type="text/xml", status_code=500)
+
+@app.get("/api/sms")
+async def get_sms_messages(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Get SMS messages for the current user"""
+    try:
+        # Get all agent IDs for this user
+        user_agent_ids = [a.id for a in db.query(Agent.id).filter(Agent.user_id == user.id).all()]
+        
+        # Get all SMS messages - use LEFT JOIN to include SMS without agents
+        from sqlalchemy import or_
+        
+        # Build filter condition
+        if user_agent_ids:
+            filter_condition = or_(
+                SMS.agent_id.in_(user_agent_ids),
+                SMS.agent_id == None
+            )
+        else:
+            # If user has no agents, only show unassigned SMS
+            filter_condition = SMS.agent_id == None
+        
+        sms_list = db.query(SMS).outerjoin(Agent).filter(filter_condition).order_by(SMS.created_at.desc()).offset(skip).limit(limit).all()
+        
+        results = []
+        for sms in sms_list:
+            # Double-check that SMS belongs to user's agent or has no agent
+            if sms.agent_id is None or (sms.agent and sms.agent.user_id == user.id):
+                results.append({
+                    "id": sms.id,
+                    "agent_id": sms.agent_id,
+                    "agent_name": sms.agent.name if sms.agent else "Unassigned",
+                    "from_number": sms.from_number,
+                    "to_number": sms.to_number,
+                    "body": sms.body,
+                    "direction": sms.direction,
+                    "message_sid": sms.message_sid,
+                    "created_at": sms.created_at.isoformat() if sms.created_at else None
+                })
+        
+        # Count total
+        total = db.query(SMS).filter(filter_condition).count()
+        
+        logger.info(f"📱 Returning {len(results)} SMS messages for user {user.username} (total: {total}, user has {len(user_agent_ids)} agents)")
+        
+        return {
+            "results": results,
+            "total": total,
+            "skip": skip,
+            "limit": limit
+        }
+    except Exception as e:
+        logger.error(f"❌ Error fetching SMS messages: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Models
 class ScheduleRequest(BaseModel):
     system_prompt: str
@@ -1675,12 +2143,18 @@ async def get_call_history(
                     if resp.status_code == 200:
                         data = resp.json()
                         # Update DB
+                        was_ended = call.status == "ended"
                         call.status = "ended" if data.get("ended") else "active"
                         if data.get("billedDuration"):
                             dur = data.get("billedDuration")
                             if isinstance(dur, str):
                                 dur = float(dur.replace("s", ""))
                             call.duration = int(dur)
+                        
+                        # If call just ended, check for missed call
+                        if data.get("ended") and not was_ended:
+                            await check_and_handle_missed_call(call, data, db, logger)
+                        
                         return True
             except Exception as e:
                 print(f"Sync error for {call.ultravox_call_id}: {e}")
@@ -1821,8 +2295,13 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
                                 db_call = db.query(Call).filter(Call.ultravox_call_id == call_id).first()
                                 if db_call:
                                     db_call.satisfaction_score = score
+                                    was_ended = db_call.status == "ended"
                                     db_call.status = "ended"
                                     db.commit()
+                                    
+                                    # Check for missed call if call just ended
+                                    if data.get("ended") and not was_ended:
+                                        await check_and_handle_missed_call(db_call, data, db, logger)
                             except Exception as e:
                                 print(f"⚠️ Error calculating satisfaction score: {e}")
                 else:
