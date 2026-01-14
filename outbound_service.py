@@ -294,7 +294,7 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
         msg_body += "Thank you for your time!"
         
         # Hardcode recipient for now
-        recipient = "+923040610720"
+        recipient = call.from_number
         
         logger.info(f"📨 Sending call summary SMS to {recipient}")
         logger.info(f"📝 SMS Content: {msg_body}")
