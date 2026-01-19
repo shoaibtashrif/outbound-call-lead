@@ -412,21 +412,43 @@ async def startup_event():
     db = SessionLocal()
     try:
         tool_name = "googleSheetsAppend"
-        db_tool = db.query(Tool).filter(Tool.name == tool_name).first()
-        if not db_tool:
-            # Get server host for webhook
-            host = os.getenv("SERVER_HOST")
-            if host:
-                if not host.startswith("http"): host = f"https://{host}"
-                path_prefix = "/outbound"
-                if path_prefix not in host:
-                    tool_url = f"{host}{path_prefix}/api/tools/google-sheets/append"
-                else:
-                    tool_url = f"{host}/api/tools/google-sheets/append"
-                
-                print(f"🛠️ Registering Google Sheets Tool at {tool_url}")
-                
-                # Register in local DB
+        # Get server host for webhook
+        host = os.getenv("SERVER_HOST")
+        if host:
+            if not host.startswith("http"): host = f"https://{host}"
+            path_prefix = os.getenv("PATH_PREFIX", "")
+            if path_prefix and path_prefix not in host:
+                tool_url = f"{host}{path_prefix}/api/tools/google-sheets/append"
+            else:
+                tool_url = f"{host}/api/tools/google-sheets/append"
+            
+            print(f"🛠️ Registering/Updating Google Sheets Tool at {tool_url}")
+            
+            # Register in Ultravox (Always do this to ensure it exists and is up to date)
+            api_key = os.getenv("ULTRAVOX_API_KEY")
+            payload = {
+                "name": tool_name,
+                "definition": {
+                    "modelToolName": tool_name,
+                    "description": "Append data to a Google Sheet. Use this to save contact info or lead data.",
+                    "dynamicParameters": [
+                        {"name": "spreadsheet_id", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "string"}, "required": True},
+                        {"name": "sheet_name", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "string"}, "required": True},
+                        {"name": "data", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "object"}, "required": True}
+                    ],
+                    "http": {
+                        "baseUrlPattern": tool_url,
+                        "httpMethod": "POST"
+                    }
+                }
+            }
+            async with httpx.AsyncClient() as client:
+                resp = await client.post("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key}, json=payload)
+                print(f"🛠️ Ultravox Tool Registration Response: {resp.status_code} - {resp.text}")
+
+            # Update/Register in local DB
+            db_tool = db.query(Tool).filter(Tool.name == tool_name).first()
+            if not db_tool:
                 new_tool = Tool(
                     name=tool_name,
                     description="Append data (name, phone, email, etc.) to a Google Sheet. Requires spreadsheet_id and sheet_name.",
@@ -435,28 +457,9 @@ async def startup_event():
                     is_builtin=False
                 )
                 db.add(new_tool)
-                db.commit()
-                
-                # Register in Ultravox
-                api_key = os.getenv("ULTRAVOX_API_KEY")
-                payload = {
-                    "name": tool_name,
-                    "definition": {
-                        "description": "Append data to a Google Sheet. Use this to save contact info or lead data.",
-                        "dynamicParameters": [
-                            {"name": "spreadsheet_id", "location": "body", "schema": {"type": "string"}, "required": True},
-                            {"name": "sheet_name", "location": "body", "schema": {"type": "string"}, "required": True},
-                            {"name": "data", "location": "body", "schema": {"type": "object"}, "required": True}
-                        ],
-                        "http": {
-                            "baseUrlPattern": tool_url,
-                            "httpMethod": "POST"
-                        }
-                    }
-                }
-                async with httpx.AsyncClient() as client:
-                    resp = await client.post("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key}, json=payload)
-                    print(f"🛠️ Ultravox Tool Registration Response: {resp.status_code} - {resp.text}")
+            else:
+                db_tool.base_url = tool_url
+            db.commit()
     except Exception as e:
         print(f"Error registering tool: {e}")
     finally:
@@ -608,8 +611,8 @@ def build_selected_tools(agent, db: Session):
         if host:
             if not host.startswith("http"):
                 host = f"https://{host}"
-            path_prefix = "/outbound"
-            if path_prefix not in host:
+            path_prefix = os.getenv("PATH_PREFIX", "")
+            if path_prefix and path_prefix not in host:
                 base_url = f"{host}{path_prefix}"
             else:
                 base_url = host
@@ -621,13 +624,19 @@ def build_selected_tools(agent, db: Session):
     
     return selected_tools if selected_tools else None
 
-async def simple_transfer(call, destination_number):
+async def simple_transfer(call, destination_number, db: Session):
     """Simple transfer using Twilio Dial"""
     try:
-        twilio_client = Client(
-            os.getenv("TWILIO_ACCOUNT_SID"),
-            os.getenv("TWILIO_AUTH_TOKEN")
-        )
+        # Get Twilio credentials from agent's number if available
+        agent = call.agent
+        if agent and agent.twilio_number:
+            twilio_sid = agent.twilio_number.account_sid
+            twilio_token = agent.twilio_number.auth_token
+        else:
+            twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
+            twilio_token = os.getenv("TWILIO_AUTH_TOKEN")
+
+        twilio_client = Client(twilio_sid, twilio_token)
         
         # Update call to dial destination
         twilio_client.calls(call.twilio_sid).update(
@@ -640,10 +649,16 @@ async def simple_transfer(call, destination_number):
 async def whisper_transfer(call, destination_number, first_name, last_name, reason, db: Session):
     """Whisper transfer with conference"""
     try:
-        twilio_client = Client(
-            os.getenv("TWILIO_ACCOUNT_SID"),
-            os.getenv("TWILIO_AUTH_TOKEN")
-        )
+        # Get Twilio credentials from agent's number if available
+        agent = call.agent
+        if agent and agent.twilio_number:
+            twilio_sid = agent.twilio_number.account_sid
+            twilio_token = agent.twilio_number.auth_token
+        else:
+            twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
+            twilio_token = os.getenv("TWILIO_AUTH_TOKEN")
+
+        twilio_client = Client(twilio_sid, twilio_token)
         
         # Create conference name
         conference_name = f"transfer_{call.ultravox_call_id}"
@@ -663,8 +678,8 @@ async def whisper_transfer(call, destination_number, first_name, last_name, reas
         host = os.getenv("SERVER_HOST")
         if host:
             if not host.startswith("http"): host = f"https://{host}"
-            path_prefix = "/outbound"
-            if path_prefix not in host:
+            path_prefix = os.getenv("PATH_PREFIX", "")
+            if path_prefix and path_prefix not in host:
                 base_url = f"{host}{path_prefix}"
             else:
                 base_url = host
@@ -718,7 +733,7 @@ async def handle_transfer(
     if useWhisper:
         await whisper_transfer(call, destinationNumber, firstName or "", lastName or "", transferReason or "", db)
     else:
-        await simple_transfer(call, destinationNumber)
+        await simple_transfer(call, destinationNumber, db)
     
     return {"status": "success", "message": "Transfer initiated"}
 
@@ -738,8 +753,8 @@ async def whisper_message(request: Request):
     host = os.getenv("SERVER_HOST")
     if host:
         if not host.startswith("http"): host = f"https://{host}"
-        path_prefix = "/outbound"
-        if path_prefix not in host:
+        path_prefix = os.getenv("PATH_PREFIX", "")
+        if path_prefix and path_prefix not in host:
             base_url = f"{host}{path_prefix}"
         else:
             base_url = host
@@ -849,7 +864,7 @@ class CallRequest(BaseModel):
     twilio_account_sid: Optional[str] = None
     twilio_auth_token: Optional[str] = None
     server_host: Optional[str] = None
-    voice: Optional[str] = "a656a751-b754-4621-b571-e1298cb7e5bb"
+    voice: Optional[str] = "d5594111-ddca-442a-8796-f0fced479a03"
 
 class AgentCallRequest(BaseModel):
     agent_id: str
@@ -884,7 +899,7 @@ class ToolDefinition(BaseModel):
 class CreateAgentRequest(BaseModel):
     name: str
     system_prompt: str
-    voice: Optional[str] = "a656a751-b754-4621-b571-e1298cb7e5bb"
+    voice: Optional[str] = "d5594111-ddca-442a-8796-f0fced479a03"
     tool_ids: Optional[List[str]] = None  # List of tool IDs to assign
     language: Optional[str] = "en"
 
@@ -1117,8 +1132,8 @@ async def update_twilio_webhook(db: Session, twilio_number_id: int):
             host = f"https://{host}"
             
         # Ensure path prefix
-        path_prefix = "/outbound"
-        if path_prefix not in host:
+        path_prefix = os.getenv("PATH_PREFIX", "")
+        if path_prefix and path_prefix not in host:
             webhook_url = f"{host}{path_prefix}/api/inbound"
         else:
             webhook_url = f"{host}/api/inbound"
@@ -1845,8 +1860,8 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
         if not host.startswith("http"):
             host = f"https://{host}"
             
-        path_prefix = "/outbound"
-        if path_prefix not in host:
+        path_prefix = os.getenv("PATH_PREFIX", "")
+        if path_prefix and path_prefix not in host:
              twiml_url = f"{host}{path_prefix}/api/twiml?joinUrl={join_url}"
         else:
              twiml_url = f"{host}/api/twiml?joinUrl={join_url}"
@@ -1903,7 +1918,7 @@ async def make_call(call_request: CallRequest, db: Session = Depends(get_db), us
     payload = {
         "systemPrompt": call_request.system_prompt,
         "model": "fixie-ai/ultravox",
-        "voice": call_request.voice or "a656a751-b754-4621-b571-e1298cb7e5bb",
+        "voice": call_request.voice or os.getenv("ULTRAVOX_VOICE_ID"),
         "languageHint": "en",
         "temperature": 0.3,
         "medium": {"twilio": {}}, 
@@ -1953,7 +1968,7 @@ async def make_call(call_request: CallRequest, db: Session = Depends(get_db), us
         # Since Nginx routes /outbound/ -> localhost:8002/, the external URL is /outbound/api/twiml
         
         # Check if we are already including /outbound in the host (unlikely)
-        path_prefix = "/outbound"
+        path_prefix = os.getenv("PATH_PREFIX", "")
         if path_prefix not in host:
              twiml_url = f"{host}{path_prefix}/api/twiml?joinUrl={join_url}"
         else:
@@ -2373,7 +2388,7 @@ class ScheduleRequest(BaseModel):
     window_start: Optional[str] = None # ISO string
     window_end: Optional[str] = None # ISO string
     tools: Optional[List[Dict[str, Any]]] = None
-    voice: Optional[str] = "a656a751-b754-4621-b571-e1298cb7e5bb"
+    voice: Optional[str] = "d5594111-ddca-442a-8796-f0fced479a03"
     twilio_account_sid: Optional[str] = None
     twilio_auth_token: Optional[str] = None
     from_number: Optional[str] = None
