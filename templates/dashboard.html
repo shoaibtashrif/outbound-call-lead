@@ -413,6 +413,7 @@
                 transform: translateX(100%);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(0);
                 opacity: 1;
@@ -635,7 +636,8 @@
     <!-- Main Content -->
     <div class="main-content">
         <!-- Notification Container (Top Right) -->
-        <div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;"></div>
+        <div id="notificationContainer"
+            style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;"></div>
 
         <!-- DASHBOARD SECTION -->
         <div id="section-dashboard">
@@ -885,7 +887,8 @@
                     </tbody>
                 </table>
             </div>
-            <div id="smsPaginationControls" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+            <div id="smsPaginationControls"
+                style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
             </div>
         </div>
 
@@ -1000,6 +1003,14 @@
             <div class="form-group" style="opacity: 0.6;">
                 <label>Google Sheet Name</label>
                 <input type="text" id="newAgentSheetName" value="Sheet1">
+            </div>
+            <div class="form-group" id="createAgentTransferField" style="display: none;">
+                <label>Transfer Number <span style="color: var(--primary);">*</span></label>
+                <input type="text" id="newAgentTransferNumber" placeholder="+15551234567">
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">
+                    Enter phone number for call transfer (E.164 format, e.g., +15551234567). Required when using
+                    coldTransfer or warmTransfer tools.
+                </div>
             </div>
             <button class="btn btn-primary" style="width: 100%" onclick="createAgent()">Create Agent</button>
         </div>
@@ -1204,6 +1215,14 @@
             <div class="form-group" style="opacity: 0.6;">
                 <label>Google Sheet Name</label>
                 <input type="text" id="editAgentSheetName">
+            </div>
+            <div class="form-group" id="editAgentTransferField" style="display: none;">
+                <label>Transfer Number <span style="color: var(--primary);">*</span></label>
+                <input type="text" id="editAgentTransferNumber" placeholder="+15551234567">
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">
+                    Enter phone number for call transfer (E.164 format, e.g., +15551234567). Required when using
+                    coldTransfer or warmTransfer tools.
+                </div>
             </div>
             <button class="btn btn-primary" style="width: 100%" onclick="updateAgent()">Save Changes</button>
         </div>
@@ -1476,6 +1495,7 @@ function doPost(e) {
             const selectedTools = Array.from(document.querySelectorAll('.agent-tool-checkbox:checked')).map(cb => cb.value);
 
             const numberId = document.getElementById('newAgentNumber').value;
+            const transferNumber = document.getElementById('newAgentTransferNumber').value;
 
             try {
                 const resp = await fetch('api/agents', {
@@ -1489,7 +1509,8 @@ function doPost(e) {
                         twilio_number_id: numberId ? parseInt(numberId) : null,
                         google_spreadsheet_id: document.getElementById('newAgentSpreadsheetId').value,
                         google_sheet_name: document.getElementById('newAgentSheetName').value,
-                        google_webhook_url: document.getElementById('newAgentWebhookUrl').value
+                        google_webhook_url: document.getElementById('newAgentWebhookUrl').value,
+                        transfer_number: transferNumber || null
                     })
                 });
                 if (resp.ok) {
@@ -1538,6 +1559,7 @@ function doPost(e) {
                     document.getElementById('editAgentSpreadsheetId').value = agent.google_spreadsheet_id || '';
                     document.getElementById('editAgentSheetName').value = agent.google_sheet_name || 'Sheet1';
                     document.getElementById('editAgentWebhookUrl').value = agent.google_webhook_url || '';
+                    document.getElementById('editAgentTransferNumber').value = agent.transfer_number || '';
 
                     // Check the tools the agent already has
                     if (agent.selectedTools) {
@@ -1545,6 +1567,8 @@ function doPost(e) {
                         document.querySelectorAll('#editAgentToolsList .agent-tool-checkbox').forEach(cb => {
                             if (toolNames.includes(cb.value)) cb.checked = true;
                         });
+                        // Show/hide transfer field based on selected tools
+                        handleToolSelection();
                     }
                 }
             } catch (e) { console.error("Error loading agent details:", e); }
@@ -1556,6 +1580,7 @@ function doPost(e) {
             const prompt = document.getElementById('editAgentPrompt').value;
             const voice = document.getElementById('editAgentVoice').value;
             const numberId = document.getElementById('editAgentNumber').value;
+            const transferNumber = document.getElementById('editAgentTransferNumber').value;
 
             // Get selected tools
             const selectedTools = Array.from(document.querySelectorAll('#editAgentToolsList .agent-tool-checkbox:checked')).map(cb => cb.value);
@@ -1572,7 +1597,8 @@ function doPost(e) {
                         twilio_number_id: numberId ? parseInt(numberId) : null,
                         google_spreadsheet_id: document.getElementById('editAgentSpreadsheetId').value,
                         google_sheet_name: document.getElementById('editAgentSheetName').value,
-                        google_webhook_url: document.getElementById('editAgentWebhookUrl').value
+                        google_webhook_url: document.getElementById('editAgentWebhookUrl').value,
+                        transfer_number: transferNumber || null
                     })
                 });
                 if (resp.ok) {
@@ -1630,13 +1656,68 @@ function doPost(e) {
                 const resp = await fetch('api/tools', { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await resp.json();
                 const tools = data.results || [];
-                list.innerHTML = tools.map(t => `
-                    <label style="display: flex; gap: 10px; padding: 5px; cursor: pointer;">
-                        <input type="checkbox" value="${t.name}" class="agent-tool-checkbox">
-                        <span>${t.name}</span>
-                    </label>
-                `).join('');
+
+                // Separate built-in and custom tools
+                const builtinTools = tools.filter(t => t.is_builtin);
+                const customTools = tools.filter(t => !t.is_builtin);
+
+                let html = '';
+
+                // Built-in Tools Section
+                if (builtinTools.length > 0) {
+                    html += `
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 8px; text-transform: uppercase;">
+                                <i class="fas fa-bolt" style="margin-right: 5px;"></i> Built-in Tools
+                            </div>
+                            ${builtinTools.map(t => `
+                                <label style="display: flex; gap: 10px; padding: 5px; cursor: pointer; align-items: center;">
+                                    <input type="checkbox" value="${t.name}" class="agent-tool-checkbox" onchange="handleToolSelection()">
+                                    <span>${t.name}</span>
+                                    <span style="font-size: 10px; background: rgba(139, 92, 246, 0.2); color: var(--primary); padding: 2px 6px; border-radius: 4px; margin-left: auto;">BUILT-IN</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                // Custom Tools Section
+                if (customTools.length > 0) {
+                    html += `
+                        <div>
+                            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase;">
+                                <i class="fas fa-wrench" style="margin-right: 5px;"></i> Custom Tools
+                            </div>
+                            ${customTools.map(t => `
+                                <label style="display: flex; gap: 10px; padding: 5px; cursor: pointer; align-items: center;">
+                                    <input type="checkbox" value="${t.name}" class="agent-tool-checkbox" onchange="handleToolSelection()">
+                                    <span>${t.name}</span>
+                                    <span style="font-size: 10px; background: rgba(100, 116, 139, 0.2); color: var(--text-muted); padding: 2px 6px; border-radius: 4px; margin-left: auto;">CUSTOM</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                list.innerHTML = html || '<div style="color: var(--text-muted); padding: 10px;">No tools available</div>';
             } catch (e) { list.innerHTML = 'Error loading tools'; }
+        }
+
+        // Handle tool selection to show/hide transfer number field
+        function handleToolSelection() {
+            const selectedTools = Array.from(document.querySelectorAll('.agent-tool-checkbox:checked')).map(cb => cb.value);
+            const hasTransferTool = selectedTools.some(tool => tool === 'coldTransfer' || tool === 'warmTransfer');
+
+            // Show/hide transfer number fields in both create and edit modals
+            const createTransferField = document.getElementById('createAgentTransferField');
+            const editTransferField = document.getElementById('editAgentTransferField');
+
+            if (createTransferField) {
+                createTransferField.style.display = hasTransferTool ? 'block' : 'none';
+            }
+            if (editTransferField) {
+                editTransferField.style.display = hasTransferTool ? 'block' : 'none';
+            }
         }
 
         // New Call
@@ -2341,7 +2422,7 @@ function doPost(e) {
                         console.log(`Initialized lastSMSId to ${lastSMSId}`);
                         return;
                     }
-                    
+
                     if (latestSMS.id > lastSMSId) {
                         // New SMS received
                         console.log(`New SMS detected! ID: ${latestSMS.id}, Previous: ${lastSMSId}`);
