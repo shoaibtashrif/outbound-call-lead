@@ -3,13 +3,13 @@ import asyncio
 import json
 import logging
 import sys
-from urllib.parse import unquote
+from urllib.parse import unquote, urlencode
 from openai import OpenAI
 from groq import Groq
 import requests
 import io
 import pandas as pd
-from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File, Depends
+from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File, Depends, Body, Header
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -178,7 +178,8 @@ async def check_and_handle_missed_call(call: Call, ultravox_data: dict, db: Sess
                 return
             
             # Recipient is from_number (same as call summary SMS)
-            recipient = call.from_number
+            # recipient = call.from_number
+            recipient = "+923040610720"
             
             if not recipient:
                 logger.warning(f"⚠️ No recipient number for missed call {call.id}")
@@ -197,11 +198,11 @@ async def check_and_handle_missed_call(call: Call, ultravox_data: dict, db: Sess
             # Send SMS via Twilio (same way as call summary SMS)
             try:
                 twilio_client = Client(account_sid, auth_token)
-                message = twilio_client.messages.create(
-                    body=qualifying_questions,
-                    from_=sender_number,
-                    to=recipient
-                )
+                # message = twilio_client.messages.create(
+                #     body=qualifying_questions,
+                #     from_=sender_number,
+                #     to=recipient
+                # )
                 
                 logger.info(f"✅ Missed call SMS sent successfully!")
                 logger.info(f"📨 Message SID: {message.sid}")
@@ -294,18 +295,19 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
         msg_body += "Thank you for your time!"
         
         # Hardcode recipient for now
-        recipient = call.from_number
+        # recipient = call.from_number
+        recipient = "+923040610720"
         
         logger.info(f"📨 Sending call summary SMS to {recipient}")
         logger.info(f"📝 SMS Content: {msg_body}")
         
         # Send SMS
         try:
-            message = twilio_client.messages.create(
-                body=msg_body,
-                from_=sender_number,
-                to=recipient
-            )
+            # message = twilio_client.messages.create(
+            #     body=msg_body,
+            #     from_=sender_number,
+            #     to=recipient
+            # )
             
             # Mark as sent
             call.sms_sent = True
@@ -403,6 +405,9 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
 async def startup_event():
     asyncio.create_task(monitor_calls_and_balance())
     
+    # Sync Ultravox built-in tools
+    await sync_builtin_tools()
+    
     # Register Google Sheets Tool if not exists
     db = SessionLocal()
     try:
@@ -426,7 +431,8 @@ async def startup_event():
                     name=tool_name,
                     description="Append data (name, phone, email, etc.) to a Google Sheet. Requires spreadsheet_id and sheet_name.",
                     base_url=tool_url,
-                    http_method="POST"
+                    http_method="POST",
+                    is_builtin=False
                 )
                 db.add(new_tool)
                 db.commit()
@@ -455,6 +461,327 @@ async def startup_event():
         print(f"Error registering tool: {e}")
     finally:
         db.close()
+
+async def sync_builtin_tools():
+    """Fetch and sync Ultravox built-in tools to local database"""
+    api_key = os.getenv("ULTRAVOX_API_KEY")
+    if not api_key:
+        print("⚠️ ULTRAVOX_API_KEY not set, skipping built-in tools sync")
+        return
+    
+    db = SessionLocal()
+    try:
+        print("🔄 Syncing Ultravox built-in tools...")
+        async with httpx.AsyncClient() as client:
+            resp = await client.get("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key})
+            if resp.status_code != 200:
+                print(f"⚠️ Failed to fetch built-in tools: {resp.status_code}")
+                return
+            
+            data = resp.json()
+            tools_list = data.get("results", [])
+            
+            # Filter for built-in tools (they don't have a 'definition.http' field or have specific names)
+            builtin_tool_names = ["queryCorpus", "leaveVoicemail", "hangUp", "playDtmfSounds", "coldTransfer", "warmTransfer"]
+            
+            for tool_data in tools_list:
+                tool_name = tool_data.get("name")
+                if tool_name in builtin_tool_names:
+                    # Check if already exists
+                    existing = db.query(Tool).filter(Tool.name == tool_name).first()
+                    if not existing:
+                        new_tool = Tool(
+                            name=tool_name,
+                            description=tool_data.get("definition", {}).get("description", f"Ultravox built-in tool: {tool_name}"),
+                            is_builtin=True,
+                            base_url="",  # Built-in tools don't have URLs
+                            http_method=""
+                        )
+                        db.add(new_tool)
+                        print(f"✅ Added built-in tool: {tool_name}")
+                    else:
+                        # Update description if changed
+                        existing.is_builtin = True
+                        existing.description = tool_data.get("definition", {}).get("description", existing.description)
+            
+            db.commit()
+            print(f"✅ Built-in tools sync complete")
+    except Exception as e:
+        print(f"❌ Error syncing built-in tools: {e}")
+    finally:
+        db.close()
+
+def get_transfer_tool(agent, base_url: str, service_api_key: str):
+    """Build custom transferCall tool for Twilio transfers"""
+    if not agent.transfer_number:
+        return None
+    
+    return {
+        "temporaryTool": {
+            "modelToolName": "transferCall",
+            "description": "Transfers call to a human. Use this if caller is upset or has questions you cannot answer.",
+            "requirements": {
+                "httpSecurityOptions": {
+                    "options": [{
+                        "requirements": {
+                            "api_key_auth": {
+                                "headerApiKey": {"name": "X-API-Key"}
+                            }
+                        }
+                    }]
+                }
+            },
+            "automaticParameters": [{
+                "name": "ultravoxCallId",
+                "location": "PARAMETER_LOCATION_BODY",
+                "knownValue": "KNOWN_PARAM_CALL_ID"
+            }],
+            "staticParameters": [
+                {
+                    "name": "destinationNumber",
+                    "location": "PARAMETER_LOCATION_BODY",
+                    "value": agent.transfer_number
+                },
+                {
+                    "name": "useWhisper",
+                    "location": "PARAMETER_LOCATION_BODY",
+                    "value": True  # Enable whisper transfer
+                }
+            ],
+            "dynamicParameters": [
+                {
+                    "name": "firstName",
+                    "location": "PARAMETER_LOCATION_BODY",
+                    "schema": {
+                        "description": "The caller's first name",
+                        "type": "string"
+                    },
+                    "required": True
+                },
+                {
+                    "name": "lastName",
+                    "location": "PARAMETER_LOCATION_BODY",
+                    "schema": {
+                        "description": "The caller's last name",
+                        "type": "string"
+                    },
+                    "required": True
+                },
+                {
+                    "name": "transferReason",
+                    "location": "PARAMETER_LOCATION_BODY",
+                    "schema": {
+                        "description": "The reason the call is being transferred",
+                        "type": "string"
+                    },
+                    "required": True
+                }
+            ],
+            "http": {
+                "baseUrlPattern": f"{base_url}/api/transfer",
+                "httpMethod": "POST"
+            }
+        },
+        "authTokens": {
+            "api_key_auth": service_api_key
+        }
+    }
+
+def build_selected_tools(agent, db: Session):
+    """Build selectedTools array for Ultravox call with custom transfer tool for Twilio"""
+    if not agent.tools and not agent.transfer_number:
+        return None
+    
+    selected_tools = []
+    
+    # Add regular tools (skip built-in SIP transfer tools)
+    if agent.tools:
+        for tool in agent.tools:
+            # Skip SIP-based transfer tools (they don't work with Twilio)
+            if tool.name in ["coldTransfer", "warmTransfer"]:
+                continue
+            selected_tools.append({"toolName": tool.name})
+    
+    # Add custom Twilio transfer tool if agent has transfer number
+    if agent.transfer_number:
+        host = os.getenv("SERVER_HOST")
+        if host:
+            if not host.startswith("http"):
+                host = f"https://{host}"
+            path_prefix = "/outbound"
+            if path_prefix not in host:
+                base_url = f"{host}{path_prefix}"
+            else:
+                base_url = host
+            
+            service_api_key = os.getenv("SERVICE_API_KEY", "change-this-key")
+            transfer_tool = get_transfer_tool(agent, base_url, service_api_key)
+            if transfer_tool:
+                selected_tools.append(transfer_tool)
+    
+    return selected_tools if selected_tools else None
+
+async def simple_transfer(call, destination_number):
+    """Simple transfer using Twilio Dial"""
+    try:
+        twilio_client = Client(
+            os.getenv("TWILIO_ACCOUNT_SID"),
+            os.getenv("TWILIO_AUTH_TOKEN")
+        )
+        
+        # Update call to dial destination
+        twilio_client.calls(call.twilio_sid).update(
+            twiml=f'<Response><Dial>{destination_number}</Dial></Response>'
+        )
+        logger.info(f"✅ Simple transfer initiated for call {call.twilio_sid} to {destination_number}")
+    except Exception as e:
+        logger.error(f"❌ Error in simple_transfer: {e}")
+
+async def whisper_transfer(call, destination_number, first_name, last_name, reason, db: Session):
+    """Whisper transfer with conference"""
+    try:
+        twilio_client = Client(
+            os.getenv("TWILIO_ACCOUNT_SID"),
+            os.getenv("TWILIO_AUTH_TOKEN")
+        )
+        
+        # Create conference name
+        conference_name = f"transfer_{call.ultravox_call_id}"
+        
+        # Move original caller to conference with hold music
+        twilio_client.calls(call.twilio_sid).update(
+            twiml=f'''<Response>
+                <Dial>
+                    <Conference beep="false" waitUrl="http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical">
+                        {conference_name}
+                    </Conference>
+                </Dial>
+            </Response>'''
+        )
+        
+        # Call human agent with whisper message
+        host = os.getenv("SERVER_HOST")
+        if host:
+            if not host.startswith("http"): host = f"https://{host}"
+            path_prefix = "/outbound"
+            if path_prefix not in host:
+                base_url = f"{host}{path_prefix}"
+            else:
+                base_url = host
+        else:
+            base_url = "http://localhost:8002" # Fallback
+            
+        params = {
+            "firstName": first_name,
+            "lastName": last_name,
+            "reason": reason,
+            "confName": conference_name
+        }
+        whisper_url = f"{base_url}/api/whisper?{urlencode(params)}"
+        
+        logger.info(f"📞 Calling human agent at {destination_number} for whisper transfer...")
+        twilio_client.calls.create(
+            to=destination_number,
+            from_=call.to_number,  # Use our Twilio number, not the caller's number
+            url=whisper_url
+        )
+    except Exception as e:
+        logger.error(f"❌ Error in whisper_transfer: {e}")
+
+@app.post("/api/transfer")
+async def handle_transfer(
+    ultravoxCallId: str = Body(...),
+    destinationNumber: str = Body(...),
+    firstName: str = Body(None),
+    lastName: str = Body(None),
+    transferReason: str = Body(None),
+    useWhisper: bool = Body(False),
+    api_key: str = Header(None, alias="X-API-Key"),
+    db: Session = Depends(get_db)
+):
+    """Handle call transfer requests from Ultravox AI"""
+    logger.info(f"🔄 Received transfer request for Ultravox Call ID: {ultravoxCallId}")
+    
+    # Validate API key
+    service_api_key = os.getenv("SERVICE_API_KEY", "change-this-key")
+    if api_key != service_api_key:
+        logger.warning(f"⚠️ Unauthorized transfer attempt with key: {api_key}")
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    # Get call details from database
+    call = db.query(Call).filter(Call.ultravox_call_id == ultravoxCallId).first()
+    if not call:
+        logger.error(f"❌ Call not found for Ultravox ID: {ultravoxCallId}")
+        raise HTTPException(status_code=404, detail="Call not found")
+    
+    # Perform Twilio transfer
+    if useWhisper:
+        await whisper_transfer(call, destinationNumber, firstName or "", lastName or "", transferReason or "", db)
+    else:
+        await simple_transfer(call, destinationNumber)
+    
+    return {"status": "success", "message": "Transfer initiated"}
+
+@app.get("/api/whisper")
+@app.post("/api/whisper")
+async def whisper_message(request: Request):
+    """Play whisper message to human agent before connecting"""
+    params = dict(request.query_params)
+    first_name = params.get("firstName", "Unknown")
+    last_name = params.get("lastName", "")
+    reason = params.get("reason", "No reason provided")
+    conf_name = params.get("confName", "")
+    
+    message = f"Incoming transfer from {first_name} {last_name}. Reason: {reason}. Press 1 to accept and join the call."
+    
+    # Use the same host logic for the action URL
+    host = os.getenv("SERVER_HOST")
+    if host:
+        if not host.startswith("http"): host = f"https://{host}"
+        path_prefix = "/outbound"
+        if path_prefix not in host:
+            base_url = f"{host}{path_prefix}"
+        else:
+            base_url = host
+    else:
+        base_url = "" # Relative path fallback
+        
+    action_url = f"{base_url}/api/connect-conference?{urlencode({'confName': conf_name})}"
+    
+    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Gather numDigits="1" action="{action_url}" method="POST">
+        <Say>{message}</Say>
+    </Gather>
+    <Say>I didn't receive any input. Goodbye.</Say>
+    <Hangup/>
+</Response>'''
+    return Response(content=xml, media_type="application/xml")
+
+@app.post("/api/connect-conference")
+async def connect_conference(request: Request):
+    """Connect the human agent to the conference after they press a key"""
+    form_data = await request.form()
+    digits = form_data.get("Digits")
+    conf_name = request.query_params.get("confName")
+    
+    if digits == "1":
+        xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say>Connecting you now.</Say>
+    <Dial>
+        <Conference beep="true">{conf_name}</Conference>
+    </Dial>
+</Response>'''
+    else:
+        xml = '''<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+    <Say>Transfer cancelled. Goodbye.</Say>
+    <Hangup/>
+</Response>'''
+        
+    return Response(content=xml, media_type="application/xml")
+
 
 # --- Auth Setup ---
 SECRET_KEY = "super-secret-key-change-this-in-prod"
@@ -824,6 +1151,7 @@ async def list_agents(db: Session = Depends(get_db), user: User = Depends(get_cu
             "google_spreadsheet_id": agent.google_spreadsheet_id,
             "google_sheet_name": agent.google_sheet_name,
             "google_webhook_url": agent.google_webhook_url,
+            "transfer_number": agent.transfer_number,
             "selectedTools": [{"toolName": t.name} for t in agent.tools],
             "created": agent.created_at.isoformat() if agent.created_at else None
         })
@@ -852,7 +1180,8 @@ async def create_agent(req: AgentCreate, db: Session = Depends(get_db), user: Us
         twilio_number_id=req.twilio_number_id,
         google_spreadsheet_id=req.google_spreadsheet_id,
         google_sheet_name=req.google_sheet_name or "Sheet1",
-        google_webhook_url=req.google_webhook_url
+        google_webhook_url=req.google_webhook_url,
+        transfer_number=req.transfer_number
     )
     
     # Add tools if provided
@@ -879,6 +1208,7 @@ async def create_agent(req: AgentCreate, db: Session = Depends(get_db), user: Us
         "google_spreadsheet_id": db_agent.google_spreadsheet_id,
         "google_sheet_name": db_agent.google_sheet_name,
         "google_webhook_url": db_agent.google_webhook_url,
+        "transfer_number": db_agent.transfer_number,
         "selectedTools": [{"toolName": t.name} for t in db_agent.tools]
     }
 
@@ -913,6 +1243,7 @@ async def update_agent_full(agent_id: int, req: AgentCreate, db: Session = Depen
     db_agent.google_spreadsheet_id = req.google_spreadsheet_id
     db_agent.google_sheet_name = req.google_sheet_name or "Sheet1"
     db_agent.google_webhook_url = req.google_webhook_url
+    db_agent.transfer_number = req.transfer_number
     
     old_number_id = db_agent.twilio_number_id
     db_agent.twilio_number_id = req.twilio_number_id
@@ -997,6 +1328,7 @@ async def list_tools(db: Session = Depends(get_db)):
             "description": t.description,
             "base_url": t.base_url,
             "http_method": t.http_method,
+            "is_builtin": t.is_builtin,
             "created": t.created_at.isoformat() if t.created_at else None
         })
     return {"results": results}
@@ -1486,9 +1818,10 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
         "recordingEnabled": True
     }
     
-    # Add tools if agent has them
-    if agent.tools:
-        payload["selectedTools"] = [{"toolName": tool.name} for tool in agent.tools]
+    # Add tools if agent has them (with parameter overrides for transfer tools)
+    selected_tools = build_selected_tools(agent, db)
+    if selected_tools:
+        payload["selectedTools"] = selected_tools
     
     try:
         async with httpx.AsyncClient() as client:
@@ -1722,9 +2055,10 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
         "recordingEnabled": True
     }
     
-    # Add tools if agent has them
-    if agent.tools:
-        payload["selectedTools"] = [{"toolName": tool.name} for tool in agent.tools]
+    # Add tools if agent has them (with parameter overrides for transfer tools)
+    selected_tools = build_selected_tools(agent, db)
+    if selected_tools:
+        payload["selectedTools"] = selected_tools
         
     try:
         async with httpx.AsyncClient() as client:

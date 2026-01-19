@@ -81,6 +81,7 @@ class Agent(Base):
     google_spreadsheet_id = Column(String, nullable=True)
     google_sheet_name = Column(String, default="Sheet1")
     google_webhook_url = Column(String, nullable=True)
+    transfer_number = Column(String, nullable=True)  # Phone number for call transfer (coldTransfer/warmTransfer)
     
     user = relationship("User", back_populates="agents")
     tools = relationship("Tool", secondary=agent_tools, back_populates="agents")
@@ -95,6 +96,8 @@ class Tool(Base):
     description = Column(Text)
     base_url = Column(String)
     http_method = Column(String, default="POST")
+    is_builtin = Column(Boolean, default=False)  # Flag for Ultravox built-in tools
+    parameter_overrides = Column(Text, nullable=True)  # JSON string for default parameter overrides
     created_at = Column(DateTime, default=datetime.utcnow)
     
     agents = relationship("Agent", secondary=agent_tools, back_populates="tools")
@@ -165,6 +168,7 @@ class AgentCreate(BaseModel):
     google_spreadsheet_id: Optional[str] = None
     google_sheet_name: Optional[str] = "Sheet1"
     google_webhook_url: Optional[str] = None
+    transfer_number: Optional[str] = None
 
 class AgentResponse(BaseModel):
     id: int
@@ -180,6 +184,7 @@ class AgentResponse(BaseModel):
     google_spreadsheet_id: Optional[str]
     google_sheet_name: Optional[str]
     google_webhook_url: Optional[str]
+    transfer_number: Optional[str]
     
     class Config:
         from_attributes = True
