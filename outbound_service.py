@@ -522,7 +522,7 @@ class CallRequest(BaseModel):
     twilio_account_sid: Optional[str] = None
     twilio_auth_token: Optional[str] = None
     server_host: Optional[str] = None
-    voice: Optional[str] = "a656a751-b754-4621-b571-e1298cb7e5bb"
+    voice: Optional[str] = Field(default_factory=lambda: os.getenv("ULTRAVOX_VOICE_ID", "a656a751-b754-4621-b571-e1298cb7e5bb"))
 
 class AgentCallRequest(BaseModel):
     agent_id: str
@@ -557,7 +557,7 @@ class ToolDefinition(BaseModel):
 class CreateAgentRequest(BaseModel):
     name: str
     system_prompt: str
-    voice: Optional[str] = "a656a751-b754-4621-b571-e1298cb7e5bb"
+    voice: Optional[str] = Field(default_factory=lambda: os.getenv("ULTRAVOX_VOICE_ID", "a656a751-b754-4621-b571-e1298cb7e5bb"))
     tool_ids: Optional[List[str]] = None  # List of tool IDs to assign
     language: Optional[str] = "en"
 
@@ -790,11 +790,11 @@ async def update_twilio_webhook(db: Session, twilio_number_id: int):
             host = f"https://{host}"
             
         # Ensure path prefix
-        path_prefix = "/outbound"
-        if path_prefix not in host:
-            webhook_url = f"{host}{path_prefix}/api/inbound"
-        else:
-            webhook_url = f"{host}/api/inbound"
+        # path_prefix = "/outbound"
+        # if path_prefix not in host:
+        #     webhook_url = f"{host}{path_prefix}/api/inbound"
+        # else:
+        webhook_url = f"{host}/api/inbound"
             
         # Find the number on Twilio and update it
         incoming_numbers = client.incoming_phone_numbers.list(phone_number=num.phone_number)
@@ -1570,7 +1570,7 @@ async def make_call(call_request: CallRequest, db: Session = Depends(get_db), us
     payload = {
         "systemPrompt": call_request.system_prompt,
         "model": "fixie-ai/ultravox",
-        "voice": call_request.voice or "a656a751-b754-4621-b571-e1298cb7e5bb",
+        "voice": call_request.voice or os.getenv("ULTRAVOX_VOICE_ID", "a656a751-b754-4621-b571-e1298cb7e5bb"),
         "languageHint": "en",
         "temperature": 0.3,
         "medium": {"twilio": {}}, 
@@ -1707,6 +1707,8 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
 
     # Create Ultravox Call
     ultravox_api_key = os.getenv("ULTRAVOX_API_KEY")
+    voice_id_env = os.getenv("ULTRAVOX_VOICE_ID")
+    print(f"DEBUG: Env Voice ID: {voice_id_env}, Agent Voice: {agent.voice}")
     if not ultravox_api_key:
          return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Configuration error.</Say></Response>', media_type="application/xml")
 
@@ -1714,7 +1716,7 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
     payload = {
         "systemPrompt": agent.system_prompt,
         "model": agent.model,
-        "voice": agent.voice,
+        "voice": voice_id_env or agent.voice,
         "languageHint": agent.language,
         "temperature": 0.3,
         "medium": {"twilio": {}},
@@ -2039,7 +2041,7 @@ class ScheduleRequest(BaseModel):
     window_start: Optional[str] = None # ISO string
     window_end: Optional[str] = None # ISO string
     tools: Optional[List[Dict[str, Any]]] = None
-    voice: Optional[str] = "a656a751-b754-4621-b571-e1298cb7e5bb"
+    voice: Optional[str] = Field(default_factory=lambda: os.getenv("ULTRAVOX_VOICE_ID", "a656a751-b754-4621-b571-e1298cb7e5bb"))
     twilio_account_sid: Optional[str] = None
     twilio_auth_token: Optional[str] = None
     from_number: Optional[str] = None
