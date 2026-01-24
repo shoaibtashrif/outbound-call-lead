@@ -198,11 +198,11 @@ async def check_and_handle_missed_call(call: Call, ultravox_data: dict, db: Sess
             # Send SMS via Twilio (same way as call summary SMS)
             try:
                 twilio_client = Client(account_sid, auth_token)
-                # message = twilio_client.messages.create(
-                #     body=qualifying_questions,
-                #     from_=sender_number,
-                #     to=recipient
-                # )
+                message = twilio_client.messages.create(
+                    body=qualifying_questions,
+                    from_=sender_number,
+                    to=recipient
+                )
                 
                 logger.info(f"✅ Missed call SMS sent successfully!")
                 logger.info(f"📨 Message SID: {message.sid}")
@@ -424,7 +424,7 @@ async def startup_event():
             
             print(f"🛠️ Registering/Updating Google Sheets Tool at {tool_url}")
             
-            # Register in Ultravox (Always do this to ensure it exists and is up to date)
+            # Register/Update in Ultravox
             api_key = os.getenv("ULTRAVOX_API_KEY")
             payload = {
                 "name": tool_name,
@@ -443,8 +443,15 @@ async def startup_event():
                 }
             }
             async with httpx.AsyncClient() as client:
-                resp = await client.post("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key}, json=payload)
-                print(f"🛠️ Ultravox Tool Registration Response: {resp.status_code} - {resp.text}")
+                # Try to update first
+                resp = await client.patch(f"https://api.ultravox.ai/api/tools/{tool_name}", headers={"X-API-Key": api_key}, json=payload)
+                if resp.status_code == 404:
+                    # If not found, create it
+                    resp = await client.post("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key}, json=payload)
+                
+                print(f"🛠️ Ultravox Tool Registration/Update Response: {resp.status_code}")
+                if resp.status_code not in [200, 201]:
+                    print(f"⚠️ Tool Registration Error: {resp.text}")
 
             # Update/Register in local DB
             db_tool = db.query(Tool).filter(Tool.name == tool_name).first()
@@ -603,7 +610,20 @@ def build_selected_tools(agent, db: Session):
             # Skip SIP-based transfer tools (they don't work with Twilio)
             if tool.name in ["coldTransfer", "warmTransfer"]:
                 continue
-            selected_tools.append({"toolName": tool.name})
+            
+            tool_entry = {"toolName": tool.name}
+            
+            # Add parameter overrides for googleSheetsAppend
+            if tool.name == "googleSheetsAppend":
+                overrides = {}
+                if agent.google_spreadsheet_id:
+                    overrides["spreadsheet_id"] = agent.google_spreadsheet_id
+                if agent.google_sheet_name:
+                    overrides["sheet_name"] = agent.google_sheet_name
+                if overrides:
+                    tool_entry["parameterOverrides"] = overrides
+            
+            selected_tools.append(tool_entry)
     
     # Add custom Twilio transfer tool if agent has transfer number
     if agent.transfer_number:
@@ -1159,7 +1179,7 @@ async def list_agents(db: Session = Depends(get_db), user: User = Depends(get_cu
             "name": agent.name,
             "systemPrompt": agent.system_prompt,
             "model": agent.model,
-            "voice": agent.voice,
+            "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "d5594111-ddca-442a-8796-f0fced479a03"),
             "languageHint": agent.language,
             "twilio_number_id": agent.twilio_number_id,
             "twilio_phone_number": agent.twilio_number.phone_number if agent.twilio_number else None,
@@ -1825,7 +1845,7 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
     payload = {
         "systemPrompt": agent.system_prompt,
         "model": agent.model,
-        "voice": agent.voice,
+        "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "d5594111-ddca-442a-8796-f0fced479a03"),
         "languageHint": agent.language,
         "temperature": 0.3,
         "medium": {"twilio": {}},
@@ -2062,7 +2082,7 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
     payload = {
         "systemPrompt": agent.system_prompt,
         "model": agent.model,
-        "voice": agent.voice,
+        "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "d5594111-ddca-442a-8796-f0fced479a03"),
         "languageHint": agent.language,
         "temperature": 0.3,
         "medium": {"twilio": {}},
