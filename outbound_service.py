@@ -197,12 +197,12 @@ async def check_and_handle_missed_call(call: Call, ultravox_data: dict, db: Sess
             
             # Send SMS via Twilio (same way as call summary SMS)
             try:
-                twilio_client = Client(account_sid, auth_token)
-                message = twilio_client.messages.create(
-                    body=qualifying_questions,
-                    from_=sender_number,
-                    to=recipient
-                )
+                # twilio_client = Client(account_sid, auth_token)
+                # message = twilio_client.messages.create(
+                #     body=qualifying_questions,
+                #     from_=sender_number,
+                #     to=recipient
+                # )
                 
                 logger.info(f"✅ Missed call SMS sent successfully!")
                 logger.info(f"📨 Message SID: {message.sid}")
@@ -884,7 +884,7 @@ class CallRequest(BaseModel):
     twilio_account_sid: Optional[str] = None
     twilio_auth_token: Optional[str] = None
     server_host: Optional[str] = None
-    voice: Optional[str] = "d5594111-ddca-442a-8796-f0fced479a03"
+    voice: Optional[str] = Field(default_factory=lambda: os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"))
 
 class AgentCallRequest(BaseModel):
     agent_id: str
@@ -919,7 +919,7 @@ class ToolDefinition(BaseModel):
 class CreateAgentRequest(BaseModel):
     name: str
     system_prompt: str
-    voice: Optional[str] = "d5594111-ddca-442a-8796-f0fced479a03"
+    voice: Optional[str] = Field(default_factory=lambda: os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"))
     tool_ids: Optional[List[str]] = None  # List of tool IDs to assign
     language: Optional[str] = "en"
 
@@ -1179,7 +1179,7 @@ async def list_agents(db: Session = Depends(get_db), user: User = Depends(get_cu
             "name": agent.name,
             "systemPrompt": agent.system_prompt,
             "model": agent.model,
-            "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "d5594111-ddca-442a-8796-f0fced479a03"),
+            "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
             "languageHint": agent.language,
             "twilio_number_id": agent.twilio_number_id,
             "twilio_phone_number": agent.twilio_number.phone_number if agent.twilio_number else None,
@@ -1318,6 +1318,22 @@ async def update_agent(agent_id: str, req: Dict[str, Any], db: Session = Depends
         if resp.status_code not in [200, 204]:
              return {"success": True, "local_update": True}
         return resp.json() if resp.status_code == 200 else {"success": True}
+
+@app.get("/api/voices")
+async def list_voices():
+    api_key = os.getenv("ULTRAVOX_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="ULTRAVOX_API_KEY not set")
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get("https://api.ultravox.ai/api/voices", headers={"X-API-Key": api_key})
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=e.response.status_code, detail=f"Ultravox Error: {e.response.text}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to fetch voices: {str(e)}")
 
 @app.delete("/api/agents/{agent_id}")
 async def delete_agent(agent_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
@@ -1845,7 +1861,7 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
     payload = {
         "systemPrompt": agent.system_prompt,
         "model": agent.model,
-        "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "d5594111-ddca-442a-8796-f0fced479a03"),
+        "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
         "languageHint": agent.language,
         "temperature": 0.3,
         "medium": {"twilio": {}},
@@ -1938,7 +1954,7 @@ async def make_call(call_request: CallRequest, db: Session = Depends(get_db), us
     payload = {
         "systemPrompt": call_request.system_prompt,
         "model": "fixie-ai/ultravox",
-        "voice": call_request.voice or os.getenv("ULTRAVOX_VOICE_ID"),
+        "voice": call_request.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
         "languageHint": "en",
         "temperature": 0.3,
         "medium": {"twilio": {}}, 
@@ -2082,7 +2098,7 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
     payload = {
         "systemPrompt": agent.system_prompt,
         "model": agent.model,
-        "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "d5594111-ddca-442a-8796-f0fced479a03"),
+        "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
         "languageHint": agent.language,
         "temperature": 0.3,
         "medium": {"twilio": {}},
@@ -2408,7 +2424,7 @@ class ScheduleRequest(BaseModel):
     window_start: Optional[str] = None # ISO string
     window_end: Optional[str] = None # ISO string
     tools: Optional[List[Dict[str, Any]]] = None
-    voice: Optional[str] = "d5594111-ddca-442a-8796-f0fced479a03"
+    voice: Optional[str] = Field(default_factory=lambda: os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"))
     twilio_account_sid: Optional[str] = None
     twilio_auth_token: Optional[str] = None
     from_number: Optional[str] = None

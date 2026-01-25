@@ -703,12 +703,15 @@
                         </div>
                         <div class="form-group">
                             <label>Voice</label>
-                            <select id="voice_instant">
-                                <option value="d5594111-ddca-442a-8796-f0fced479a03">Noushin (Female)</option>
-                                <option value="724d6ca3-1763-4700-9851-f748d5314f8d">Jessica (Female)</option>
-                                <option value="0489849f-945f-40b0-bcc4-ee5720a42291">Kira (Female)</option>
-                                <option value="b9a779ca-5174-453b-994d-36f1ca9f83b4">Terrence (Male)</option>
-                            </select>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <select id="voice_instant" style="flex: 1;">
+                                    <option value="f0ed7e07-0e85-4853-a8f5-e09c627cf944">Loading voices...</option>
+                                </select>
+                                <button type="button" class="btn btn-secondary" onclick="previewVoice('voice_instant')"
+                                    style="padding: 8px 12px;">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -971,9 +974,15 @@
             </div>
             <div class="form-group">
                 <label>Voice</label>
-                <select id="newAgentVoice">
-                    <option value="d5594111-ddca-442a-8796-f0fced479a03">Noushin (Default)</option>
-                </select>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="newAgentVoice" style="flex: 1;">
+                        <option value="f0ed7e07-0e85-4853-a8f5-e09c627cf944">Loading voices...</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary" onclick="previewVoice('newAgentVoice')"
+                        style="padding: 8px 12px;">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
             </div>
             <div class="form-group">
                 <label>Tools</label>
@@ -1184,9 +1193,15 @@
             </div>
             <div class="form-group">
                 <label>Voice</label>
-                <select id="editAgentVoice">
-                    <option value="d5594111-ddca-442a-8796-f0fced479a03">Mark (Default)</option>
-                </select>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <select id="editAgentVoice" style="flex: 1;">
+                        <option value="f0ed7e07-0e85-4853-a8f5-e09c627cf944">Loading voices...</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary" onclick="previewVoice('editAgentVoice')"
+                        style="padding: 8px 12px;">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
             </div>
             <div class="form-group">
                 <label>Tools</label>
@@ -1264,6 +1279,42 @@ function doPost(e) {
     <script>
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/';
+
+        let availableVoices = [];
+        const previewAudio = new Audio();
+
+        async function loadVoices() {
+            try {
+                const resp = await fetch('api/voices', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+                availableVoices = data.results || [];
+
+                const dropdowns = ['voice_instant', 'newAgentVoice', 'editAgentVoice'];
+                dropdowns.forEach(id => {
+                    const select = document.getElementById(id);
+                    if (select) {
+                        select.innerHTML = availableVoices.map(v =>
+                            `<option value="${v.voiceId}">${v.name} (${v.languageLabel})</option>`
+                        ).join('');
+                    }
+                });
+            } catch (e) { console.error("Error loading voices:", e); }
+        }
+
+        function previewVoice(selectId) {
+            const select = document.getElementById(selectId);
+            const voiceId = select.value;
+            const voice = availableVoices.find(v => v.voiceId === voiceId);
+            if (voice && voice.previewUrl) {
+                previewAudio.src = voice.previewUrl;
+                previewAudio.play();
+            } else {
+                alert("Preview not available for this voice.");
+            }
+        }
+
+        // Initialize
+        loadVoices();
 
         // Navigation
         function showSection(id) {

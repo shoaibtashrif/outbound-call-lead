@@ -72,7 +72,7 @@ class Agent(Base):
     ultravox_agent_id = Column(String, unique=True, index=True)
     name = Column(String, nullable=False)
     system_prompt = Column(Text)
-    voice = Column(String, default="d5594111-ddca-442a-8796-f0fced479a03")
+    voice = Column(String, default="f0ed7e07-0e85-4853-a8f5-e09c627cf944")
     language = Column(String, default="en")
     model = Column(String, default="fixie-ai/ultravox")
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -161,7 +161,7 @@ class TwilioNumberResponse(BaseModel):
 class AgentCreate(BaseModel):
     name: str
     system_prompt: str
-    voice: Optional[str] = "d5594111-ddca-442a-8796-f0fced479a03"
+    voice: Optional[str] = "f0ed7e07-0e85-4853-a8f5-e09c627cf944"
     language: Optional[str] = "en"
     tool_names: Optional[List[str]] = None
     twilio_number_id: Optional[int] = None
