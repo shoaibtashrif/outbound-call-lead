@@ -82,6 +82,8 @@ class Agent(Base):
     google_sheet_name = Column(String, default="Sheet1")
     google_webhook_url = Column(String, nullable=True)
     transfer_number = Column(String, nullable=True)  # Phone number for call transfer (coldTransfer/warmTransfer)
+    temperature = Column(Float, default=0.3)
+    speed = Column(Float, default=1.0)
     
     user = relationship("User", back_populates="agents")
     tools = relationship("Tool", secondary=agent_tools, back_populates="agents")
@@ -169,6 +171,8 @@ class AgentCreate(BaseModel):
     google_sheet_name: Optional[str] = "Sheet1"
     google_webhook_url: Optional[str] = None
     transfer_number: Optional[str] = None
+    temperature: Optional[float] = 0.3
+    speed: Optional[float] = 1.0
 
 class AgentResponse(BaseModel):
     id: int
@@ -185,6 +189,8 @@ class AgentResponse(BaseModel):
     google_sheet_name: Optional[str]
     google_webhook_url: Optional[str]
     transfer_number: Optional[str]
+    temperature: float
+    speed: float
     
     class Config:
         from_attributes = True

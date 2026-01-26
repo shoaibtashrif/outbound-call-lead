@@ -702,15 +702,47 @@
                             <textarea id="sys_prompt_instant" rows="4">You are a helpful assistant.</textarea>
                         </div>
                         <div class="form-group">
-                            <label>Voice</label>
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <select id="voice_instant" style="flex: 1;">
-                                    <option value="f0ed7e07-0e85-4853-a8f5-e09c627cf944">Loading voices...</option>
-                                </select>
-                                <button type="button" class="btn btn-secondary" onclick="previewVoice('voice_instant')"
-                                    style="padding: 8px 12px;">
-                                    <i class="fas fa-play"></i>
-                                </button>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                <label>Voice</label>
+                                <label
+                                    style="font-size: 12px; display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text-muted);">
+                                    <input type="checkbox" id="manual_voice_instant_toggle"
+                                        onchange="toggleManualVoice('instant')"> Manual ID
+                                </label>
+                            </div>
+                            <div id="voice_select_container_instant">
+                                <input type="text" id="search_voice_instant" placeholder="Search voice..."
+                                    style="margin-bottom: 5px; width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;"
+                                    onkeyup="filterVoices('search_voice_instant', 'voice_instant')">
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <select id="voice_instant" style="flex: 1;">
+                                        <option value="f0ed7e07-0e85-4853-a8f5-e09c627cf944">Loading voices...</option>
+                                    </select>
+                                    <button type="button" class="btn btn-secondary"
+                                        onclick="previewVoice('voice_instant')" style="padding: 8px 12px;">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="voice_manual_container_instant" class="hidden">
+                                <input type="text" id="voice_id_manual_instant"
+                                    placeholder="Paste Ultravox Voice ID here..."
+                                    style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div class="form-group">
+                                <label>Temperature: <span id="temp_val_instant">0.3</span></label>
+                                <input type="range" id="temp_instant" min="0" max="1" step="0.1" value="0.3"
+                                    oninput="document.getElementById('temp_val_instant').textContent = this.value"
+                                    style="width: 100%;">
+                            </div>
+                            <div class="form-group">
+                                <label>Speed: <span id="speed_val_instant">1.0</span></label>
+                                <input type="range" id="speed_instant" min="0.5" max="2.0" step="0.1" value="1.0"
+                                    oninput="document.getElementById('speed_val_instant').textContent = this.value"
+                                    style="width: 100%;">
                             </div>
                         </div>
                     </div>
@@ -973,15 +1005,45 @@
                 <textarea id="newAgentPrompt" rows="5" placeholder="You are a helpful assistant..."></textarea>
             </div>
             <div class="form-group">
-                <label>Voice</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <select id="newAgentVoice" style="flex: 1;">
-                        <option value="f0ed7e07-0e85-4853-a8f5-e09c627cf944">Loading voices...</option>
-                    </select>
-                    <button type="button" class="btn btn-secondary" onclick="previewVoice('newAgentVoice')"
-                        style="padding: 8px 12px;">
-                        <i class="fas fa-play"></i>
-                    </button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label>Voice</label>
+                    <label
+                        style="font-size: 12px; display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text-muted);">
+                        <input type="checkbox" id="manual_newAgentVoice_toggle"
+                            onchange="toggleManualVoice('newAgent')"> Manual ID
+                    </label>
+                </div>
+                <div id="voice_select_container_newAgent">
+                    <input type="text" id="search_newAgentVoice" placeholder="Search voice..."
+                        style="margin-bottom: 5px; width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;"
+                        onkeyup="filterVoices('search_newAgentVoice', 'newAgentVoice')">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="newAgentVoice" style="flex: 1;">
+                            <option value="f0ed7e07-0e85-4853-a8f5-e09c627cf944">Loading voices...</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary" onclick="previewVoice('newAgentVoice')"
+                            style="padding: 8px 12px;">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="voice_manual_container_newAgent" class="hidden">
+                    <input type="text" id="voice_id_manual_newAgent" placeholder="Paste Ultravox Voice ID here..."
+                        style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Temperature: <span id="temp_val_newAgent">0.3</span></label>
+                    <input type="range" id="temp_newAgent" min="0" max="1" step="0.1" value="0.3"
+                        oninput="document.getElementById('temp_val_newAgent').textContent = this.value"
+                        style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label>Speed: <span id="speed_val_newAgent">1.0</span></label>
+                    <input type="range" id="speed_newAgent" min="0.5" max="2.0" step="0.1" value="1.0"
+                        oninput="document.getElementById('speed_val_newAgent').textContent = this.value"
+                        style="width: 100%;">
                 </div>
             </div>
             <div class="form-group">
@@ -1192,15 +1254,45 @@
                 <textarea id="editAgentPrompt" rows="5"></textarea>
             </div>
             <div class="form-group">
-                <label>Voice</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <select id="editAgentVoice" style="flex: 1;">
-                        <option value="f0ed7e07-0e85-4853-a8f5-e09c627cf944">Loading voices...</option>
-                    </select>
-                    <button type="button" class="btn btn-secondary" onclick="previewVoice('editAgentVoice')"
-                        style="padding: 8px 12px;">
-                        <i class="fas fa-play"></i>
-                    </button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label>Voice</label>
+                    <label
+                        style="font-size: 12px; display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text-muted);">
+                        <input type="checkbox" id="manual_editAgentVoice_toggle"
+                            onchange="toggleManualVoice('editAgent')"> Manual ID
+                    </label>
+                </div>
+                <div id="voice_select_container_editAgent">
+                    <input type="text" id="search_editAgentVoice" placeholder="Search voice..."
+                        style="margin-bottom: 5px; width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;"
+                        onkeyup="filterVoices('search_editAgentVoice', 'editAgentVoice')">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="editAgentVoice" style="flex: 1;">
+                            <option value="f0ed7e07-0e85-4853-a8f5-e09c627cf944">Loading voices...</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary" onclick="previewVoice('editAgentVoice')"
+                            style="padding: 8px 12px;">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="voice_manual_container_editAgent" class="hidden">
+                    <input type="text" id="voice_id_manual_editAgent" placeholder="Paste Ultravox Voice ID here..."
+                        style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white;">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Temperature: <span id="temp_val_editAgent">0.3</span></label>
+                    <input type="range" id="temp_editAgent" min="0" max="1" step="0.1" value="0.3"
+                        oninput="document.getElementById('temp_val_editAgent').textContent = this.value"
+                        style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label>Speed: <span id="speed_val_editAgent">1.0</span></label>
+                    <input type="range" id="speed_editAgent" min="0.5" max="2.0" step="0.1" value="1.0"
+                        oninput="document.getElementById('speed_val_editAgent').textContent = this.value"
+                        style="width: 100%;">
                 </div>
             </div>
             <div class="form-group">
@@ -1288,26 +1380,86 @@ function doPost(e) {
                 const resp = await fetch('api/voices', { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await resp.json();
                 availableVoices = data.results || [];
+                console.log("Loaded voices:", availableVoices);
 
                 const dropdowns = ['voice_instant', 'newAgentVoice', 'editAgentVoice'];
                 dropdowns.forEach(id => {
-                    const select = document.getElementById(id);
-                    if (select) {
-                        select.innerHTML = availableVoices.map(v =>
-                            `<option value="${v.voiceId}">${v.name} (${v.languageLabel})</option>`
-                        ).join('');
-                    }
+                    populateVoiceDropdown(id, availableVoices);
                 });
             } catch (e) { console.error("Error loading voices:", e); }
+        }
+
+        function populateVoiceDropdown(selectId, voices) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const currentValue = select.value;
+            select.innerHTML = voices.map(v =>
+                `<option value="${v.voiceId}">${v.name} (${v.languageLabel})</option>`
+            ).join('');
+            if (currentValue && voices.some(v => v.voiceId === currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function filterVoices(inputId, selectId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toLowerCase();
+            const filteredVoices = availableVoices.filter(v =>
+                v.name.toLowerCase().includes(filter) ||
+                (v.languageLabel && v.languageLabel.toLowerCase().includes(filter))
+            );
+            populateVoiceDropdown(selectId, filteredVoices);
+        }
+
+        function toggleManualVoice(prefix) {
+            const isManual = document.getElementById(`manual_voice_${prefix}_toggle`)?.checked ||
+                document.getElementById(`manual_${prefix}Voice_toggle`)?.checked;
+
+            const selectContainer = document.getElementById(`voice_select_container_${prefix}`);
+            const manualContainer = document.getElementById(`voice_manual_container_${prefix}`);
+
+            if (isManual) {
+                selectContainer.classList.add('hidden');
+                manualContainer.classList.remove('hidden');
+            } else {
+                selectContainer.classList.remove('hidden');
+                manualContainer.classList.add('hidden');
+            }
+        }
+
+        function getSelectedVoice(prefix) {
+            const isManual = document.getElementById(`manual_voice_${prefix}_toggle`)?.checked ||
+                document.getElementById(`manual_${prefix}Voice_toggle`)?.checked;
+            if (isManual) {
+                return document.getElementById(`voice_id_manual_${prefix}`).value;
+            } else {
+                const selectId = prefix.includes('Agent') ? `${prefix}Voice` : `voice_${prefix}`;
+                return document.getElementById(selectId).value;
+            }
         }
 
         function previewVoice(selectId) {
             const select = document.getElementById(selectId);
             const voiceId = select.value;
+            console.log("Previewing voice:", voiceId);
             const voice = availableVoices.find(v => v.voiceId === voiceId);
+            console.log("Found voice object:", voice);
             if (voice && voice.previewUrl) {
+                console.log("Playing audio from:", voice.previewUrl);
                 previewAudio.src = voice.previewUrl;
-                previewAudio.play();
+                // Ensure audio is loaded before playing
+                previewAudio.load();
+                const playPromise = previewAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(err => {
+                        console.error("Audio play error:", err);
+                        if (err.name === 'NotAllowedError') {
+                            alert("Playback blocked. Please interact with the page first.");
+                        } else {
+                            alert("Failed to play voice preview: " + err.message);
+                        }
+                    });
+                }
             } else {
                 alert("Preview not available for this voice.");
             }
@@ -1540,7 +1692,9 @@ function doPost(e) {
         async function createAgent() {
             const name = document.getElementById('newAgentName').value;
             const prompt = document.getElementById('newAgentPrompt').value;
-            const voice = document.getElementById('newAgentVoice').value;
+            const voice = getSelectedVoice('newAgent');
+            const temperature = parseFloat(document.getElementById('temp_newAgent').value);
+            const speed = parseFloat(document.getElementById('speed_newAgent').value);
 
             // Get selected tools
             const selectedTools = Array.from(document.querySelectorAll('.agent-tool-checkbox:checked')).map(cb => cb.value);
@@ -1556,6 +1710,8 @@ function doPost(e) {
                         name,
                         system_prompt: prompt,
                         voice,
+                        temperature,
+                        speed,
                         tool_names: selectedTools,
                         twilio_number_id: numberId ? parseInt(numberId) : null,
                         google_spreadsheet_id: document.getElementById('newAgentSpreadsheetId').value,
@@ -1605,7 +1761,25 @@ function doPost(e) {
                 if (agent) {
                     document.getElementById('editAgentName').value = agent.name;
                     document.getElementById('editAgentPrompt').value = agent.systemPrompt;
-                    document.getElementById('editAgentVoice').value = agent.voice;
+
+                    // Handle voice selection (check if it's a manual ID or in the list)
+                    const voiceId = agent.voice;
+                    const voiceExists = availableVoices.some(v => v.voiceId === voiceId);
+                    if (voiceExists) {
+                        document.getElementById('manual_editAgentVoice_toggle').checked = false;
+                        toggleManualVoice('editAgent');
+                        document.getElementById('editAgentVoice').value = voiceId;
+                    } else {
+                        document.getElementById('manual_editAgentVoice_toggle').checked = true;
+                        toggleManualVoice('editAgent');
+                        document.getElementById('voice_id_manual_editAgent').value = voiceId;
+                    }
+
+                    document.getElementById('temp_editAgent').value = agent.temperature || 0.3;
+                    document.getElementById('temp_val_editAgent').textContent = agent.temperature || 0.3;
+                    document.getElementById('speed_editAgent').value = agent.speed || 1.0;
+                    document.getElementById('speed_val_editAgent').textContent = agent.speed || 1.0;
+
                     document.getElementById('editAgentNumber').value = agent.twilio_number_id || '';
                     document.getElementById('editAgentSpreadsheetId').value = agent.google_spreadsheet_id || '';
                     document.getElementById('editAgentSheetName').value = agent.google_sheet_name || 'Sheet1';
@@ -1629,7 +1803,9 @@ function doPost(e) {
             const id = document.getElementById('editAgentId').value;
             const name = document.getElementById('editAgentName').value;
             const prompt = document.getElementById('editAgentPrompt').value;
-            const voice = document.getElementById('editAgentVoice').value;
+            const voice = getSelectedVoice('editAgent');
+            const temperature = parseFloat(document.getElementById('temp_editAgent').value);
+            const speed = parseFloat(document.getElementById('speed_editAgent').value);
             const numberId = document.getElementById('editAgentNumber').value;
             const transferNumber = document.getElementById('editAgentTransferNumber').value;
 
@@ -1644,6 +1820,8 @@ function doPost(e) {
                         name,
                         system_prompt: prompt,
                         voice,
+                        temperature,
+                        speed,
                         tool_names: selectedTools,
                         twilio_number_id: numberId ? parseInt(numberId) : null,
                         google_spreadsheet_id: document.getElementById('editAgentSpreadsheetId').value,
@@ -1816,7 +1994,9 @@ function doPost(e) {
 
             if (callMode === 'prompt') {
                 body.system_prompt = document.getElementById('sys_prompt_instant').value;
-                body.voice = document.getElementById('voice_instant').value;
+                body.voice = getSelectedVoice('instant');
+                body.temperature = parseFloat(document.getElementById('temp_instant').value);
+                body.speed = parseFloat(document.getElementById('speed_instant').value);
             } else {
                 url = 'api/call-agent';
                 body.agent_id = document.getElementById('agent_select').value;

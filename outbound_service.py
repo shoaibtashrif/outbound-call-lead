@@ -885,6 +885,8 @@ class CallRequest(BaseModel):
     twilio_auth_token: Optional[str] = None
     server_host: Optional[str] = None
     voice: Optional[str] = Field(default_factory=lambda: os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"))
+    temperature: Optional[float] = 0.3
+    speed: Optional[float] = 1.0
 
 class AgentCallRequest(BaseModel):
     agent_id: str
@@ -1187,6 +1189,8 @@ async def list_agents(db: Session = Depends(get_db), user: User = Depends(get_cu
             "google_sheet_name": agent.google_sheet_name,
             "google_webhook_url": agent.google_webhook_url,
             "transfer_number": agent.transfer_number,
+            "temperature": agent.temperature,
+            "speed": agent.speed,
             "selectedTools": [{"toolName": t.name} for t in agent.tools],
             "created": agent.created_at.isoformat() if agent.created_at else None
         })
@@ -1216,7 +1220,9 @@ async def create_agent(req: AgentCreate, db: Session = Depends(get_db), user: Us
         google_spreadsheet_id=req.google_spreadsheet_id,
         google_sheet_name=req.google_sheet_name or "Sheet1",
         google_webhook_url=req.google_webhook_url,
-        transfer_number=req.transfer_number
+        transfer_number=req.transfer_number,
+        temperature=req.temperature,
+        speed=req.speed
     )
     
     # Add tools if provided
@@ -1244,6 +1250,8 @@ async def create_agent(req: AgentCreate, db: Session = Depends(get_db), user: Us
         "google_sheet_name": db_agent.google_sheet_name,
         "google_webhook_url": db_agent.google_webhook_url,
         "transfer_number": db_agent.transfer_number,
+        "temperature": db_agent.temperature,
+        "speed": db_agent.speed,
         "selectedTools": [{"toolName": t.name} for t in db_agent.tools]
     }
 
@@ -1279,6 +1287,8 @@ async def update_agent_full(agent_id: int, req: AgentCreate, db: Session = Depen
     db_agent.google_sheet_name = req.google_sheet_name or "Sheet1"
     db_agent.google_webhook_url = req.google_webhook_url
     db_agent.transfer_number = req.transfer_number
+    db_agent.temperature = req.temperature
+    db_agent.speed = req.speed
     
     old_number_id = db_agent.twilio_number_id
     db_agent.twilio_number_id = req.twilio_number_id
@@ -1308,6 +1318,8 @@ async def update_agent(agent_id: str, req: Dict[str, Any], db: Session = Depends
             if "voice" in req: db_agent.voice = req["voice"]
             if "language" in req: db_agent.language = req["language"]
             if "twilio_number_id" in req: db_agent.twilio_number_id = req["twilio_number_id"]
+            if "temperature" in req: db_agent.temperature = req["temperature"]
+            if "speed" in req: db_agent.speed = req["speed"]
             db.commit()
     except:
         pass
@@ -1325,11 +1337,19 @@ async def list_voices():
     if not api_key:
         raise HTTPException(status_code=500, detail="ULTRAVOX_API_KEY not set")
     
+    all_voices = []
+    url = "https://api.ultravox.ai/api/voices"
+    
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.get("https://api.ultravox.ai/api/voices", headers={"X-API-Key": api_key})
-            resp.raise_for_status()
-            return resp.json()
+            while url:
+                resp = await client.get(url, headers={"X-API-Key": api_key})
+                resp.raise_for_status()
+                data = resp.json()
+                all_voices.extend(data.get("results", []))
+                url = data.get("next") # Follow pagination if it exists
+            
+            return {"results": all_voices}
         except httpx.HTTPStatusError as e:
             raise HTTPException(status_code=e.response.status_code, detail=f"Ultravox Error: {e.response.text}")
         except Exception as e:
@@ -1863,7 +1883,7 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
         "model": agent.model,
         "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
         "languageHint": agent.language,
-        "temperature": 0.3,
+        "temperature": agent.temperature or 0.3,
         "medium": {"twilio": {}},
         "firstSpeakerSettings": {"user": {}},
         "recordingEnabled": True
@@ -1956,7 +1976,7 @@ async def make_call(call_request: CallRequest, db: Session = Depends(get_db), us
         "model": "fixie-ai/ultravox",
         "voice": call_request.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
         "languageHint": "en",
-        "temperature": 0.3,
+        "temperature": call_request.temperature or 0.3,
         "medium": {"twilio": {}}, 
         "firstSpeakerSettings": {"user": {}}, # User speaks first (answers phone)
         "recordingEnabled": True
