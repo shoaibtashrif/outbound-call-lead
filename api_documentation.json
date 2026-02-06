@@ -1,0 +1,891 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Outbound Call Service API",
+        "description": "API for managing AI agents, making outbound calls, and handling chatbots.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "https://agent.cabex.co.uk/outbound",
+            "description": "Production server"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "OAuth2PasswordBearer": {
+                "type": "oauth2",
+                "flows": {
+                    "password": {
+                        "tokenUrl": "token",
+                        "scopes": {}
+                    }
+                }
+            },
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        },
+        "schemas": {
+            "UserCreate": {
+                "type": "object",
+                "required": [
+                    "username",
+                    "password"
+                ],
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "nullable": true
+                    },
+                    "full_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "business_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "subscription_type": {
+                        "type": "string",
+                        "default": "starter"
+                    }
+                }
+            },
+            "UserResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "full_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "business_type": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "subscription_type": {
+                        "type": "string"
+                    },
+                    "balance": {
+                        "type": "number"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "AgentCreate": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "system_prompt"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "system_prompt": {
+                        "type": "string"
+                    },
+                    "voice": {
+                        "type": "string",
+                        "default": "a656a751-b754-4621-b571-e1298cb7e5bb"
+                    },
+                    "language": {
+                        "type": "string",
+                        "default": "en"
+                    },
+                    "tool_names": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "twilio_number_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "google_spreadsheet_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "google_sheet_name": {
+                        "type": "string",
+                        "default": "Sheet1"
+                    },
+                    "google_webhook_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "transfer_number": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                }
+            },
+            "AgentCallRequest": {
+                "type": "object",
+                "required": [
+                    "agent_id",
+                    "to_number"
+                ],
+                "properties": {
+                    "agent_id": {
+                        "type": "string"
+                    },
+                    "to_number": {
+                        "type": "string"
+                    },
+                    "from_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "twilio_account_sid": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "twilio_auth_token": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "server_host": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                }
+            },
+            "CallRequest": {
+                "type": "object",
+                "required": [
+                    "system_prompt",
+                    "to_number"
+                ],
+                "properties": {
+                    "system_prompt": {
+                        "type": "string"
+                    },
+                    "to_number": {
+                        "type": "string"
+                    },
+                    "tools": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        },
+                        "nullable": true
+                    },
+                    "from_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "twilio_account_sid": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "twilio_auth_token": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "server_host": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "voice": {
+                        "type": "string",
+                        "default": "a656a751-b754-4621-b571-e1298cb7e5bb"
+                    }
+                }
+            },
+            "ChatbotCreate": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "prompt",
+                    "model"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "knowledge_base_type": {
+                        "type": "string",
+                        "enum": [
+                            "text",
+                            "website"
+                        ],
+                        "nullable": true
+                    },
+                    "knowledge_base_content": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "model": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/token": {
+            "post": {
+                "summary": "Login for Access Token",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "username",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Login",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "access_token": {
+                                            "type": "string"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "bearer"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/register": {
+            "post": {
+                "summary": "Register a new user",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/check-username": {
+            "get": {
+                "summary": "Check if username is available",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Username availability status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "available": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/profile": {
+            "get": {
+                "summary": "Get current user profile",
+                "tags": [
+                    "User"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Update user profile",
+                "tags": [
+                    "User"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "business_type": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated profile",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/agents": {
+            "get": {
+                "summary": "List all agents for current user",
+                "tags": [
+                    "Agents"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of agents",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "results": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create a new agent",
+                "tags": [
+                    "Agents"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AgentCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Agent created successfully"
+                    }
+                }
+            }
+        },
+        "/api/call-agent": {
+            "post": {
+                "summary": "Initiate an outbound call using an agent",
+                "tags": [
+                    "Calls"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AgentCallRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Call initiated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "call_id": {
+                                            "type": "string"
+                                        },
+                                        "twilio_sid": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/call": {
+            "post": {
+                "summary": "Initiate an instant outbound call with custom prompt",
+                "tags": [
+                    "Calls"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CallRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Call initiated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "call_id": {
+                                            "type": "string"
+                                        },
+                                        "twilio_sid": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/history": {
+            "get": {
+                "summary": "Get call history for current user",
+                "tags": [
+                    "Calls"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Call history list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "results": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/calls/{call_id}": {
+            "get": {
+                "summary": "Get detailed information about a specific call",
+                "tags": [
+                    "Calls"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "call_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Call details including transcript and recording URL"
+                    }
+                }
+            }
+        },
+        "/api/calls/{call_id}/end": {
+            "post": {
+                "summary": "End an active call manually",
+                "tags": [
+                    "Calls"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "call_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Call ended"
+                    }
+                }
+            }
+        },
+        "/api/schedule": {
+            "post": {
+                "summary": "Schedule batch outbound calls",
+                "tags": [
+                    "Calls"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "system_prompt",
+                                    "to_numbers"
+                                ],
+                                "properties": {
+                                    "system_prompt": {
+                                        "type": "string"
+                                    },
+                                    "to_numbers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "window_start": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "window_end": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    },
+                                    "voice": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Batch scheduled"
+                    }
+                }
+            }
+        },
+        "/api/sms": {
+            "get": {
+                "summary": "Get SMS message history",
+                "tags": [
+                    "SMS"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "skip",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 0
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SMS messages list"
+                    }
+                }
+            }
+        },
+        "/api/chatbots": {
+            "get": {
+                "summary": "List all chatbots",
+                "tags": [
+                    "Chatbots"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of chatbots",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create a new chatbot",
+                "tags": [
+                    "Chatbots"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChatbotCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Chatbot created"
+                    }
+                }
+            }
+        },
+        "/api/chatbots/{chatbot_id}/chat": {
+            "post": {
+                "summary": "Chat with a specific chatbot",
+                "tags": [
+                    "Chatbots"
+                ],
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "chatbot_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "message"
+                                ],
+                                "properties": {
+                                    "message": {
+                                        "type": "string"
+                                    },
+                                    "history": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Chat response"
+                    }
+                }
+            }
+        }
+    }
+}

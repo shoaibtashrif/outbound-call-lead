@@ -20,7 +20,15 @@ from typing import Optional, List, Dict, Any
 import httpx
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, Session
-from models import Base, Agent, Tool, AgentCreate, AgentResponse, User, UserCreate, UserLogin, UserResponse, Call, TwilioNumber, TwilioNumberCreate, TwilioNumberResponse, SMS, SMSResponse
+from models import Base, Agent, Tool, AgentCreate, AgentResponse, User, UserCreate, UserLogin, UserResponse, Call, TwilioNumber, TwilioNumberCreate, TwilioNumberResponse, SMS, SMSResponse, Chatbot, ChatHistory, ChatbotCreate, ChatbotUpdate, ChatbotResponse, ChatHistoryResponse
+import re
+from bs4 import BeautifulSoup
+try:
+    from langchain_openai import OpenAIEmbeddings
+    from langchain_community.vectorstores import FAISS
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+except ImportError:
+    pass
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -1583,7 +1591,6 @@ async def end_call(call_id: str, db: Session = Depends(get_db)):
                 except Exception as e:
                     print(f"POST endpoint error: {e}")
             
-            # If we reached here and it's a Twilio call, maybe it's already ended or we can't find it
             if db_call:
                 db_call.status = "ended"
                 db.commit()
@@ -1595,11 +1602,180 @@ async def end_call(call_id: str, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error ending call: {str(e)}")
-            
-    except HTTPException:
-        raise
+
+# --- CHATBOT ROUTES ---
+
+@app.get("/api/chatbots", response_model=List[ChatbotResponse])
+def get_chatbots(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return db.query(Chatbot).filter(Chatbot.user_id == current_user.id).all()
+
+@app.post("/api/chatbots", response_model=ChatbotResponse)
+def create_chatbot(chatbot: ChatbotCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db_chatbot = Chatbot(
+        user_id=current_user.id,
+        name=chatbot.name,
+        prompt=chatbot.prompt,
+        knowledge_base_type=chatbot.knowledge_base_type,
+        knowledge_base_content=chatbot.knowledge_base_content,
+        model=chatbot.model
+    )
+    db.add(db_chatbot)
+    db.commit()
+    db.refresh(db_chatbot)
+    return db_chatbot
+
+@app.put("/api/chatbots/{chatbot_id}", response_model=ChatbotResponse)
+def update_chatbot(chatbot_id: int, chatbot: ChatbotUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db_chatbot = db.query(Chatbot).filter(Chatbot.id == chatbot_id, Chatbot.user_id == current_user.id).first()
+    if not db_chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot not found")
+    
+    update_data = chatbot.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_chatbot, key, value)
+    
+    db.commit()
+    db.refresh(db_chatbot)
+    return db_chatbot
+
+@app.delete("/api/chatbots/{chatbot_id}")
+def delete_chatbot(chatbot_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db_chatbot = db.query(Chatbot).filter(Chatbot.id == chatbot_id, Chatbot.user_id == current_user.id).first()
+    if not db_chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot not found")
+    
+    db.delete(db_chatbot)
+    db.commit()
+    return {"success": True}
+
+async def get_kb_context(chatbot: Chatbot):
+    if not chatbot.knowledge_base_type or not chatbot.knowledge_base_content:
+        return ""
+    
+    content = ""
+    if chatbot.knowledge_base_type == "text":
+        content = chatbot.knowledge_base_content
+    elif chatbot.knowledge_base_type == "website":
+        # Simple scraping
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(chatbot.knowledge_base_content, timeout=10.0)
+                if resp.status_code == 200:
+                    soup = BeautifulSoup(resp.text, 'html.parser')
+                    # Remove script and style elements
+                    for script in soup(["script", "style"]):
+                        script.extract()
+                    content = soup.get_text(separator=' ', strip=True)
+                    content = re.sub(r'\s+', ' ', content)
+        except Exception as e:
+            logger.error(f"Scraping error: {e}")
+            return ""
+
+    if not content:
+        return ""
+
+    # Simple RAG if many words, otherwise just return content
+    if len(content.split()) < 500:
+        return content
+
+    try:
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+        chunks = text_splitter.split_text(content)
+        embeddings = OpenAIEmbeddings()
+        vectorstore = FAISS.from_texts(chunks, embeddings)
+        docs = vectorstore.similarity_search(chatbot.prompt, k=3) # Use prompt as query or last message? 
+        # For now, let's just use the first 2000 words if RAG is complex
+        return "\n".join([d.page_content for d in docs])
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error ending call: {str(e)}")
+        logger.error(f"RAG error: {e}")
+        return content[:2000]
+
+@app.post("/api/chatbots/{chatbot_id}/chat")
+async def chatbot_chat(chatbot_id: int, body: dict = Body(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db_chatbot = db.query(Chatbot).filter(Chatbot.id == chatbot_id, Chatbot.user_id == current_user.id).first()
+    if not db_chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot not found")
+    
+    user_message = body.get("message")
+    history = body.get("history", []) # List of {role: ..., content: ...}
+    
+    # Get KB context
+    context = await get_kb_context(db_chatbot)
+    
+    system_prompt = f"{db_chatbot.prompt}\n\nUSE THE FOLLOWING KNOWLEDGE BASE IF RELEVANT:\n{context}"
+    
+    messages = [{"role": "system", "content": system_prompt}]
+    messages.extend(history)
+    messages.append({"role": "user", "content": user_message})
+    
+    response_text = ""
+    
+    try:
+        if "gpt-4" in db_chatbot.model or "gpt-3.5" in db_chatbot.model:
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            completion = client.chat.completions.create(
+                model=db_chatbot.model,
+                messages=messages
+            )
+            response_text = completion.choices[0].message.content
+        elif "llama" in db_chatbot.model:
+            client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+            completion = client.chat.completions.create(
+                model=db_chatbot.model,
+                messages=messages
+            )
+            response_text = completion.choices[0].message.content
+        else:
+            # Fallback to OpenAI if model is unknown or deepseek/hf (since they are disabled in UI)
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            completion = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages
+            )
+            response_text = completion.choices[0].message.content
+            
+        return {"response": response_text}
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/chatbots/{chatbot_id}/history")
+def save_chat_history(chatbot_id: int, body: dict = Body(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db_chatbot = db.query(Chatbot).filter(Chatbot.id == chatbot_id, Chatbot.user_id == current_user.id).first()
+    if not db_chatbot:
+        raise HTTPException(status_code=404, detail="Chatbot not found")
+    
+    history = ChatHistory(
+        chatbot_id=chatbot_id,
+        user_id=current_user.id,
+        transcript=body.get("transcript"),
+        model_used=db_chatbot.model,
+        satisfaction_score=body.get("satisfaction_score")
+    )
+    db.add(history)
+    db.commit()
+    return {"success": True}
+
+@app.get("/api/chat-history", response_model=List[ChatHistoryResponse])
+def get_chat_history(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    histories = db.query(ChatHistory).filter(ChatHistory.user_id == current_user.id).order_by(ChatHistory.created_at.desc()).all()
+    
+    results = []
+    for h in histories:
+        res = ChatHistoryResponse.from_orm(h)
+        res.chatbot_name = h.chatbot.name if h.chatbot else "Deleted Chatbot"
+        results.append(res)
+    return results
+
+@app.get("/api/chat-history/{history_id}", response_model=ChatHistoryResponse)
+def get_chat_history_detail(history_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    history = db.query(ChatHistory).filter(ChatHistory.id == history_id, ChatHistory.user_id == current_user.id).first()
+    if not history:
+        raise HTTPException(status_code=404, detail="History not found")
+        
+    res = ChatHistoryResponse.from_orm(history)
+    res.chatbot_name = history.chatbot.name if history.chatbot else "Deleted Chatbot"
+    return res
 
 # --- CSV Upload ---
 

@@ -616,6 +616,12 @@
         <div class="nav-item" onclick="showSection('tools')" id="nav-tools">
             <i class="fas fa-tools"></i> Tools
         </div>
+        <div class="nav-item" onclick="showSection('chatbots')" id="nav-chatbots">
+            <i class="fas fa-comment-dots"></i> Chatbots
+        </div>
+        <div class="nav-item" onclick="showSection('chatbot-history')" id="nav-chatbot-history">
+            <i class="fas fa-comments"></i> Chat History
+        </div>
         <div class="nav-item" onclick="showSection('numbers')" id="nav-numbers">
             <i class="fas fa-phone-square"></i> Phone Numbers
         </div>
@@ -954,6 +960,43 @@
             </div>
         </div>
 
+        <!-- CHATBOTS SECTION -->
+        <div id="section-chatbots" class="hidden">
+            <div class="header">
+                <h1>My Chatbots</h1>
+                <button class="btn btn-primary" onclick="openCreateChatbotModal()">
+                    <i class="fas fa-plus"></i> Create Chatbot
+                </button>
+            </div>
+            <div class="agents-grid" id="chatbotsList">
+                <!-- Chatbots will be loaded here -->
+            </div>
+        </div>
+
+        <!-- CHATBOT HISTORY SECTION -->
+        <div id="section-chatbot-history" class="hidden">
+            <div class="header">
+                <h1>Chatbot Conversation History</h1>
+            </div>
+            <div class="glass-card" style="padding: 0; overflow: hidden;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Chatbot</th>
+                            <th>Model</th>
+                            <th>Snippet</th>
+                            <th>Score</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chatbotHistoryBody">
+                        <!-- History will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <!-- Create Agent Modal -->
@@ -1261,6 +1304,74 @@ function doPost(e) {
         </div>
     </div>
 
+    <!-- Create Chatbot Modal -->
+    <div id="createChatbotModal" class="modal">
+        <div class="modal-content">
+            <div class="close-modal" onclick="closeModal('createChatbotModal')"><i class="fas fa-times"></i></div>
+            <h2 id="chatbotModalTitle">Create Chatbot</h2>
+            <input type="hidden" id="editChatbotId">
+            <div class="form-group">
+                <label>Chatbot Name</label>
+                <input type="text" id="chatbotName" placeholder="My Assistant">
+            </div>
+            <div class="form-group">
+                <label>System Prompt</label>
+                <textarea id="chatbotPrompt" rows="4" placeholder="You are a helpful assistant..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Knowledge Base Type</label>
+                <select id="kbType" onchange="toggleKBInput()">
+                    <option value="none">None</option>
+                    <option value="text">Text / Document Content</option>
+                    <option value="website">Website URL (Scraping)</option>
+                </select>
+            </div>
+            <div class="form-group hidden" id="kbContentGroup">
+                <label id="kbLabel">Content</label>
+                <textarea id="kbContent" rows="4" placeholder="Paste your knowledge base text here..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Model selection</label>
+                <select id="chatbotModel">
+                    <option value="gpt-4o">OpenAI - GPT-4o</option>
+                    <option value="llama-3.3-70b-versatile">Groq - Llama 3.3 70B</option>
+                    <option value="deepseek-chat">DeepSeek Chat (Disabled)</option>
+                    <option value="hugging-face">Hugging Face (Disabled)</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="width: 100%" onclick="saveChatbot()" id="saveChatbotBtn">Create
+                Chatbot</button>
+        </div>
+    </div>
+
+    <!-- Chat Interface Modal -->
+    <div id="chatbotChatModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; display: flex; flex-direction: column; height: 80vh;">
+            <div class="close-modal" onclick="closeChatModal()"><i class="fas fa-times"></i></div>
+            <h2 id="chatModalTitle">Chat with Assistant</h2>
+            <div id="chatMessages"
+                style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin: 20px 0; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 12px;">
+                <!-- Messages will appear here -->
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="chatInput" placeholder="Type your message..." style="flex: 1;"
+                    onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                <button class="btn btn-primary" onclick="sendChatMessage()" id="sendChatBtn"><i
+                        class="fas fa-paper-plane"></i></button>
+            </div>
+            <div id="chatSatisfaction" class="hidden" style="margin-top: 15px; text-align: center;">
+                <label>Rate your experience:</label>
+                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 5px;">
+                    <button class="btn btn-secondary" onclick="rateChat(1)">1</button>
+                    <button class="btn btn-secondary" onclick="rateChat(2)">2</button>
+                    <button class="btn btn-secondary" onclick="rateChat(3)">3</button>
+                    <button class="btn btn-secondary" onclick="rateChat(4)">4</button>
+                    <button class="btn btn-secondary" onclick="rateChat(5)">5</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/';
@@ -1279,6 +1390,8 @@ function doPost(e) {
             if (id === 'tools') loadTools();
             if (id === 'numbers') loadNumbers();
             if (id === 'sms-inbox') loadSMS();
+            if (id === 'chatbots') loadChatbots();
+            if (id === 'chatbot-history') loadChatbotHistory();
         }
 
         function logout() {
@@ -2454,6 +2567,291 @@ function doPost(e) {
                 startSMSPolling();
             }
         });
+
+        // Chatbot logic
+        function toggleKBInput() {
+            const type = document.getElementById('kbType').value;
+            const group = document.getElementById('kbContentGroup');
+            const label = document.getElementById('kbLabel');
+            const content = document.getElementById('kbContent');
+
+            if (type === 'none') {
+                group.classList.add('hidden');
+            } else {
+                group.classList.remove('hidden');
+                if (type === 'text') {
+                    label.textContent = 'Knowledge Base Text';
+                    content.placeholder = 'Paste your knowledge base text here...';
+                } else {
+                    label.textContent = 'Website URL';
+                    content.placeholder = 'https://example.com/info';
+                }
+            }
+        }
+
+        function openCreateChatbotModal() {
+            document.getElementById('chatbotModalTitle').textContent = 'Create Chatbot';
+            document.getElementById('editChatbotId').value = '';
+            document.getElementById('chatbotName').value = '';
+            document.getElementById('chatbotPrompt').value = '';
+            document.getElementById('kbType').value = 'none';
+            document.getElementById('kbContent').value = '';
+            document.getElementById('saveChatbotBtn').textContent = 'Create Chatbot';
+            toggleKBInput();
+            document.getElementById('createChatbotModal').classList.add('active');
+        }
+
+        async function saveChatbot() {
+            const id = document.getElementById('editChatbotId').value;
+            const name = document.getElementById('chatbotName').value;
+            const prompt = document.getElementById('chatbotPrompt').value;
+            const kbType = document.getElementById('kbType').value;
+            const kbContent = document.getElementById('kbContent').value;
+            const model = document.getElementById('chatbotModel').value;
+
+            if (!name || !prompt) return alert('Please fill in name and prompt');
+
+            const url = id ? `api/chatbots/${id}` : 'api/chatbots';
+            const method = id ? 'PUT' : 'POST';
+
+            try {
+                const resp = await fetch(url, {
+                    method: method,
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        prompt,
+                        knowledge_base_type: kbType !== 'none' ? kbType : null,
+                        knowledge_base_content: kbType !== 'none' ? kbContent : null,
+                        model
+                    })
+                });
+
+                if (resp.ok) {
+                    closeModal('createChatbotModal');
+                    loadChatbots();
+                } else {
+                    alert('Failed to save chatbot');
+                }
+            } catch (e) { alert('Error saving chatbot'); }
+        }
+
+        async function loadChatbots() {
+            const list = document.getElementById('chatbotsList');
+            list.innerHTML = '<div class="loader">Loading...</div>';
+            try {
+                const resp = await fetch('api/chatbots', { headers: { 'Authorization': `Bearer ${token}` } });
+                const chatbots = await resp.json();
+
+                if (chatbots.length === 0) {
+                    list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No chatbots found. Create one!</div>';
+                    return;
+                }
+
+                list.innerHTML = chatbots.map(c => `
+                    <div class="glass-card">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                            <div>
+                                <h3 style="font-weight: 600; font-size: 18px;">${c.name}</h3>
+                                <div style="font-size: 11px; color: var(--text-muted);">${c.model}</div>
+                            </div>
+                        </div>
+                        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 15px; height: 60px; overflow: hidden;">
+                            ${c.prompt}
+                        </p>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-primary" style="flex: 1;" onclick="openChatInterface(${c.id}, '${c.name.replace(/'/g, "\\'")}')">Chat</button>
+                            <button class="btn btn-secondary" onclick="editChatbot(${c.id})"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger" onclick="deleteChatbot(${c.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { list.innerHTML = 'Error loading chatbots'; }
+        }
+
+        async function editChatbot(id) {
+            try {
+                const resp = await fetch(`api/chatbots`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const chatbots = await resp.json();
+                const chatbot = chatbots.find(c => c.id === id);
+                if (chatbot) {
+                    document.getElementById('chatbotModalTitle').textContent = 'Edit Chatbot';
+                    document.getElementById('editChatbotId').value = chatbot.id;
+                    document.getElementById('chatbotName').value = chatbot.name;
+                    document.getElementById('chatbotPrompt').value = chatbot.prompt;
+                    document.getElementById('kbType').value = chatbot.knowledge_base_type || 'none';
+                    document.getElementById('kbContent').value = chatbot.knowledge_base_content || '';
+                    document.getElementById('chatbotModel').value = chatbot.model;
+                    document.getElementById('saveChatbotBtn').textContent = 'Update Chatbot';
+                    toggleKBInput();
+                    document.getElementById('createChatbotModal').classList.add('active');
+                }
+            } catch (e) { }
+        }
+
+        async function deleteChatbot(id) {
+            if (!confirm('Delete this chatbot?')) return;
+            try {
+                const resp = await fetch(`api/chatbots/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (resp.ok) loadChatbots();
+            } catch (e) { }
+        }
+
+        let currentChatBotId = null;
+        let chatHistory = [];
+
+        function openChatInterface(id, name) {
+            currentChatBotId = id;
+            chatHistory = [];
+            document.getElementById('chatModalTitle').textContent = `Chat with ${name}`;
+            document.getElementById('chatMessages').innerHTML = '';
+            document.getElementById('chatInput').value = '';
+            document.getElementById('chatSatisfaction').classList.add('hidden');
+            document.getElementById('chatbotChatModal').classList.add('active');
+        }
+
+        function closeChatModal() {
+            if (chatHistory.length > 0) {
+                document.getElementById('chatSatisfaction').classList.remove('hidden');
+            } else {
+                document.getElementById('chatbotChatModal').classList.remove('active');
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !currentChatBotId) return;
+
+            // Add user message to UI
+            addMessageToUI('user', text);
+            input.value = '';
+            chatHistory.push({ role: 'user', content: text });
+
+            // Add loading indicator
+            const loadingId = 'loading-' + Date.now();
+            const msgDiv = document.createElement('div');
+            msgDiv.id = loadingId;
+            msgDiv.innerHTML = `<div style="background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 12px; width: fit-content; font-size: 14px; align-self: flex-start;"><i class="fas fa-circle-notch fa-spin"></i> Assistant is thinking...</div>`;
+            document.getElementById('chatMessages').appendChild(msgDiv);
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+
+            try {
+                const resp = await fetch(`api/chatbots/${currentChatBotId}/chat`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text, history: chatHistory.slice(0, -1) })
+                });
+                const data = await resp.json();
+
+                document.getElementById(loadingId).remove();
+
+                if (resp.ok) {
+                    addMessageToUI('assistant', data.response);
+                    chatHistory.push({ role: 'assistant', content: data.response });
+                } else {
+                    addMessageToUI('assistant', 'Sorry, I encountered an error: ' + (data.detail || 'Unknown error'));
+                }
+            } catch (e) {
+                document.getElementById(loadingId).remove();
+                addMessageToUI('assistant', 'Network error');
+            }
+        }
+
+        function addMessageToUI(role, text) {
+            const container = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.style.display = 'flex';
+            msgDiv.style.flexDirection = role === 'user' ? 'row-reverse' : 'row';
+            msgDiv.style.gap = '10px';
+
+            msgDiv.innerHTML = `
+                <div style="background: ${role === 'user' ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}; padding: 10px 15px; border-radius: 12px; max-width: 80%; font-size: 14px;">
+                    ${text}
+                </div>
+            `;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function rateChat(score) {
+            try {
+                await fetch(`api/chatbots/${currentChatBotId}/history`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        transcript: JSON.stringify(chatHistory),
+                        satisfaction_score: score
+                    })
+                });
+                document.getElementById('chatbotChatModal').classList.remove('active');
+                loadChatbotHistory();
+            } catch (e) {
+                document.getElementById('chatbotChatModal').classList.remove('active');
+            }
+        }
+
+        async function loadChatbotHistory() {
+            const tbody = document.getElementById('chatbotHistoryBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="loader">Loading...</td></tr>';
+            try {
+                const resp = await fetch('api/chat-history', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">No history found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.map(h => {
+                    const messages = JSON.parse(h.transcript);
+                    const lastMsg = messages[messages.length - 1]?.content || '';
+                    const snippet = lastMsg.substring(0, 50) + (lastMsg.length > 50 ? '...' : '');
+
+                    return `
+                        <tr>
+                            <td>${h.chatbot_name || 'Deleted Chatbot'}</td>
+                            <td><span class="badge badge-secondary">${h.model_used}</span></td>
+                            <td style="font-size: 13px; color: var(--text-muted);">${snippet}</td>
+                            <td>${h.satisfaction_score ? h.satisfaction_score + '/5' : '-'}</td>
+                            <td>${new Date(h.created_at).toLocaleString()}</td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="viewChatHistoryDetails(${h.id})">View</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) { tbody.innerHTML = 'Error loading history'; }
+        }
+
+        async function viewChatHistoryDetails(id) {
+            try {
+                const resp = await fetch(`api/chat-history/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const h = await resp.json();
+
+                document.getElementById('chatModalTitle').textContent = `History with ${h.chatbot_name}`;
+                document.getElementById('chatMessages').innerHTML = '';
+                document.getElementById('chatInput').parentElement.classList.add('hidden');
+                document.getElementById('chatSatisfaction').classList.add('hidden');
+
+                const messages = JSON.parse(h.transcript);
+                messages.forEach(m => addMessageToUI(m.role, m.content));
+
+                document.getElementById('chatbotChatModal').classList.add('active');
+
+                // Add a "Back" button listener to restore UI
+                const closeBtn = document.querySelector('#chatbotChatModal .close-modal');
+                const oldOnClick = closeBtn.onclick;
+                closeBtn.onclick = () => {
+                    document.getElementById('chatInput').parentElement.classList.remove('hidden');
+                    document.getElementById('chatbotChatModal').classList.remove('active');
+                    closeBtn.onclick = oldOnClick;
+                };
+            } catch (e) { }
+        }
 
         // Init
         fetchData();

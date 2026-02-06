@@ -29,6 +29,8 @@ class User(Base):
     
     agents = relationship("Agent", back_populates="user")
     calls = relationship("Call", back_populates="user")
+    chatbots = relationship("Chatbot", back_populates="user")
+    chat_histories = relationship("ChatHistory", back_populates="user")
 
 class Call(Base):
     __tablename__ = 'calls'
@@ -116,6 +118,36 @@ class SMS(Base):
     
     agent = relationship("Agent")
 
+class Chatbot(Base):
+    __tablename__ = 'chatbots'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    name = Column(String, nullable=False)
+    prompt = Column(Text, nullable=False)
+    knowledge_base_type = Column(String, nullable=True) # 'text', 'file', 'website'
+    knowledge_base_content = Column(Text, nullable=True)
+    model = Column(String, default="gpt-4o") # 'gpt-4o', 'llama-3.1-70b-versatile', etc.
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", back_populates="chatbots")
+    histories = relationship("ChatHistory", back_populates="chatbot")
+
+class ChatHistory(Base):
+    __tablename__ = 'chat_histories'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    chatbot_id = Column(Integer, ForeignKey('chatbots.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    transcript = Column(Text, nullable=False) # JSON list of messages
+    model_used = Column(String, nullable=False)
+    satisfaction_score = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="chat_histories")
+    chatbot = relationship("Chatbot", back_populates="histories")
+
 # Pydantic models
 class UserCreate(BaseModel):
     username: str
@@ -198,6 +230,44 @@ class SMSResponse(BaseModel):
     body: str
     direction: str
     message_sid: Optional[str]
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class ChatbotCreate(BaseModel):
+    name: str
+    prompt: str
+    knowledge_base_type: Optional[str] = None
+    knowledge_base_content: Optional[str] = None
+    model: str
+
+class ChatbotUpdate(BaseModel):
+    name: Optional[str] = None
+    prompt: Optional[str] = None
+    knowledge_base_type: Optional[str] = None
+    knowledge_base_content: Optional[str] = None
+    model: Optional[str] = None
+
+class ChatbotResponse(BaseModel):
+    id: int
+    name: str
+    prompt: str
+    knowledge_base_type: Optional[str]
+    knowledge_base_content: Optional[str]
+    model: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class ChatHistoryResponse(BaseModel):
+    id: int
+    chatbot_id: int
+    chatbot_name: Optional[str] = None
+    transcript: str
+    model_used: str
+    satisfaction_score: Optional[int]
     created_at: datetime
     
     class Config:
