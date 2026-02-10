@@ -29,6 +29,7 @@ class User(Base):
     
     agents = relationship("Agent", back_populates="user")
     calls = relationship("Call", back_populates="user")
+    business_checkups = relationship("BusinessCheckup", back_populates="user")
 
 class Call(Base):
     __tablename__ = 'calls'
@@ -119,6 +120,24 @@ class SMS(Base):
     agent = relationship("Agent")
 
 # Pydantic models
+class BusinessCheckup(Base):
+    __tablename__ = 'business_checkups'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    business_name = Column(String, nullable=False)
+    address = Column(String, nullable=True) # Full address or City/State
+    website = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    report_data = Column(Text, nullable=False) # JSON data
+    is_starred = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # user = relationship("User", backref="business_checkups") # Already defined in User? No, adding backref here is fine or explicit relationship
+    user = relationship("User", back_populates="business_checkups")
+
+# Pydantic models (Original comment)
 class UserCreate(BaseModel):
     username: str
     password: str
@@ -206,5 +225,28 @@ class SMSResponse(BaseModel):
     message_sid: Optional[str]
     created_at: datetime
     
+    class Config:
+        from_attributes = True
+    class Config:
+        from_attributes = True
+
+class BusinessCheckupBase(BaseModel):
+    business_name: str
+    address: Optional[str] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+
+class BusinessCheckupCreate(BusinessCheckupBase):
+    report_data: dict # Will be stored as JSON string
+    is_starred: bool = False
+
+class BusinessCheckupResponse(BusinessCheckupBase):
+    id: int
+    user_id: int
+    report_data: dict # Parsed from JSON string in service or here (Pydantic can handle dict <-> json str if customized, but usually we handle it in service)
+    is_starred: bool
+    created_at: datetime
+
     class Config:
         from_attributes = True

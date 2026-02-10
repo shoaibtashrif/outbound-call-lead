@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VoiceBot AI - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ultravox-client/dist/index.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
@@ -587,6 +588,62 @@
             width: 200%;
             height: 200%;
         }
+
+        /* Web Call Visualizer */
+        @keyframes pulse {
+            0% {
+                height: 20%;
+            }
+
+            50% {
+                height: 80%;
+            }
+
+            .bar:nth-child(5) {
+                animation-delay: 0.4s;
+            }
+
+            /* Business Checkup Cards */
+            .checkup-result-card {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid var(--glass-border);
+                padding: 20px;
+                border-radius: 12px;
+                margin-bottom: 20px;
+            }
+
+            .checkup-score-badge {
+                display: inline-block;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 0.9em;
+            }
+
+            .score-good {
+                background: rgba(16, 185, 129, 0.2);
+                color: #34d399;
+            }
+
+            .score-avg {
+                background: rgba(245, 158, 11, 0.2);
+                color: #fbbf24;
+            }
+
+            .score-bad {
+                background: rgba(239, 68, 68, 0.2);
+                color: #f87171;
+            }
+
+            .saved-checkup-card {
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .saved-checkup-card:hover {
+                background: rgba(255, 255, 255, 0.1);
+                transform: translateY(-2px);
+            }
     </style>
 </head>
 
@@ -621,6 +678,9 @@
         </div>
         <div class="nav-item" onclick="showSection('billing')" id="nav-billing">
             <i class="fas fa-credit-card"></i> Billing
+        </div>
+        <div class="nav-item" onclick="showSection('checkup')" id="nav-checkup">
+            <i class="fas fa-stethoscope"></i> Business Checkup
         </div>
 
         <div class="user-profile" onclick="openProfileModal()" style="cursor: pointer;">
@@ -991,6 +1051,29 @@
 
     </div>
 
+    <!-- Web Call Modal -->
+    <div id="webCallModal" class="modal">
+        <div class="modal-content" style="text-align: center;">
+            <div class="close-modal" onclick="endWebCall()"><i class="fas fa-times"></i></div>
+            <h2 id="webCallAgentName">Testing Agent</h2>
+            <div id="webCallStatus" style="margin: 20px 0; font-size: 18px; color: var(--primary);">Connecting...</div>
+
+            <div id="webCallVisualizer" class="hidden"
+                style="height: 100px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 30px;">
+                <div class="bar" style="width: 6px; background: var(--primary); border-radius: 5px;"></div>
+                <div class="bar" style="width: 6px; background: var(--primary); border-radius: 5px;"></div>
+                <div class="bar" style="width: 6px; background: var(--primary); border-radius: 5px;"></div>
+                <div class="bar" style="width: 6px; background: var(--primary); border-radius: 5px;"></div>
+                <div class="bar" style="width: 6px; background: var(--primary); border-radius: 5px;"></div>
+            </div>
+
+            <button class="btn btn-danger" style="width: 100%; justify-content: center; padding: 16px;"
+                onclick="endWebCall()">
+                <i class="fas fa-phone-slash"></i> End Test Call
+            </button>
+        </div>
+    </div>
+
     <!-- Create Agent Modal -->
     <div id="createAgentModal" class="modal">
         <div class="modal-content">
@@ -1335,6 +1418,54 @@
         </div>
     </div>
 
+    <!-- BUSINESS CHECKUP SECTION -->
+    <div id="section-checkup" class="hidden">
+        <div class="header">
+            <div>
+                <h1>Business Checkup</h1>
+                <p>Automated business presence and performance analysis.</p>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="glass-card" style="margin-bottom: 30px; max-width: 800px; margin-left: auto; margin-right: auto;">
+            <div style="display: flex; gap: 15px; align-items: flex-end;">
+                <div class="form-group" style="flex: 2;">
+                    <label>Business Name</label>
+                    <input type="text" id="checkup-search-input" placeholder="e.g. Joe's Pizza, New York">
+                </div>
+                <div class="form-group" style="flex: 0;">
+                    <button class="btn btn-primary" onclick="performBusinessSearch()" id="btn-checkup-search">
+                        <i class="fas fa-search"></i> Run Checkup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Result Container -->
+        <div id="checkup-live-result" class="hidden">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Saved Reports Grid -->
+        <h2 style="margin: 30px 0 20px;">Saved Reports <span class="badge badge-warning"
+                id="saved-reports-count">0</span></h2>
+
+        <div id="saved-checkups-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            <!-- Loading or list -->
+            <div style="color: var(--text-muted);">Loading saved reports...</div>
+        </div>
+    </div>
+
+    <!-- Checkup Details Modal -->
+    <div id="checkupDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="close-modal" onclick="closeModal('checkupDetailsModal')"><i class="fas fa-times"></i></div>
+            <div id="checkup-modal-content"></div>
+        </div>
+    </div>
+
     <!-- Webhook Guide Modal -->
     <div id="webhookGuideModal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
@@ -1470,11 +1601,16 @@ function doPost(e) {
 
         // Navigation
         function showSection(id) {
-            document.querySelectorAll('.main-content > div').forEach(div => div.classList.add('hidden'));
-            document.getElementById(`section-${id}`).classList.remove('hidden');
+            // Hide all sections that start with 'section-'
+            document.querySelectorAll('[id^="section-"]').forEach(div => div.classList.add('hidden'));
+
+            // Show the target section
+            const target = document.getElementById(`section-${id}`);
+            if (target) target.classList.remove('hidden');
 
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            document.getElementById(`nav-${id}`).classList.add('active');
+            const navItem = document.getElementById(`nav-${id}`);
+            if (navItem) navItem.classList.add('active');
 
             if (id === 'agents') loadAgents();
             if (id === 'history') loadHistory();
@@ -1482,6 +1618,7 @@ function doPost(e) {
             if (id === 'tools') loadTools();
             if (id === 'numbers') loadNumbers();
             if (id === 'sms-inbox') loadSMS();
+            if (id === 'checkup') loadSavedCheckups();
         }
 
         function logout() {
@@ -1679,8 +1816,9 @@ function doPost(e) {
                             <i class="fas fa-phone-alt" style="margin-right: 5px;"></i>
                             ${a.twilio_phone_number || 'No number assigned'}
                         </div>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <button class="btn btn-primary" style="flex: 1; font-size: 14px;" onclick="initiateCall('${a.agentId}')">Call</button>
+                            <button class="btn btn-warning" style="flex: 1; font-size: 14px; background: #f59e0b; color: white;" onclick="startWebCall('${a.id}', '${a.name}')">Web Call</button>
                             <button class="btn btn-secondary" style="padding: 10px;" onclick="openEditAgentModal('${a.id}', '${a.agentId}')"><i class="fas fa-edit"></i></button>
                             <button class="btn btn-danger" style="padding: 10px;" onclick="deleteAgent('${a.agentId}')"><i class="fas fa-trash"></i></button>
                         </div>
@@ -2686,9 +2824,465 @@ function doPost(e) {
             }
         });
 
+        let ultravoxCall = null;
+
+        async function startWebCall(agentId, agentName) {
+            const modal = document.getElementById('webCallModal');
+            const status = document.getElementById('webCallStatus');
+            const visualizer = document.getElementById('webCallVisualizer');
+            const nameEl = document.getElementById('webCallAgentName');
+
+            nameEl.textContent = `Testing Agent: ${agentName}`;
+            status.textContent = 'Requesting Microphone access...';
+            status.style.color = 'var(--primary)';
+            visualizer.classList.add('hidden');
+            modal.classList.add('active');
+
+            try {
+                // Check microphone permission
+                await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                status.textContent = 'Connecting to AI...';
+
+                const resp = await fetch(`api/agents/${agentId}/web-call`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || 'Failed to start web call');
+                }
+
+                const { joinUrl } = await resp.json();
+
+                // Initialize Ultravox Client
+                // The library usually exports to window.Ultravox
+                const SDK = window.Ultravox || window.UltravoxClient || (window.ultravox ? window.ultravox.UltravoxSession : null);
+                if (!SDK && !window.UltravoxSession) {
+                    console.error("Window objects:", Object.keys(window).filter(k => k.toLowerCase().includes('ultravox')));
+                    throw new Error('Ultravox SDK not loaded. Check your internet connection.');
+                }
+
+                if (window.UltravoxSession) {
+                    ultravoxCall = new window.UltravoxSession();
+                } else if (SDK.UltravoxSession) {
+                    ultravoxCall = new SDK.UltravoxSession();
+                } else {
+                    ultravoxCall = new SDK();
+                }
+
+                ultravoxCall.joinCall(joinUrl);
+
+                ultravoxCall.addEventListener('status', () => {
+                    const currentStatus = ultravoxCall.status;
+                    console.log('Ultravox Status:', currentStatus);
+
+                    if (currentStatus === 'connected') {
+                        status.textContent = 'Agent is Live & Listening';
+                        status.style.color = 'var(--success)';
+                        visualizer.classList.remove('hidden');
+                    } else if (currentStatus === 'disconnected') {
+                        status.textContent = 'Call Disconnected';
+                        status.style.color = 'var(--text-muted)';
+                        visualizer.classList.add('hidden');
+                    }
+                });
+
+                ultravoxCall.addEventListener('error', (event) => {
+                    console.error('Ultravox Error:', event);
+                    status.textContent = 'Connection Error: ' + (event.message || 'Unknown error');
+                    status.style.color = 'var(--danger)';
+                });
+
+            } catch (e) {
+                console.error("Web Call Error:", e);
+                status.textContent = 'Setup Failed: ' + e.message;
+                status.style.color = 'var(--danger)';
+
+                if (e.name === 'NotAllowedError') {
+                    status.textContent = 'Microphone access denied. Please allow it in settings.';
+                }
+            }
+        }
+
+        function endWebCall() {
+            if (ultravoxCall) {
+                try {
+                    ultravoxCall.leaveCall();
+                } catch (e) {
+                    console.error("Error leaving call:", e);
+                }
+                ultravoxCall = null;
+            }
+            document.getElementById('webCallModal').classList.remove('active');
+            document.getElementById('webCallVisualizer').classList.add('hidden');
+        }
+
+
+        // Business Checkup Logic
+        let currentCheckupData = null;
+
+        async function performBusinessSearch() {
+            const btn = document.getElementById('btn-checkup-search');
+            const input = document.getElementById('checkup-search-input');
+            const resultDiv = document.getElementById('checkup-live-result');
+
+            if (!input.value.trim()) return alert("Please enter a business name");
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+            btn.disabled = true;
+            resultDiv.innerHTML = '';
+            resultDiv.classList.add('hidden');
+
+            try {
+                const resp = await fetch('api/business-checkup/search', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ business_name: input.value })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || "Search failed");
+                }
+
+                currentCheckupData = await resp.json();
+                renderCheckupResult(currentCheckupData, resultDiv, false); // isSaved=False
+                resultDiv.classList.remove('hidden');
+
+            } catch (e) {
+                console.error(e);
+                alert("Error: " + e.message);
+            } finally {
+                btn.innerHTML = '<i class="fas fa-search"></i> Run Checkup';
+                btn.disabled = false;
+            }
+        }
+
+        function renderCheckupResult(data, container, isSaved) {
+            const bd = data.business_details || {};
+            const comp = data.completeness_check || {};
+            const perf = data.website_performance || {};
+            const pres = data.presence_checks || {};
+
+            const mobileScore = perf.mobile_score || 0;
+            const desktopScore = perf.desktop_score || 0;
+
+            const getScoreClass = (s) => s >= 90 ? 'score-good' : (s >= 50 ? 'score-avg' : 'score-bad');
+
+            // Build opening hours HTML
+            let hoursHTML = '';
+            if (bd.opening_hours && bd.opening_hours.length > 0) {
+                hoursHTML = `
+                    <div style="margin-top: 15px;">
+                        <h4 style="margin: 10px 0; font-size: 14px;">
+                            <i class="fas fa-clock"></i> Business Hours
+                        </h4>
+                        <ul style="list-style: none; padding: 0; font-size: 13px; color: var(--text-muted);">
+                            ${bd.opening_hours.map(day => `<li style="padding: 4px 0;">${day}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            } else {
+                hoursHTML = `
+                    <div style="margin-top: 15px;">
+                        <h4 style="margin: 10px 0; font-size: 14px; color: var(--text-muted);">
+                            <i class="fas fa-clock"></i> Business Hours: Not Available
+                        </h4>
+                    </div>
+                `;
+            }
+
+            // Build contact info HTML
+            let contactHTML = `
+                <div style="margin-top: 15px;">
+                    <h4 style="margin: 10px 0; font-size: 14px;">
+                        <i class="fas fa-address-card"></i> Contact Information
+                    </h4>
+                    <div style="font-size: 13px;">
+                        ${bd.phone ? `
+                            <div style="padding: 6px 0;">
+                                <i class="fas fa-phone"></i> 
+                                <a href="tel:${bd.phone}" style="color: var(--primary);">${bd.phone}</a>
+                            </div>
+                        ` : '<div style="padding: 6px 0; color: var(--text-muted);"><i class="fas fa-phone"></i> No phone number</div>'}
+                        
+                        ${bd.website ? `
+                            <div style="padding: 6px 0;">
+                                <i class="fas fa-globe"></i> 
+                                <a href="${bd.website}" target="_blank" style="color: var(--primary);">${bd.website}</a>
+                            </div>
+                        ` : '<div style="padding: 6px 0; color: var(--text-muted);"><i class="fas fa-globe"></i> No website</div>'}
+                        
+                        ${bd.google_maps_url ? `
+                            <div style="padding: 6px 0;">
+                                <i class="fas fa-map-marker-alt"></i> 
+                                <a href="${bd.google_maps_url}" target="_blank" style="color: var(--primary);">View on Google Maps</a>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+
+            // Build reviews HTML with expand/collapse
+            let reviewsHTML = '';
+            if (bd.reviews && bd.reviews.length > 0) {
+                reviewsHTML = `
+                    <div style="margin-top: 20px;">
+                        <h4 style="margin: 10px 0; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="toggleReviews()">
+                            <i class="fas fa-star"></i> Reviews (${bd.review_count || bd.reviews.length})
+                            <i id="reviews-toggle-icon" class="fas fa-chevron-down" style="font-size: 12px; margin-left: auto;"></i>
+                        </h4>
+                        <div id="reviews-container" style="display: none; margin-top: 10px;">
+                            ${bd.reviews.map((review, idx) => `
+                                <div style="background: rgba(15, 23, 42, 0.5); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--glass-border);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                        <strong style="font-size: 13px;">${review.author_name}</strong>
+                                        <div>
+                                            ${Array(review.rating).fill('⭐').join('')}
+                                            <span style="color: var(--text-muted); font-size: 12px; margin-left: 6px;">${review.rating}/5</span>
+                                        </div>
+                                    </div>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                                        ${review.text || 'No review text'}
+                                    </p>
+                                    ${review.relative_time ? `
+                                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+                                            <i class="fas fa-clock"></i> ${review.relative_time}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                reviewsHTML = `
+                    <div style="margin-top: 20px;">
+                        <h4 style="margin: 10px 0; font-size: 14px; color: var(--text-muted);">
+                            <i class="fas fa-star"></i> No Reviews Available
+                        </h4>
+                    </div>
+                `;
+            }
+
+            // Build photos HTML
+            let photosHTML = '';
+            if (bd.photos && bd.photos.length > 0) {
+                photosHTML = `
+                    <div style="margin-top: 20px;">
+                        <h4 style="margin: 10px 0; font-size: 14px;">
+                            <i class="fas fa-camera"></i> Photos
+                        </h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 10px;">
+                            ${bd.photos.map(photo => `
+                                <div style="position: relative; padding-bottom: 100%; overflow: hidden; border-radius: 8px; background: rgba(15, 23, 42, 0.5);">
+                                    <img src="${photo}" alt="Business photo" 
+                                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
+                                         onclick="window.open('${photo}', '_blank')">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                photosHTML = `
+                    <div style="margin-top: 20px;">
+                        <h4 style="margin: 10px 0; font-size: 14px; color: var(--text-muted);">
+                            <i class="fas fa-camera"></i> No Photos Available
+                        </h4>
+                    </div>
+                `;
+            }
+
+            let html = `
+                <div class="glass-card" style="position: relative;">
+                    ${!isSaved ?
+                    `<button class="btn btn-warning" onclick="saveCheckup()" style="position: absolute; top: 20px; right: 20px;">
+                            <i class="fas fa-star"></i> Save Business
+                        </button>`
+                    : `<button class="btn btn-danger" onclick="deleteCheckup(${data.id})" style="position: absolute; top: 20px; right: 20px;">
+                            <i class="fas fa-trash"></i> Remove
+                           </button>`
+                }
+                    
+                    <h2 style="margin-top: 0;">${bd.name}</h2>
+                    <p style="color: var(--text-muted);"><i class="fas fa-map-marker-alt"></i> ${bd.address || 'N/A'}</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                        <!-- Left: Core Info -->
+                        <div>
+                            <h3>Profile Completeness</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li>${comp.has_website ? '✅' : '❌'} Website Linked</li>
+                                <li>${comp.has_phone ? '✅' : '❌'} Phone Number</li>
+                                <li>${comp.has_hours ? '✅' : '❌'} Business Hours</li>
+                                <li>${comp.has_photos ? '✅' : '❌'} Photos Available</li>
+                            </ul>
+                            
+                            <div style="margin-top: 15px;">
+                                <strong>Google Rating:</strong> ${bd.rating || 'N/A'} ⭐ (${bd.review_count || 0} reviews)
+                            </div>
+
+                            ${contactHTML}
+                            ${hoursHTML}
+                        </div>
+                        
+                        <!-- Right: Website Performance -->
+                        <div>
+                            <h3>Website Health</h3>
+                            ${bd.website ? `
+                                <div style="margin-bottom: 10px;">
+                                    Mobile Performance: <span class="checkup-score-badge ${getScoreClass(mobileScore)}">${mobileScore}/100</span>
+                                </div>
+                                <div style="margin-bottom: 10px;">
+                                    Desktop Performance: <span class="checkup-score-badge ${getScoreClass(desktopScore)}">${desktopScore}/100</span>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted);">
+                                    HTTPS: ${pres.https_enabled ? 'Secure 🔒' : 'Insecure ⚠️'}<br>
+                                    Mobile Friendly: ${pres.mobile_responsive}
+                                </div>
+                            ` : '<div style="color: var(--danger);">No Website Detected</div>'}
+
+                            ${photosHTML}
+                        </div>
+                    </div>
+
+                    ${reviewsHTML}
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function toggleReviews() {
+            const reviewsContainer = document.getElementById('reviews-container');
+            const toggleIcon = document.getElementById('reviews-toggle-icon');
+
+            if (reviewsContainer.style.display === 'none') {
+                reviewsContainer.style.display = 'block';
+                toggleIcon.classList.remove('fa-chevron-down');
+                toggleIcon.classList.add('fa-chevron-up');
+            } else {
+                reviewsContainer.style.display = 'none';
+                toggleIcon.classList.remove('fa-chevron-up');
+                toggleIcon.classList.add('fa-chevron-down');
+            }
+        }
+
+        async function saveCheckup() {
+            if (!currentCheckupData) return;
+            const btn = document.querySelector('#checkup-live-result .btn-warning');
+            if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true; }
+
+            try {
+                const resp = await fetch('api/business-checkup/save', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        report_data: currentCheckupData,
+                        is_starred: true
+                    })
+                });
+                if (!resp.ok) throw new Error("Failed to save");
+
+                // Refresh list and clear current
+                loadSavedCheckups();
+                document.getElementById('checkup-live-result').classList.add('hidden');
+                document.getElementById('checkup-search-input').value = '';
+                currentCheckupData = null;
+                alert("Business saved to reports!");
+            } catch (e) {
+                alert(e.message);
+                if (btn) { btn.innerHTML = '<i class="fas fa-star"></i> Save Business'; btn.disabled = false; }
+            }
+        }
+
+        async function loadSavedCheckups() {
+            const grid = document.getElementById('saved-checkups-grid');
+            const countBadge = document.getElementById('saved-reports-count');
+
+            try {
+                const resp = await fetch('api/business-checkup/list', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await resp.json();
+
+                countBadge.textContent = data.length;
+
+                if (data.length === 0) {
+                    grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No saved reports yet. Run a checkup to add one.</div>';
+                    return;
+                }
+
+                grid.innerHTML = data.map(item => {
+                    const r = item.report_data || {};
+                    const bd = r.business_details || {};
+                    const score = (r.website_performance?.mobile_score || 0);
+
+                    return `
+                        <div class="glass-card saved-checkup-card" onclick="openCheckupModal(${item.id})">
+                             <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <h3 style="margin: 0; font-size: 16px;">${item.business_name}</h3>
+                                <span class="badge ${score > 50 ? 'badge-success' : 'badge-warning'}">${score}</span>
+                             </div>
+                             <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px;">
+                                <i class="fas fa-map-marker-alt"></i> ${item.address || 'Unknown'}<br>
+                                <i class="fas fa-calendar"></i> ${new Date(item.created_at).toLocaleDateString()}
+                             </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error(e);
+                grid.innerHTML = '<div style="color: var(--danger);">Failed to load reports</div>';
+            }
+        }
+
+        let allSavedCheckups = []; // To cache logic if needed, but for now we refetch. Actually we need mapped data to open modal without re-fetching if we want speed, but re-fetching by ID is robust.
+
+        async function openCheckupModal(id) {
+            // We can fetch by ID or find in loaded list. Let's find in loaded list if possible or just store it.
+            // Simpler: fetch fresh or use existing.
+            // Let's quickly re-fetch details or use what we have? 
+            // We'll re-use the list endpoint data if we had it, but for now let's make a simple client-side cache or just re-render from stored data?
+            // "list" endpoint returns full report_data so we technically have it.
+            // Let's just refetch list to be lazy or implement proper cache.
+            // BETTER: passed ID, find in DOM? No.
+            // Let's just fetch individual checkup if we had endpoint? We deleted 'get' endpoint to save space? No, we have it in service but maybe not exposed?
+            // Actually, we exposed list, delete, save, search.
+            // We can add a GET endpoint or just filter from the list we just fetched.
+            // Let's assume we re-fetch the list and keep it in a variable.
+
+            // Re-fetch list implementation detail:
+            const resp = await fetch('api/business-checkup/list', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await resp.json();
+            const item = data.find(x => x.id === id);
+
+            if (item) {
+                const modal = document.getElementById('checkupDetailsModal');
+                const content = document.getElementById('checkup-modal-content');
+                // Mock id for delete to work
+                item.report_data.id = item.id;
+                renderCheckupResult(item.report_data, content, true);
+                modal.classList.add('active');
+            }
+        }
+
+        async function deleteCheckup(id) {
+            if (!confirm("Are you sure?")) return;
+            await fetch(`api/business-checkup/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            closeModal('checkupDetailsModal');
+            loadSavedCheckups();
+        }
+
         // Init
         fetchData();
         startSMSPolling();
+        loadSavedCheckups();
     </script>
 </body>
 

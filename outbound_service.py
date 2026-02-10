@@ -10,7 +10,7 @@ import requests
 import io
 import pandas as pd
 from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File, Depends, Body, Header
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from twilio.rest import Client
@@ -597,9 +597,9 @@ def get_transfer_tool(agent, base_url: str, service_api_key: str):
         }
     }
 
-def build_selected_tools(agent, db: Session):
+def build_selected_tools(agent, db: Session, is_web_call: bool = False):
     """Build selectedTools array for Ultravox call with custom transfer tool for Twilio"""
-    if not agent.tools and not agent.transfer_number:
+    if not agent.tools and (not agent.transfer_number or is_web_call):
         return None
     
     selected_tools = []
@@ -625,8 +625,8 @@ def build_selected_tools(agent, db: Session):
             
             selected_tools.append(tool_entry)
     
-    # Add custom Twilio transfer tool if agent has transfer number
-    if agent.transfer_number:
+    # Add custom Twilio transfer tool if agent has transfer number (only for non-web calls)
+    if not is_web_call and agent.transfer_number:
         host = os.getenv("SERVER_HOST")
         if host:
             if not host.startswith("http"):
@@ -1890,7 +1890,7 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
     }
     
     # Add tools if agent has them (with parameter overrides for transfer tools)
-    selected_tools = build_selected_tools(agent, db)
+    selected_tools = build_selected_tools(agent, db, is_web_call=False)
     if selected_tools:
         payload["selectedTools"] = selected_tools
     
@@ -1948,6 +1948,74 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
         print(f"Error saving call to DB: {e}")
 
     return {"status": "success", "call_id": call_id, "twilio_sid": call.sid}
+
+
+@app.post("/api/agents/{agent_id}/web-call")
+async def create_web_call(agent_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Create an Ultravox call for WebRTC (web calling)"""
+    # Balance Check
+    if user.balance <= 0:
+        raise HTTPException(status_code=402, detail="Insufficient balance. Please top up.")
+
+    ultravox_api_key = os.getenv("ULTRAVOX_API_KEY")
+    if not ultravox_api_key:
+        raise HTTPException(status_code=500, detail="ULTRAVOX_API_KEY not set")
+
+    # Get agent from database
+    try:
+        agent_id_int = int(agent_id)
+        agent = db.query(Agent).filter(Agent.id == agent_id_int).first()
+    except ValueError:
+        agent = db.query(Agent).filter(Agent.ultravox_agent_id == agent_id).first()
+    
+    if not agent:
+        raise HTTPException(status_code=404, detail=f"Agent not found: {agent_id}")
+
+    # 1. Create Ultravox Call
+    url = "https://api.ultravox.ai/api/calls"
+    
+    payload = {
+        "systemPrompt": agent.system_prompt,
+        "model": agent.model,
+        "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
+        "languageHint": agent.language,
+        "temperature": agent.temperature or 0.3,
+        "firstSpeakerSettings": {"agent": {}}, # Agent speaks first for test calls
+        "recordingEnabled": True
+    }
+    
+    # Add tools (excluding transfer tools for web calls)
+    selected_tools = build_selected_tools(agent, db, is_web_call=True)
+    if selected_tools:
+        payload["selectedTools"] = selected_tools
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, headers={"X-API-Key": ultravox_api_key}, json=payload)
+            if resp.status_code != 201:
+                raise HTTPException(status_code=resp.status_code, detail=f"Ultravox Error: {resp.text}")
+            
+            data = resp.json()
+            join_url = data["joinUrl"]
+            call_id = data["callId"]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create Ultravox call: {str(e)}")
+
+    # Save to DB
+    try:
+        new_call = Call(
+            ultravox_call_id=call_id,
+            user_id=user.id,
+            agent_id=agent.id,
+            status="started",
+            direction="web"
+        )
+        db.add(new_call)
+        db.commit()
+    except Exception as e:
+        print(f"Error saving web call to DB: {e}")
+
+    return {"joinUrl": join_url, "callId": call_id}
 
 
 @app.post("/api/call")
@@ -2127,7 +2195,7 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
     }
     
     # Add tools if agent has them (with parameter overrides for transfer tools)
-    selected_tools = build_selected_tools(agent, db)
+    selected_tools = build_selected_tools(agent, db, is_web_call=False)
     if selected_tools:
         payload["selectedTools"] = selected_tools
         
@@ -2798,6 +2866,90 @@ async def get_recording_proxy(call_id: str):
         raise HTTPException(status_code=500, detail=f"Error fetching recording: {str(e)}")
 
 
+
+
+
+# --------------------------------------------------------------------------------
+# Business Checkup Endpoints
+# --------------------------------------------------------------------------------
+from checkup_service import BusinessCheckupService
+
+@app.post("/api/business-checkup/search")
+async def search_business_checkup(request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    try:
+        data = await request.json()
+    except:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+        
+    business_name = data.get("business_name")
+    if not business_name:
+         raise HTTPException(status_code=400, detail="Business name is required")
+
+    service = BusinessCheckupService(db, user.id)
+    report = service.search_business(business_name)
+    
+    if "error" in report:
+        if report["error"] == "Business not found":
+             raise HTTPException(status_code=404, detail="Business not found")
+        return JSONResponse(status_code=500, content={"detail": report["error"]})
+        
+    return report
+
+@app.post("/api/business-checkup/save")
+async def save_business_checkup(request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    try:
+        data = await request.json()
+    except:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    service = BusinessCheckupService(db, user.id)
+    report_data = data.get("report_data")
+    is_starred = data.get("is_starred", True)
+    
+    if not report_data:
+        raise HTTPException(status_code=400, detail="Report data required")
+
+    try:
+        saved = service.save_report(report_data, is_starred=is_starred)
+        return {
+            "id": saved.id,
+            "business_name": saved.business_name,
+            "created_at": saved.created_at.isoformat() if saved.created_at else None
+        }
+    except Exception as e:
+        logger.error(f"Error saving report: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/business-checkup/list")
+async def list_business_checkups(skip: int = 0, limit: int = 50, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    service = BusinessCheckupService(db, user.id)
+    results = service.list_starred_reports(skip, limit)
+    
+    response = []
+    for r in results:
+        try:
+             parsed_data = json.loads(r.report_data)
+        except:
+             parsed_data = {}
+        
+        response.append({
+            "id": r.id,
+            "business_name": r.business_name,
+            "address": r.address,
+            "phone": r.phone,
+            "website": r.website,
+            "report_data": parsed_data,
+            "is_starred": r.is_starred,
+            "created_at": r.created_at.isoformat() if r.created_at else None
+        })
+    return response
+
+@app.delete("/api/business-checkup/{checkup_id}")
+async def delete_business_checkup(checkup_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    service = BusinessCheckupService(db, user.id)
+    if service.delete_report(checkup_id):
+        return {"status": "success"}
+    raise HTTPException(status_code=404, detail="Report not found")
 
 
 if __name__ == "__main__":
