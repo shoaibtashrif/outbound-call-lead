@@ -36,10 +36,14 @@ class BusinessCheckupService:
             return {"error": "Google API disabled (Missing Key)"}
 
         search_query = business_name
+        location_parts = []
         if business_address:
-            search_query = f"{business_name}, {business_address}"
-        elif city_state:
-            search_query = f"{business_name}, {city_state}"
+            location_parts.append(business_address)
+        if city_state:
+            location_parts.append(city_state)
+            
+        if location_parts:
+            search_query = f"{business_name}, {', '.join(location_parts)}"
 
         logger.info(f"Searching for business: {search_query}")
         
@@ -74,21 +78,13 @@ class BusinessCheckupService:
             
             result = place_details["result"]
             
-            # Fetch actual photo URLs
-            photos_urls = []
-            if "photo" in result:
-                for photo_ref_obj in result["photo"][:3]:  # Limit to 3 photos
-                    try:
-                        photo_url = self.gmaps.places_photo(photo_ref_obj["photo_reference"], max_width=800)
-                        photos_urls.append(photo_url)
-                    except Exception as photo_e:
-                        logger.warning(f"Error fetching photo URL: {photo_e}")
-                        pass
+            # Check if business has photos (boolean for calculations)
+            has_photos = "photos" in result and len(result.get("photos", [])) > 0
             
             website_url = result.get("website")
             
             # Build the enriched report
-            report = self._build_report(result, photos_urls, website_url)
+            report = self._build_report(result, has_photos, website_url)
             
             return report
 
@@ -96,20 +92,142 @@ class BusinessCheckupService:
             logger.error(f"Error searching business: {e}")
             return {"error": str(e)}
 
-    def _build_report(self, place_data, photos_urls, website_url):
+    def _calculate_visibility_score(self, place_data, website_performance, has_photos):
         """
-        Builds a comprehensive report from Place data, PageSpeed, and website checks.
+        Calculates Business Visibility Score (0-100) using deterministic weighted formula.
+        NO AI - pure backend calculation.
+        """
+        score = 0
+        
+        # --- Google Presence (50 points total) ---
+        
+        # Rating Score (0-20 pts)
+        rating = place_data.get("rating", 0) or 0
+        if rating >= 4.5:
+            score += 20
+        elif rating >= 4.0:
+            score += 15
+        elif rating >= 3.5:
+            score += 10
+        elif rating >= 3.0:
+            score += 5
+        
+        # Review Volume (0-10 pts)
+        review_count = place_data.get("user_ratings_total", 0) or 0
+        if review_count >= 50:
+            score += 10
+        elif review_count >= 20:
+            score += 7
+        elif review_count >= 5:
+            score += 4
+        
+        # Profile Completeness (0-20 pts) - 5 pts each
+        if place_data.get("website"):
+            score += 5
+        if place_data.get("formatted_phone_number"):
+            score += 5
+        if "opening_hours" in place_data and place_data["opening_hours"]:
+            score += 5
+        if has_photos:
+            score += 5
+        
+        # --- Website Performance (40 points total) ---
+        
+        if isinstance(website_performance, dict) and "mobile_score" in website_performance:
+            # Mobile Score (0-20 pts)
+            mobile_score = website_performance.get("mobile_score", 0) or 0
+            if mobile_score >= 90:
+                score += 20
+            elif mobile_score >= 70:
+                score += 15
+            elif mobile_score >= 50:
+                score += 10
+            else:
+                score += 5
+            
+            # Desktop Score (0-10 pts)
+            desktop_score = website_performance.get("desktop_score", 0) or 0
+            if desktop_score >= 90:
+                score += 10
+            elif desktop_score >= 70:
+                score += 7
+            elif desktop_score >= 50:
+                score += 4
+            else:
+                score += 2            
+            # HTTPS Enabled (10 pts)
+            # Check from presence_checks or infer from website URL
+            website_url = place_data.get("website", "")
+            if website_url and website_url.startswith("https://"):
+                score += 10
+        
+        # --- Trust Signals (10 points total) ---
+        
+        if isinstance(website_performance, dict):
+            # Core Web Vitals (0-10 pts)
+            cwv = website_performance.get("core_web_vitals_summary", "N/A")
+            if cwv == "PASS":
+                score += 10
+            elif cwv == "NEEDS_IMPROVEMENT":
+                score += 5
+            # FAIL = 0
+        
+        return min(score, 100)  # Cap at 100
+    
+    def _calculate_revenue_leakage(self, place_data, website_performance, has_photos):
+        """
+        Calculates estimated revenue leakage using fixed assumptions.
+        Returns dict with percentage and dollar amount.
+        """
+        loss_percentage = 0
+        
+        # Rating < 4.0 → 15% conversion loss
+        rating = place_data.get("rating", 0) or 0
+        if rating < 4.0:
+            loss_percentage += 15
+        
+        # Mobile score < 70 → 10% traffic loss
+        if isinstance(website_performance, dict):
+            mobile_score = website_performance.get("mobile_score", 0) or 0
+            if mobile_score < 70:
+                loss_percentage += 10
+        
+        # Review count < 10 → 10% trust loss
+        review_count = place_data.get("user_ratings_total", 0) or 0
+        if review_count < 10:
+            loss_percentage += 10
+        
+        # No photos → 5% engagement loss
+        if not has_photos:
+            loss_percentage += 5
+        
+        # Cap at 40%
+        loss_percentage = min(loss_percentage, 40)
+        
+        # Fixed assumptions
+        opportunities_per_month = 100
+        average_job_value = 1500
+        
+        monthly_revenue_leakage = opportunities_per_month * average_job_value * (loss_percentage / 100)
+        
+        return {
+            "estimated_loss_percentage": loss_percentage,
+            "estimated_monthly_revenue_leakage": int(monthly_revenue_leakage)
+        }
+
+    def _build_report(self, place_data, has_photos, website_url):
+        """
+        Builds a comprehensive report with NEW SCHEMA using deterministic calculations.
         """
         # Extract primary category (type)
         primary_category = None
-        if "type" in place_data and place_data["type"]:
-            primary_category = place_data["type"][0] if isinstance(place_data["type"], list) else place_data["type"]
+        if "types" in place_data and place_data["types"]:  # Fixed: 'types' not 'type'
+            primary_category = place_data["types"][0] if isinstance(place_data["types"], list) else place_data["types"]
         
         # Extract opening hours
         opening_hours_data = None
         if "opening_hours" in place_data and place_data["opening_hours"]:
             opening_hours_obj = place_data["opening_hours"]
-            # Get weekday_text which has formatted hours like "Monday: 9:00 AM – 5:00 PM"
             opening_hours_data = opening_hours_obj.get("weekday_text", [])
         
         # Extract reviews
@@ -124,51 +242,69 @@ class BusinessCheckupService:
                     "relative_time": review.get("relative_time_description", "")
                 })
         
-        # Basic business details
-        business_details = {
-            "name": place_data.get("name"),
-            "address": place_data.get("formatted_address"),
-            "phone": place_data.get("formatted_phone_number"),
-            "website": website_url,
-            "rating": place_data.get("rating"),
-            "review_count": place_data.get("user_ratings_total"),
-            "status": place_data.get("business_status"),
-            "google_maps_url": place_data.get("url"),
-            "primary_category": primary_category,
-            "photos": photos_urls,
-            "opening_hours": opening_hours_data,
-            "reviews": reviews_data
-        }
-        
-        # Completeness check
-        completeness_check = {
-            "has_website": bool(website_url),
-            "has_phone": bool(place_data.get("formatted_phone_number")),
-            "has_hours": "opening_hours" in place_data and place_data["opening_hours"],
-            "has_photos": bool(photos_urls),
-            "has_reviews": place_data.get("user_ratings_total", 0) > 0,
-            "rating_health": "Good" if (place_data.get("rating") or 0) >= 4.0 else "Needs Improvement"
-        }
-        
-        # Website performance and presence checks
+        # Get website performance metrics
         website_performance = {}
-        presence_checks = {}
-        
         if website_url:
             website_performance = self._get_pagespeed_insights(website_url)
-            presence_checks = self._perform_website_presence_checks(website_url)
         else:
-            website_performance = {"note": "No website available"}
-            presence_checks = {"note": "No website available"}
+            website_performance = {
+                "mobile_score": 0,
+                "desktop_score": 0,
+                "core_web_vitals_summary": "N/A",
+                "https_enabled": False
+            }
+        
+        # NEW SCHEMA STRUCTURE
+        
+        # 1. business_info
+        business_info = {
+            "name": place_data.get("name", ""),
+            "address": place_data.get("formatted_address", ""),
+            "phone": place_data.get("formatted_phone_number", ""),
+            "website": website_url or ""
+        }
+        
+        # 2. google_metrics
+        google_metrics = {
+            "rating": place_data.get("rating", 0) or 0,
+            "review_count": place_data.get("user_ratings_total", 0) or 0,
+            "category": primary_category or "",
+            "verification_status": place_data.get("business_status", ""),
+            "profile_completeness": {
+                "has_website": bool(website_url),
+                "has_phone": bool(place_data.get("formatted_phone_number")),
+                "has_hours": bool(opening_hours_data),
+                "has_photos": has_photos
+            }
+        }
+        
+        # 3. website_metrics
+        website_metrics = {
+            "mobile_score": website_performance.get("mobile_score", 0),
+            "desktop_score": website_performance.get("desktop_score", 0),
+            "core_web_vitals_summary": website_performance.get("core_web_vitals_summary", "N/A"),
+            "https_enabled": website_url.startswith("https://") if website_url else False
+        }
+        
+        # 4. calculated_scores - DETERMINISTIC BACKEND CALCULATION
+        visibility_score = self._calculate_visibility_score(place_data, website_performance, has_photos)
+        revenue_leakage = self._calculate_revenue_leakage(place_data, website_performance, has_photos)
+        
+        calculated_scores = {
+            "visibility_score": visibility_score,
+            "estimated_loss_percentage": revenue_leakage["estimated_loss_percentage"],
+            "estimated_monthly_revenue_leakage": revenue_leakage["estimated_monthly_revenue_leakage"]
+        }
         
         report = {
-            "business_details": business_details,
-            "completeness_check": completeness_check,
-            "website_performance": website_performance,
-            "presence_checks": presence_checks
+            "business_info": business_info,
+            "google_metrics": google_metrics,
+            "website_metrics": website_metrics,
+            "calculated_scores": calculated_scores
         }
         
         return report
+
 
     def _get_pagespeed_insights(self, website_url):
         """

@@ -2873,27 +2873,93 @@ async def get_recording_proxy(call_id: str):
 # Business Checkup Endpoints
 # --------------------------------------------------------------------------------
 from checkup_service import BusinessCheckupService
+from pydantic import BaseModel, EmailStr
 
-@app.post("/api/business-checkup/search")
-async def search_business_checkup(request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+class BusinessCheckupRequest(BaseModel):
+    full_name: str
+    phone: str
+    business_name: str
+    email: EmailStr
+    business_address: Optional[str] = None
+    city_state: Optional[str] = None
+    website: Optional[str] = None
+
+# Public search endpoint (handles both auth and no-auth)
+@app.post(
+    "/api/business-checkup/search",
+    tags=["Business Checkup"],
+    summary="Search Business Checkup",
+    description="Search for a business and run a full checkup. Supports optional authentication.",
+    openapi_extra={"security": []} # Mark as public in Swagger
+)
+async def search_business_checkup(
+    request: BusinessCheckupRequest, 
+    db: Session = Depends(get_db), 
+    user: Optional[User] = Depends(get_current_user_optional)
+):
     try:
-        data = await request.json()
-    except:
-        raise HTTPException(status_code=400, detail="Invalid JSON")
-        
-    business_name = data.get("business_name")
-    if not business_name:
-         raise HTTPException(status_code=400, detail="Business name is required")
+        # Validate that we have location information
+        if not request.business_address and not request.city_state:
+            raise HTTPException(
+                status_code=400, 
+                detail="Either business_address or city_state is required for accurate search"
+            )
 
-    service = BusinessCheckupService(db, user.id)
-    report = service.search_business(business_name)
-    
-    if "error" in report:
-        if report["error"] == "Business not found":
-             raise HTTPException(status_code=404, detail="Business not found")
-        return JSONResponse(status_code=500, content={"detail": report["error"]})
+        # If no user is logged in, use the guest user (id=0)
+        current_user_id = user.id if user else 0
         
-    return report
+        # Ensure guest user exists if needed
+        if current_user_id == 0:
+            guest_user = db.query(User).filter(User.id == 0).first()
+            if not guest_user:
+                guest_user = User(
+                    id=0,
+                    username="__public_guest__",
+                    email="guest@system.internal",
+                    full_name="Public Guest",
+                    hashed_password=get_password_hash("guest_pass_123"), # Use global hashing util
+                    balance=0
+                )
+                db.add(guest_user)
+                db.commit()
+
+        service = BusinessCheckupService(db, current_user_id)
+        report = service.search_business(
+            business_name=request.business_name,
+            business_address=request.business_address,
+            city_state=request.city_state
+        )
+        
+        if "error" in report:
+            if report["error"] == "Business not found":
+                raise HTTPException(status_code=404, detail="Business not found")
+            return JSONResponse(status_code=500, content={"detail": report["error"]})
+        
+        # Automatically save public leads
+        if current_user_id == 0:
+            # We still need contact info for saving the lead internally, 
+            # but we won't return it in the API response if not requested.
+            # Let's add it temporarily for saving then remove it.
+            report_to_save = report.copy()
+            report_to_save["contact_info"] = {
+                "full_name": request.full_name,
+                "phone": request.phone,
+                "email": request.email,
+                "website": request.website
+            }
+            try:
+                service.save_report(report_to_save, is_starred=False)
+                logger.info(f"📊 Public search lead saved: {request.email} - {request.business_name}")
+            except Exception as e:
+                logger.warning(f"Could not save public checkup lead: {e}")
+        
+        return report
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in business checkup search: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/business-checkup/save")
 async def save_business_checkup(request: Request, db: Session = Depends(get_db), user: User = Depends(get_current_user)):

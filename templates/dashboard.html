@@ -1427,19 +1427,43 @@
             </div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="glass-card" style="margin-bottom: 30px; max-width: 800px; margin-left: auto; margin-right: auto;">
-            <div style="display: flex; gap: 15px; align-items: flex-end;">
-                <div class="form-group" style="flex: 2;">
-                    <label>Business Name</label>
-                    <input type="text" id="checkup-search-input" placeholder="e.g. Joe's Pizza, New York">
+        <!-- Search Form -->
+        <div class="glass-card" style="margin-bottom: 30px; max-width: 900px; margin-left: auto; margin-right: auto;">
+            <h3 style="margin-top: 0;">Business Information</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>Full Name <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="checkup-full-name" placeholder="e.g. John Doe" required>
                 </div>
-                <div class="form-group" style="flex: 0;">
-                    <button class="btn btn-primary" onclick="performBusinessSearch()" id="btn-checkup-search">
-                        <i class="fas fa-search"></i> Run Checkup
-                    </button>
+                <div class="form-group">
+                    <label>Phone <span style="color: var(--danger);">*</span></label>
+                    <input type="tel" id="checkup-phone" placeholder="e.g. +1-234-567-8900" required>
+                </div>
+                <div class="form-group">
+                    <label>Business Name <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="checkup-business-name" placeholder="e.g. Joe's Pizza" required>
+                </div>
+                <div class="form-group">
+                    <label>Email <span style="color: var(--danger);">*</span></label>
+                    <input type="email" id="checkup-email" placeholder="e.g. john@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Business Address</label>
+                    <input type="text" id="checkup-address" placeholder="e.g. 123 Main St, New York, NY">
+                </div>
+                <div class="form-group">
+                    <label>City + State (if no address)</label>
+                    <input type="text" id="checkup-city-state" placeholder="e.g. New York, NY">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Website URL (optional)</label>
+                    <input type="url" id="checkup-website" placeholder="e.g. https://example.com">
                 </div>
             </div>
+            <button class="btn btn-primary" onclick="performBusinessSearch()" id="btn-checkup-search"
+                style="width: 100%;">
+                <i class="fas fa-search"></i> Run Checkup
+            </button>
         </div>
 
         <!-- Live Result Container -->
@@ -2925,10 +2949,23 @@ function doPost(e) {
 
         async function performBusinessSearch() {
             const btn = document.getElementById('btn-checkup-search');
-            const input = document.getElementById('checkup-search-input');
             const resultDiv = document.getElementById('checkup-live-result');
 
-            if (!input.value.trim()) return alert("Please enter a business name");
+            // Get all form values
+            const fullName = document.getElementById('checkup-full-name').value.trim();
+            const phone = document.getElementById('checkup-phone').value.trim();
+            const businessName = document.getElementById('checkup-business-name').value.trim();
+            const email = document.getElementById('checkup-email').value.trim();
+            const address = document.getElementById('checkup-address').value.trim();
+            const cityState = document.getElementById('checkup-city-state').value.trim();
+            const website = document.getElementById('checkup-website').value.trim();
+
+            // Validate required fields
+            if (!fullName) return alert("Please enter your full name");
+            if (!phone) return alert("Please enter your phone number");
+            if (!businessName) return alert("Please enter the business name");
+            if (!email) return alert("Please enter your email");
+            if (!address && !cityState) return alert("Please enter either business address OR city + state");
 
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
             btn.disabled = true;
@@ -2939,7 +2976,15 @@ function doPost(e) {
                 const resp = await fetch('api/business-checkup/search', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ business_name: input.value })
+                    body: JSON.stringify({
+                        full_name: fullName,
+                        phone: phone,
+                        business_name: businessName,
+                        email: email,
+                        business_address: address,
+                        city_state: cityState,
+                        website: website
+                    })
                 });
 
                 if (!resp.ok) {
@@ -2961,26 +3006,32 @@ function doPost(e) {
         }
 
         function renderCheckupResult(data, container, isSaved) {
-            const bd = data.business_details || {};
-            const comp = data.completeness_check || {};
-            const perf = data.website_performance || {};
-            const pres = data.presence_checks || {};
+            // NEW SCHEMA: Extract from updated structure
+            const biz = data.business_info || {};
+            const gm = data.google_metrics || {};
+            const wm = data.website_metrics || {};
+            const scores = data.calculated_scores || {};
+            const comp = gm.profile_completeness || {};
 
-            const mobileScore = perf.mobile_score || 0;
-            const desktopScore = perf.desktop_score || 0;
+            const mobileScore = wm.mobile_score || 0;
+            const desktopScore = wm.desktop_score || 0;
+            const visibilityScore = scores.visibility_score || 0;
+            const lossPercent = scores.estimated_loss_percentage || 0;
+            const monthlyLeakage = scores.estimated_monthly_revenue_leakage || 0;
 
             const getScoreClass = (s) => s >= 90 ? 'score-good' : (s >= 50 ? 'score-avg' : 'score-bad');
+            const getVisibilityClass = (s) => s >= 80 ? 'score-good' : (s >= 50 ? 'score-avg' : 'score-bad');
 
             // Build opening hours HTML
             let hoursHTML = '';
-            if (bd.opening_hours && bd.opening_hours.length > 0) {
+            if (gm.opening_hours && gm.opening_hours.length > 0) {
                 hoursHTML = `
                     <div style="margin-top: 15px;">
                         <h4 style="margin: 10px 0; font-size: 14px;">
                             <i class="fas fa-clock"></i> Business Hours
                         </h4>
                         <ul style="list-style: none; padding: 0; font-size: 13px; color: var(--text-muted);">
-                            ${bd.opening_hours.map(day => `<li style="padding: 4px 0;">${day}</li>`).join('')}
+                            ${gm.opening_hours.map(day => `<li style="padding: 4px 0;">${day}</li>`).join('')}
                         </ul>
                     </div>
                 `;
@@ -3001,24 +3052,24 @@ function doPost(e) {
                         <i class="fas fa-address-card"></i> Contact Information
                     </h4>
                     <div style="font-size: 13px;">
-                        ${bd.phone ? `
+                        ${biz.phone ? `
                             <div style="padding: 6px 0;">
                                 <i class="fas fa-phone"></i> 
-                                <a href="tel:${bd.phone}" style="color: var(--primary);">${bd.phone}</a>
+                                <a href="tel:${biz.phone}" style="color: var(--primary);">${biz.phone}</a>
                             </div>
                         ` : '<div style="padding: 6px 0; color: var(--text-muted);"><i class="fas fa-phone"></i> No phone number</div>'}
                         
-                        ${bd.website ? `
+                        ${biz.website ? `
                             <div style="padding: 6px 0;">
                                 <i class="fas fa-globe"></i> 
-                                <a href="${bd.website}" target="_blank" style="color: var(--primary);">${bd.website}</a>
+                                <a href="${biz.website}" target="_blank" style="color: var(--primary);">${biz.website}</a>
                             </div>
                         ` : '<div style="padding: 6px 0; color: var(--text-muted);"><i class="fas fa-globe"></i> No website</div>'}
                         
-                        ${bd.google_maps_url ? `
+                        ${gm.google_maps_url ? `
                             <div style="padding: 6px 0;">
                                 <i class="fas fa-map-marker-alt"></i> 
-                                <a href="${bd.google_maps_url}" target="_blank" style="color: var(--primary);">View on Google Maps</a>
+                                <a href="${gm.google_maps_url}" target="_blank" style="color: var(--primary);">View on Google Maps</a>
                             </div>
                         ` : ''}
                     </div>
@@ -3027,15 +3078,15 @@ function doPost(e) {
 
             // Build reviews HTML with expand/collapse
             let reviewsHTML = '';
-            if (bd.reviews && bd.reviews.length > 0) {
+            if (gm.reviews && gm.reviews.length > 0) {
                 reviewsHTML = `
                     <div style="margin-top: 20px;">
                         <h4 style="margin: 10px 0; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="toggleReviews()">
-                            <i class="fas fa-star"></i> Reviews (${bd.review_count || bd.reviews.length})
+                            <i class="fas fa-star"></i> Reviews (${gm.review_count || gm.reviews.length})
                             <i id="reviews-toggle-icon" class="fas fa-chevron-down" style="font-size: 12px; margin-left: auto;"></i>
                         </h4>
                         <div id="reviews-container" style="display: none; margin-top: 10px;">
-                            ${bd.reviews.map((review, idx) => `
+                            ${gm.reviews.map((review, idx) => `
                                 <div style="background: rgba(15, 23, 42, 0.5); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--glass-border);">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                         <strong style="font-size: 13px;">${review.author_name}</strong>
@@ -3069,14 +3120,14 @@ function doPost(e) {
 
             // Build photos HTML
             let photosHTML = '';
-            if (bd.photos && bd.photos.length > 0) {
+            if (gm.photos && gm.photos.length > 0) {
                 photosHTML = `
                     <div style="margin-top: 20px;">
                         <h4 style="margin: 10px 0; font-size: 14px;">
                             <i class="fas fa-camera"></i> Photos
                         </h4>
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 10px;">
-                            ${bd.photos.map(photo => `
+                            ${gm.photos.map(photo => `
                                 <div style="position: relative; padding-bottom: 100%; overflow: hidden; border-radius: 8px; background: rgba(15, 23, 42, 0.5);">
                                     <img src="${photo}" alt="Business photo" 
                                          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; cursor: pointer;"
@@ -3107,8 +3158,45 @@ function doPost(e) {
                            </button>`
                 }
                     
-                    <h2 style="margin-top: 0;">${bd.name}</h2>
-                    <p style="color: var(--text-muted);"><i class="fas fa-map-marker-alt"></i> ${bd.address || 'N/A'}</p>
+                    <h2 style="margin-top: 0;">${biz.name}</h2>
+                    <p style="color: var(--text-muted);"><i class="fas fa-map-marker-alt"></i> ${biz.address || 'N/A'}</p>
+                    
+                    <!-- NEW: Visibility Score Badge (Prominent Display) -->
+                    <div style="text-align: center; margin: 30px 0; padding: 30px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1)); border-radius: 16px; border: 2px solid var(--glass-border);">
+                        <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 10px;">
+                            Business Visibility Score
+                        </div>
+                        <div style="font-size: 72px; font-weight: bold; margin: 10px 0;" class="${getVisibilityClass(visibilityScore)}">
+                            ${visibilityScore}<span style="font-size: 36px;">/100</span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-muted); margin-top: 10px;">
+                            ${visibilityScore >= 80 ? '🎉 Excellent online presence!' : 
+                              visibilityScore >= 50 ? '⚠️ Room for improvement' : 
+                              '❌ Significant visibility issues detected'}
+                        </div>
+                    </div>
+
+                    <!-- NEW: Revenue Leakage Card -->
+                    ${lossPercent > 0 ? `
+                        <div style="margin: 20px 0; padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: 12px; border: 2px solid rgba(239, 68, 68, 0.3);">
+                            <h3 style="margin: 0 0 15px 0; color: var(--danger); display: flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-exclamation-triangle"></i> Estimated Revenue Leakage
+                            </h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div>
+                                    <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 5px;">Loss Percentage</div>
+                                    <div style="font-size: 36px; font-weight: bold; color: var(--danger);">${lossPercent}%</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 5px;">Monthly Revenue Loss</div>
+                                    <div style="font-size: 36px; font-weight: bold; color: var(--danger);">$${monthlyLeakage.toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(239, 68, 68, 0.2);">
+                                <i class="fas fa-info-circle"></i> Based on 100 opportunities/month × $1,500 avg. job value
+                            </div>
+                        </div>
+                    ` : ''}
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
                         <!-- Left: Core Info -->
@@ -3122,7 +3210,7 @@ function doPost(e) {
                             </ul>
                             
                             <div style="margin-top: 15px;">
-                                <strong>Google Rating:</strong> ${bd.rating || 'N/A'} ⭐ (${bd.review_count || 0} reviews)
+                                <strong>Google Rating:</strong> ${gm.rating || 'N/A'} ⭐ (${gm.review_count || 0} reviews)
                             </div>
 
                             ${contactHTML}
@@ -3132,7 +3220,7 @@ function doPost(e) {
                         <!-- Right: Website Performance -->
                         <div>
                             <h3>Website Health</h3>
-                            ${bd.website ? `
+                            ${biz.website ? `
                                 <div style="margin-bottom: 10px;">
                                     Mobile Performance: <span class="checkup-score-badge ${getScoreClass(mobileScore)}">${mobileScore}/100</span>
                                 </div>
@@ -3140,8 +3228,8 @@ function doPost(e) {
                                     Desktop Performance: <span class="checkup-score-badge ${getScoreClass(desktopScore)}">${desktopScore}/100</span>
                                 </div>
                                 <div style="font-size: 12px; color: var(--text-muted);">
-                                    HTTPS: ${pres.https_enabled ? 'Secure 🔒' : 'Insecure ⚠️'}<br>
-                                    Mobile Friendly: ${pres.mobile_responsive}
+                                    HTTPS: ${wm.https_enabled ? 'Secure 🔒' : 'Insecure ⚠️'}<br>
+                                    Core Web Vitals: ${wm.core_web_vitals_summary || 'N/A'}
                                 </div>
                             ` : '<div style="color: var(--danger);">No Website Detected</div>'}
 
