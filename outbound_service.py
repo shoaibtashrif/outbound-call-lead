@@ -9,7 +9,7 @@ from groq import Groq
 import requests
 import io
 import pandas as pd
-from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File, Depends, Body, Header
+from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File, Depends, Body, Header, BackgroundTasks
 from fastapi.responses import HTMLResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -26,6 +26,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from google_sheets_service import google_sheets_service
+from report_helper import send_checkup_email_report
 
 
 load_dotenv()
@@ -2894,6 +2895,7 @@ class BusinessCheckupRequest(BaseModel):
 )
 async def search_business_checkup(
     request: BusinessCheckupRequest, 
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db), 
     user: Optional[User] = Depends(get_current_user_optional)
 ):
@@ -2952,6 +2954,9 @@ async def search_business_checkup(
                 logger.info(f"📊 Public search lead saved: {request.email} - {request.business_name}")
             except Exception as e:
                 logger.warning(f"Could not save public checkup lead: {e}")
+        
+        # Schedule email sending
+        background_tasks.add_task(send_checkup_email_report, request.email, report)
         
         return report
         

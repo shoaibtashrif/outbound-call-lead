@@ -8,6 +8,8 @@ Specifically designed for automated business auditing and lead generation. This 
 **Method:** `POST`  
 **Auth:** Optional (Publicly accessible)
 
+**Note:** A PDF report is automatically generated and emailed to the address provided in the `email` field.
+
 ---
 
 ## 1. Request Schema
@@ -97,37 +99,37 @@ curl -X 'POST' 'http://localhost:8002/api/business-checkup/search' \
 
 ### Sample JSON Response
 ```json
+
 {
-  "business_info": {
-    "name": "McDonald's",
-    "address": "1528 Broadway Times Square, New York, NY 10036, USA",
-    "phone": "(917) 409-5946",
-    "website": "https://www.mcdonalds.com/us/en-us/..."
-  },
-  "google_metrics": {
-    "rating": 3.7,
-    "review_count": 1593,
-    "category": "cafe",
-    "verification_status": "OPERATIONAL",
-    "has_photos": true,
-    "profile_completeness": {
-      "has_website": true,
-      "has_phone": true,
-      "has_hours": true,
-      "has_photos": true
+    "business_info": {
+        "name": "McDonald's",
+        "address": "1528 Broadway Times Square, New York, NY 10036, USA",
+        "phone": "(917) 409-5946",
+        "website": "https://www.mcdonalds.com/us/en-us/location/NY/New-York/1528-Broadway/39147.html?cid=RF:YXT:GMB::Clicks"
+    },
+    "google_metrics": {
+        "rating": 3.7,
+        "review_count": 1593,
+        "category": "cafe",
+        "verification_status": "OPERATIONAL",
+        "profile_completeness": {
+            "has_website": true,
+            "has_phone": true,
+            "has_hours": true,
+            "has_photos": true
+        }
+    },
+    "website_metrics": {
+        "mobile_score": 0,
+        "desktop_score": 0,
+        "core_web_vitals_summary": "N/A",
+        "https_enabled": true
+    },
+    "calculated_scores": {
+        "visibility_score": 57,
+        "estimated_loss_percentage": 25,
+        "estimated_monthly_revenue_leakage": 37500
     }
-  },
-  "website_metrics": {
-    "mobile_score": 53,
-    "desktop_score": 65,
-    "core_web_vitals_summary": "NEEDS_IMPROVEMENT",
-    "https_enabled": true
-  },
-  "calculated_scores": {
-    "visibility_score": 67,
-    "estimated_loss_percentage": 25,
-    "estimated_monthly_revenue_leakage": 37500
-  }
 }
 ```
 
