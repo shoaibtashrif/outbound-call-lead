@@ -78,15 +78,15 @@ async def monitor_calls_and_balance():
             # Find active calls in our DB
             active_calls = db.query(Call).filter(Call.status.in_(["started", "active"])).all()
             api_key = os.getenv("ULTRAVOX_API_KEY")
-            
+
             logger.info(f"🔍 Monitoring {len(active_calls)} active calls...")
-            
+
             for call in active_calls:
                 user = db.query(User).filter(User.id == call.user_id).first()
-                if not user: 
+                if not user:
                     logger.warning(f"⚠️ No user found for call {call.id}")
                     continue
-                
+
                 # Check actual status from Ultravox first
                 try:
                     async with httpx.AsyncClient() as client:
@@ -101,10 +101,10 @@ async def monitor_calls_and_balance():
                                     if isinstance(dur, str): dur = float(dur.replace("s", ""))
                                     call.duration = int(dur)
                                 db.commit()
-                                
+
                                 # Check if call is missed and send qualifying SMS
                                 await check_and_handle_missed_call(call, data, db, logger)
-                                
+
                                 # Send SMS if data collected and not sent yet
                                 await send_call_summary_sms(call, db, logger)
                                 continue
@@ -115,7 +115,7 @@ async def monitor_calls_and_balance():
                 cost_per_min = 0.05
                 user.balance -= cost_per_min
                 logger.info(f"💰 Deducted ${cost_per_min} from user {user.username}, balance: ${user.balance:.2f}")
-                
+
                 if user.balance <= 0:
                     user.balance = 0
                     logger.warning(f"⚠️ User {user.username} balance exhausted, terminating call {call.ultravox_call_id}")
@@ -127,7 +127,7 @@ async def monitor_calls_and_balance():
                         logger.info(f"✅ Call {call.ultravox_call_id} terminated due to insufficient balance")
                     except Exception as e:
                         logger.error(f"❌ Error terminating call {call.ultravox_call_id}: {e}")
-                
+
                 db.commit()
         except Exception as e:
             logger.error(f"❌ Monitor error: {e}")
@@ -140,7 +140,7 @@ async def check_and_handle_missed_call(call: Call, ultravox_data: dict, db: Sess
         # Check duration
         duration = call.duration or 0
         is_short_call = duration < 7
-        
+
         # Check if user spoke (has user messages)
         has_user_input = False
         try:
@@ -156,55 +156,54 @@ async def check_and_handle_missed_call(call: Call, ultravox_data: dict, db: Sess
                     has_user_input = any(msg.get('role') == 'user' and msg.get('text', '').strip() for msg in messages)
         except Exception as e:
             logger.warning(f"⚠️ Could not check user input for call {call.ultravox_call_id}: {e}")
-        
+
         # Call is missed if duration < 7 seconds OR no user input
         is_missed_call = is_short_call or not has_user_input
-        
+
         if is_missed_call:
             logger.info(f"📞 Call {call.ultravox_call_id} is MISSED (duration: {duration}s, user_input: {has_user_input})")
-            
+
             # Get agent first
             agent = None
             if call.agent_id:
                 agent = db.query(Agent).filter(Agent.id == call.agent_id).first()
-            
+
             # For missed calls, use same logic as call summary SMS
             # Get Twilio credentials (same as send_call_summary_sms)
             account_sid = os.getenv("TWILIO_ACCOUNT_SID")
             auth_token = os.getenv("TWILIO_AUTH_TOKEN")
             sender_number = call.to_number  # Same as call summary SMS
-            
+
             if not all([account_sid, auth_token, sender_number]):
                 logger.error("❌ Missing Twilio credentials in environment variables")
                 return
-            
+
             # Recipient is from_number (same as call summary SMS)
             # recipient = call.from_number
             recipient = "+923040610720"
-            
+
             if not recipient:
                 logger.warning(f"⚠️ No recipient number for missed call {call.id}")
                 return
-            
+
             # Qualifying questions SMS
             qualifying_questions = (
                 "Hi! We tried reaching you but couldn't connect. "
                 "Would you be interested in learning more about our services? "
                 "Please reply YES if interested, or let us know a better time to call."
             )
-            
+
             logger.info(f"📨 Sending missed call qualifying SMS from {sender_number} to {recipient}")
             logger.info(f"📝 SMS Content: {qualifying_questions}")
-            
-            # Send SMS via Twilio (same way as call summary SMS)
+
             try:
-                # twilio_client = Client(account_sid, auth_token)
-                # message = twilio_client.messages.create(
-                #     body=qualifying_questions,
-                #     from_=sender_number,
-                #     to=recipient
-                # )
-                
+                twilio_client = Client(account_sid, auth_token)
+                message = twilio_client.messages.create(
+                    body=qualifying_questions,
+                    from_=sender_number,
+                    to=recipient
+                )
+
                 logger.info(f"✅ Missed call SMS sent successfully!")
                 logger.info(f"📨 Message SID: {message.sid}")
                 logger.info(f"📱 Status: {message.status}")
@@ -224,7 +223,7 @@ async def check_and_handle_missed_call(call: Call, ultravox_data: dict, db: Sess
                     logger.error(f"❌ Unhandled SMS error: {error_msg}")
                 # Don't save to DB if SMS failed to send
                 return
-            
+
             # Save outbound SMS to database (only if SMS was sent successfully)
             sms_record = SMS(
                 agent_id=call.agent_id,
@@ -237,13 +236,13 @@ async def check_and_handle_missed_call(call: Call, ultravox_data: dict, db: Sess
             db.add(sms_record)
             db.commit()
             db.refresh(sms_record)
-            
+
             logger.info(f"✅ Outbound SMS saved to database with ID: {sms_record.id}")
-            
+
             # Note: Missed call SMS are NOT saved to Google Sheets per user requirement
         else:
             logger.info(f"✅ Call {call.ultravox_call_id} is NOT missed (duration: {duration}s, user_input: {has_user_input})")
-            
+
     except Exception as e:
         logger.error(f"❌ Error handling missed call for {call.ultravox_call_id}: {e}", exc_info=True)
 
@@ -263,14 +262,14 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
         account_sid = os.getenv("TWILIO_ACCOUNT_SID")
         auth_token = os.getenv("TWILIO_AUTH_TOKEN")
         sender_number = call.to_number
-        
+
         if not all([account_sid, auth_token, sender_number]):
             logger.error("❌ Missing Twilio credentials in environment variables")
             return
 
         # Initialize Twilio client
         twilio_client = Client(account_sid, auth_token)
-        
+
         # Parse collected data
         try:
             collected = json.loads(call.collected_data)
@@ -278,30 +277,30 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
         except json.JSONDecodeError as e:
             logger.error(f"❌ Invalid JSON in collected_data for call {call.id}: {e}")
             return
-        
+
         # Build SMS message
         msg_body = "📞 Call Summary:\n"
         for key, value in collected.items():
             # Clean up the key name for better readability
             clean_key = key.replace('_', ' ').title()
             msg_body += f"• {clean_key}: {value}\n"
-        
+
         # Add call details
         if call.duration:
             minutes = call.duration // 60
             seconds = call.duration % 60
             msg_body += f"• Duration: {minutes}m {seconds}s\n"
-        
+
         msg_body += f"• Call ID: {call.id}\n"
         msg_body += "Thank you for your time!"
-        
+
         # Hardcode recipient for now
         # recipient = call.from_number
         recipient = "+923040610720"
-        
+
         logger.info(f"📨 Sending call summary SMS to {recipient}")
         logger.info(f"📝 SMS Content: {msg_body}")
-        
+
         # Send SMS
         try:
             # message = twilio_client.messages.create(
@@ -309,22 +308,22 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
             #     from_=sender_number,
             #     to=recipient
             # )
-            
+
             # Mark as sent
             call.sms_sent = True
             db.commit()
-            
+
             logger.info(f"✅ Call summary SMS sent successfully!")
             logger.info(f"📨 Message SID: {message.sid}")
             logger.info(f"📱 Status: {message.status}")
             logger.info(f"📞 From: {message.from_}")
             logger.info(f"📞 To: {message.to}")
-            
+
             # Save outbound SMS to database (only if SMS sent successfully)
             agent = None
             if call.agent_id:
                 agent = db.query(Agent).filter(Agent.id == call.agent_id).first()
-            
+
             sms_record = SMS(
                 agent_id=call.agent_id,
                 from_number=sender_number,
@@ -336,14 +335,14 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
             db.add(sms_record)
             db.commit()
             db.refresh(sms_record)
-            
+
             logger.info(f"✅ Call summary SMS saved to database with ID: {sms_record.id}")
         except Exception as sms_error:
             error_msg = str(sms_error)
             logger.error(f"❌ Error sending call summary SMS: {error_msg}")
             # Re-raise to be caught by outer exception handler
             raise
-        
+
         # Save to Google Sheets if agent is configured
         if agent:
             try:
@@ -358,7 +357,7 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
                     "Call ID": call.ultravox_call_id,
                     "Type": "Call Summary"
                 }
-                
+
                 # Priority 1: Use Webhook URL if configured
                 if agent.google_webhook_url:
                     logger.info(f"🚀 Forwarding call summary SMS data to Google Webhook")
@@ -368,7 +367,7 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
                             logger.info(f"✅ Webhook Response ({resp.status_code}): {resp.text}")
                         except Exception as e:
                             logger.error(f"❌ Webhook Error: {e}")
-                
+
                 # Priority 2: Use Direct API
                 elif agent.google_spreadsheet_id:
                     sheet_name = agent.google_sheet_name or "Sheet1"
@@ -380,11 +379,11 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
                         logger.info(f"✅ Call summary SMS saved to Google Sheets")
             except Exception as e:
                 logger.error(f"❌ Error saving call summary SMS to Google Sheets: {e}", exc_info=True)
-        
+
     except Exception as e:
         error_msg = str(e)
         logger.error(f"❌ Error sending call summary SMS for call {call.id}: {error_msg}", exc_info=True)
-        
+
         # Check for specific Twilio errors
         if "Permission to send" in error_msg or "not enabled for the region" in error_msg:
             logger.warning(f"⚠️ SMS not enabled for region +923040610720, marking as sent to avoid retries")
@@ -405,10 +404,10 @@ async def send_call_summary_sms(call: Call, db: Session, logger):
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(monitor_calls_and_balance())
-    
+
     # Sync Ultravox built-in tools
     await sync_builtin_tools()
-    
+
     # Register Google Sheets Tool if not exists
     db = SessionLocal()
     try:
@@ -422,9 +421,9 @@ async def startup_event():
                 tool_url = f"{host}{path_prefix}/api/tools/google-sheets/append"
             else:
                 tool_url = f"{host}/api/tools/google-sheets/append"
-            
+
             print(f"🛠️ Registering/Updating Google Sheets Tool at {tool_url}")
-            
+
             # Register/Update in Ultravox
             api_key = os.getenv("ULTRAVOX_API_KEY")
             payload = {
@@ -449,7 +448,7 @@ async def startup_event():
                 if resp.status_code == 404:
                     # If not found, create it
                     resp = await client.post("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key}, json=payload)
-                
+
                 print(f"🛠️ Ultravox Tool Registration/Update Response: {resp.status_code}")
                 if resp.status_code not in [200, 201]:
                     print(f"⚠️ Tool Registration Error: {resp.text}")
@@ -479,7 +478,7 @@ async def sync_builtin_tools():
     if not api_key:
         print("⚠️ ULTRAVOX_API_KEY not set, skipping built-in tools sync")
         return
-    
+
     db = SessionLocal()
     try:
         print("🔄 Syncing Ultravox built-in tools...")
@@ -488,13 +487,13 @@ async def sync_builtin_tools():
             if resp.status_code != 200:
                 print(f"⚠️ Failed to fetch built-in tools: {resp.status_code}")
                 return
-            
+
             data = resp.json()
             tools_list = data.get("results", [])
-            
+
             # Filter for built-in tools (they don't have a 'definition.http' field or have specific names)
             builtin_tool_names = ["queryCorpus", "leaveVoicemail", "hangUp", "playDtmfSounds", "coldTransfer", "warmTransfer"]
-            
+
             for tool_data in tools_list:
                 tool_name = tool_data.get("name")
                 if tool_name in builtin_tool_names:
@@ -514,7 +513,7 @@ async def sync_builtin_tools():
                         # Update description if changed
                         existing.is_builtin = True
                         existing.description = tool_data.get("definition", {}).get("description", existing.description)
-            
+
             db.commit()
             print(f"✅ Built-in tools sync complete")
     except Exception as e:
@@ -526,7 +525,7 @@ def get_transfer_tool(agent, base_url: str, service_api_key: str):
     """Build custom transferCall tool for Twilio transfers"""
     if not agent.transfer_number:
         return None
-    
+
     return {
         "temporaryTool": {
             "modelToolName": "transferCall",
@@ -602,18 +601,18 @@ def build_selected_tools(agent, db: Session, is_web_call: bool = False):
     """Build selectedTools array for Ultravox call with custom transfer tool for Twilio"""
     if not agent.tools and (not agent.transfer_number or is_web_call):
         return None
-    
+
     selected_tools = []
-    
+
     # Add regular tools (skip built-in SIP transfer tools)
     if agent.tools:
         for tool in agent.tools:
             # Skip SIP-based transfer tools (they don't work with Twilio)
             if tool.name in ["coldTransfer", "warmTransfer"]:
                 continue
-            
+
             tool_entry = {"toolName": tool.name}
-            
+
             # Add parameter overrides for googleSheetsAppend
             if tool.name == "googleSheetsAppend":
                 overrides = {}
@@ -623,9 +622,9 @@ def build_selected_tools(agent, db: Session, is_web_call: bool = False):
                     overrides["sheet_name"] = agent.google_sheet_name
                 if overrides:
                     tool_entry["parameterOverrides"] = overrides
-            
+
             selected_tools.append(tool_entry)
-    
+
     # Add custom Twilio transfer tool if agent has transfer number (only for non-web calls)
     if not is_web_call and agent.transfer_number:
         host = os.getenv("SERVER_HOST")
@@ -637,12 +636,12 @@ def build_selected_tools(agent, db: Session, is_web_call: bool = False):
                 base_url = f"{host}{path_prefix}"
             else:
                 base_url = host
-            
+
             service_api_key = os.getenv("SERVICE_API_KEY", "change-this-key")
             transfer_tool = get_transfer_tool(agent, base_url, service_api_key)
             if transfer_tool:
                 selected_tools.append(transfer_tool)
-    
+
     return selected_tools if selected_tools else None
 
 async def simple_transfer(call, destination_number, db: Session):
@@ -658,7 +657,7 @@ async def simple_transfer(call, destination_number, db: Session):
             twilio_token = os.getenv("TWILIO_AUTH_TOKEN")
 
         twilio_client = Client(twilio_sid, twilio_token)
-        
+
         # Update call to dial destination
         twilio_client.calls(call.twilio_sid).update(
             twiml=f'<Response><Dial>{destination_number}</Dial></Response>'
@@ -680,10 +679,10 @@ async def whisper_transfer(call, destination_number, first_name, last_name, reas
             twilio_token = os.getenv("TWILIO_AUTH_TOKEN")
 
         twilio_client = Client(twilio_sid, twilio_token)
-        
+
         # Create conference name
         conference_name = f"transfer_{call.ultravox_call_id}"
-        
+
         # Move original caller to conference with hold music
         twilio_client.calls(call.twilio_sid).update(
             twiml=f'''<Response>
@@ -694,7 +693,7 @@ async def whisper_transfer(call, destination_number, first_name, last_name, reas
                 </Dial>
             </Response>'''
         )
-        
+
         # Call human agent with whisper message
         host = os.getenv("SERVER_HOST")
         if host:
@@ -706,7 +705,7 @@ async def whisper_transfer(call, destination_number, first_name, last_name, reas
                 base_url = host
         else:
             base_url = "http://localhost:8002" # Fallback
-            
+
         params = {
             "firstName": first_name,
             "lastName": last_name,
@@ -714,7 +713,7 @@ async def whisper_transfer(call, destination_number, first_name, last_name, reas
             "confName": conference_name
         }
         whisper_url = f"{base_url}/api/whisper?{urlencode(params)}"
-        
+
         logger.info(f"📞 Calling human agent at {destination_number} for whisper transfer...")
         twilio_client.calls.create(
             to=destination_number,
@@ -737,25 +736,25 @@ async def handle_transfer(
 ):
     """Handle call transfer requests from Ultravox AI"""
     logger.info(f"🔄 Received transfer request for Ultravox Call ID: {ultravoxCallId}")
-    
+
     # Validate API key
     service_api_key = os.getenv("SERVICE_API_KEY", "change-this-key")
     if api_key != service_api_key:
         logger.warning(f"⚠️ Unauthorized transfer attempt with key: {api_key}")
         raise HTTPException(status_code=401, detail="Unauthorized")
-    
+
     # Get call details from database
     call = db.query(Call).filter(Call.ultravox_call_id == ultravoxCallId).first()
     if not call:
         logger.error(f"❌ Call not found for Ultravox ID: {ultravoxCallId}")
         raise HTTPException(status_code=404, detail="Call not found")
-    
+
     # Perform Twilio transfer
     if useWhisper:
         await whisper_transfer(call, destinationNumber, firstName or "", lastName or "", transferReason or "", db)
     else:
         await simple_transfer(call, destinationNumber, db)
-    
+
     return {"status": "success", "message": "Transfer initiated"}
 
 @app.get("/api/whisper")
@@ -767,9 +766,9 @@ async def whisper_message(request: Request):
     last_name = params.get("lastName", "")
     reason = params.get("reason", "No reason provided")
     conf_name = params.get("confName", "")
-    
+
     message = f"Incoming transfer from {first_name} {last_name}. Reason: {reason}. Press 1 to accept and join the call."
-    
+
     # Use the same host logic for the action URL
     host = os.getenv("SERVER_HOST")
     if host:
@@ -781,9 +780,9 @@ async def whisper_message(request: Request):
             base_url = host
     else:
         base_url = "" # Relative path fallback
-        
+
     action_url = f"{base_url}/api/connect-conference?{urlencode({'confName': conf_name})}"
-    
+
     xml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Gather numDigits="1" action="{action_url}" method="POST">
@@ -800,7 +799,7 @@ async def connect_conference(request: Request):
     form_data = await request.form()
     digits = form_data.get("Digits")
     conf_name = request.query_params.get("confName")
-    
+
     if digits == "1":
         xml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -815,7 +814,7 @@ async def connect_conference(request: Request):
     <Say>Transfer cancelled. Goodbye.</Say>
     <Hangup/>
 </Response>'''
-        
+
     return Response(content=xml, media_type="application/xml")
 
 
@@ -968,7 +967,7 @@ async def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-    
+
     hashed_password = get_password_hash(user.password)
     new_user = User(
         username=user.username,
@@ -993,10 +992,10 @@ async def check_username(username: str, db: Session = Depends(get_db)):
 @app.get("/api/dashboard")
 async def get_dashboard_data(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     agent_count = db.query(Agent).filter(Agent.user_id == user.id).count()
-    
+
     # Count actual live calls
     live_calls = db.query(Call).filter(
-        Call.user_id == user.id, 
+        Call.user_id == user.id,
         Call.status.in_(["started", "active"])
     ).count()
 
@@ -1008,20 +1007,20 @@ async def get_dashboard_data(user: User = Depends(get_current_user), db: Session
         day_label = target_date.strftime("%a")
         date_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
         date_end = date_start + timedelta(days=1)
-        
+
         # Call count
         count = db.query(Call).filter(Call.user_id == user.id, Call.created_at >= date_start, Call.created_at < date_end).count()
         usage_data.append({"day": day_label, "calls": count})
-        
+
         # Satisfaction average
         avg_score = db.query(func.avg(Call.satisfaction_score)).filter(
-            Call.user_id == user.id, 
-            Call.created_at >= date_start, 
+            Call.user_id == user.id,
+            Call.created_at >= date_start,
             Call.created_at < date_end,
             Call.satisfaction_score != None
         ).scalar() or 0
         satisfaction_data.append({"day": day_label, "score": round(float(avg_score), 1)})
-    
+
     # Satisfaction distribution for Pie Chart
     successful_calls = db.query(Call).filter(Call.user_id == user.id, Call.satisfaction_score >= 7).count()
     unsuccessful_calls = db.query(Call).filter(Call.user_id == user.id, Call.satisfaction_score < 7, Call.satisfaction_score != None).count()
@@ -1055,14 +1054,14 @@ async def get_stats(db: Session = Depends(get_db), user: User = Depends(get_curr
     total_calls = db.query(Call).filter(Call.user_id == user.id).count()
     total_duration = db.query(func.sum(Call.duration)).filter(Call.user_id == user.id).scalar() or 0
     active_agents = db.query(Agent).filter(Agent.user_id == user.id).count()
-    
+
     # Get calls per day for the last 7 days
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     calls_last_7_days = db.query(Call).filter(Call.user_id == user.id, Call.created_at >= seven_days_ago).count()
-    
+
     # Live calls
     live_calls = db.query(Call).filter(
-        Call.user_id == user.id, 
+        Call.user_id == user.id,
         Call.status.in_(["started", "active"])
     ).count()
 
@@ -1085,7 +1084,7 @@ async def update_user_profile(req: Dict[str, Any], db: Session = Depends(get_db)
     if "full_name" in req: user.full_name = req["full_name"]
     if "email" in req: user.email = req["email"]
     if "business_type" in req: user.business_type = req["business_type"]
-    
+
     db.commit()
     db.refresh(user)
     return user
@@ -1099,7 +1098,7 @@ async def get_recent_numbers(db: Session = Depends(get_db), user: User = Depends
         Call.user_id == user.id,
         Call.to_number != None
     ).group_by(Call.to_number).order_by(func.max(Call.created_at).desc()).limit(10).all()
-    
+
     return [r[0] for r in recent]
 
 # --- Twilio Numbers API ---
@@ -1142,7 +1141,7 @@ async def update_twilio_webhook(db: Session, twilio_number_id: int):
     num = db.query(TwilioNumber).filter(TwilioNumber.id == twilio_number_id).first()
     if not num:
         return
-    
+
     try:
         client = Client(num.account_sid, num.auth_token)
         # Get server host
@@ -1150,17 +1149,17 @@ async def update_twilio_webhook(db: Session, twilio_number_id: int):
         if not host:
             print("⚠️ SERVER_HOST not set, cannot update Twilio webhook")
             return
-            
+
         if not host.startswith("http"):
             host = f"https://{host}"
-            
+
         # Ensure path prefix
         path_prefix = os.getenv("PATH_PREFIX", "")
         if path_prefix and path_prefix not in host:
             webhook_url = f"{host}{path_prefix}/api/inbound"
         else:
             webhook_url = f"{host}/api/inbound"
-            
+
         # Find the number on Twilio and update it
         incoming_numbers = client.incoming_phone_numbers.list(phone_number=num.phone_number)
         if incoming_numbers:
@@ -1225,20 +1224,20 @@ async def create_agent(req: AgentCreate, db: Session = Depends(get_db), user: Us
         temperature=req.temperature,
         speed=req.speed
     )
-    
+
     # Add tools if provided
     if req.tool_names:
         tools = db.query(Tool).filter(Tool.name.in_(req.tool_names)).all()
         db_agent.tools = tools
-    
+
     db.add(db_agent)
     db.commit()
     db.refresh(db_agent)
-    
+
     # Update Twilio Webhook if number assigned
     if db_agent.twilio_number_id:
         await update_twilio_webhook(db, db_agent.twilio_number_id)
-    
+
     return {
         "agentId": str(db_agent.id),
         "name": db_agent.name,
@@ -1268,7 +1267,7 @@ async def update_agent_full(agent_id: int, req: AgentCreate, db: Session = Depen
     db_agent = db.query(Agent).filter(Agent.id == agent_id, Agent.user_id == user.id).first()
     if not db_agent:
         raise HTTPException(status_code=404, detail="Agent not found")
-    
+
     # Check if number is already assigned to another agent
     if req.twilio_number_id and req.twilio_number_id != db_agent.twilio_number_id:
         existing = db.query(Agent).filter(Agent.twilio_number_id == req.twilio_number_id, Agent.id != agent_id).first()
@@ -1290,14 +1289,14 @@ async def update_agent_full(agent_id: int, req: AgentCreate, db: Session = Depen
     db_agent.transfer_number = req.transfer_number
     db_agent.temperature = req.temperature
     db_agent.speed = req.speed
-    
+
     old_number_id = db_agent.twilio_number_id
     db_agent.twilio_number_id = req.twilio_number_id
-    
+
     if req.tool_names is not None:
         tools = db.query(Tool).filter(Tool.name.in_(req.tool_names)).all()
         db_agent.tools = tools
-        
+
     db.commit()
     db.refresh(db_agent)
 
@@ -1337,10 +1336,10 @@ async def list_voices():
     api_key = os.getenv("ULTRAVOX_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="ULTRAVOX_API_KEY not set")
-    
+
     all_voices = []
     url = "https://api.ultravox.ai/api/voices"
-    
+
     async with httpx.AsyncClient() as client:
         try:
             while url:
@@ -1349,7 +1348,7 @@ async def list_voices():
                 data = resp.json()
                 all_voices.extend(data.get("results", []))
                 url = data.get("next") # Follow pagination if it exists
-            
+
             return {"results": all_voices}
         except httpx.HTTPStatusError as e:
             raise HTTPException(status_code=e.response.status_code, detail=f"Ultravox Error: {e.response.text}")
@@ -1377,7 +1376,7 @@ async def delete_agent(agent_id: str, db: Session = Depends(get_db), user: User 
     except ValueError:
         # Try as Ultravox ID
         db_agent = db.query(Agent).filter(Agent.ultravox_agent_id == agent_id, Agent.user_id == user.id).first()
-    
+
     if db_agent:
         db.delete(db_agent)
         db.commit()
@@ -1409,7 +1408,7 @@ async def list_tools(db: Session = Depends(get_db)):
 @app.post("/api/tools")
 async def create_tool(tool: ToolDefinition, db: Session = Depends(get_db)):
     api_key = os.getenv("ULTRAVOX_API_KEY")
-    
+
     # Construct Ultravox Tool Definition
     definition = {
         "description": tool.description,
@@ -1462,7 +1461,7 @@ async def create_tool(tool: ToolDefinition, db: Session = Depends(get_db)):
             # If it already exists in Ultravox, we might want to still save it locally if missing
             if resp.status_code != 409:
                 raise HTTPException(status_code=resp.status_code, detail=resp.text)
-        
+
         # Save to local DB
         db_tool = db.query(Tool).filter(Tool.name == tool.name).first()
         if not db_tool:
@@ -1474,7 +1473,7 @@ async def create_tool(tool: ToolDefinition, db: Session = Depends(get_db)):
             )
             db.add(db_tool)
             db.commit()
-            
+
         return resp.json() if resp.status_code == 201 else {"success": True, "message": "Tool already exists in Ultravox, saved locally"}
 
 @app.delete("/api/tools/{tool_name}")
@@ -1495,6 +1494,7 @@ async def google_sheets_append(request: Request, db: Session = Depends(get_db)):
     call_id = headers.get("x-call-id") or headers.get("X-Call-Id")
     
     logger.info(f"📥 Received Google Sheets Tool Call. Call ID: {call_id}")
+    logger.info(f"🛠️ Headers: {dict(headers)}")
     logger.info(f"📦 Body: {body}")
     
     # Extract data. If 'data' key exists, use it, otherwise use the whole body
@@ -1518,7 +1518,7 @@ async def google_sheets_append(request: Request, db: Session = Depends(get_db)):
     else:
         # Fallback: Try to find the most recent active call
         logger.info("⚠️ No Call ID found in headers. Trying to find most recent active call...")
-        call_record = db.query(Call).filter(Call.status == "started").order_by(Call.created_at.desc()).first()
+        call_record = db.query(Call).filter(Call.status.in_(["started", "active"])).order_by(Call.created_at.desc()).first()
         if call_record:
             logger.info(f"🔄 Using Agent from recent call: {call_record.id}")
             if call_record.agent:
@@ -1537,9 +1537,7 @@ async def google_sheets_append(request: Request, db: Session = Depends(get_db)):
         if existing_data:
             try:
                 existing_data_str = json.dumps(json.loads(existing_data), sort_keys=True)
-                if existing_data_str == new_data_str:
-                    logger.info(f"⚠️ Duplicate data detected for Call {call_record.id}, skipping save")
-                else:
+                if existing_data_str != new_data_str:
                     # Data is different, update it
                     try:
                         call_record.collected_data = new_data_str
@@ -1573,34 +1571,28 @@ async def google_sheets_append(request: Request, db: Session = Depends(get_db)):
                 return {"success": True, "message": "Data saved successfully"}
             except Exception as e:
                 logger.error(f"❌ Webhook Error: {e}")
-                # Still return success to Ultravox so tool doesn't retry
-                return {"success": True, "message": "Data received, webhook failed"}
+                # Return success False to let the bot know it failed
+                return {"success": False, "message": f"Data received, but webhook failed: {str(e)}"}
 
     # 3. Priority 2: Use Direct API (requires service-account.json)
     spreadsheet_id = spreadsheet_id or (agent.google_spreadsheet_id if agent else None)
     sheet_name = sheet_name or (agent.google_sheet_name if agent else "Sheet1")
-    
     if not spreadsheet_id:
-        if not agent:
-            logger.warning("⚠️ No agent found and no spreadsheet_id provided in request")
-        else:
-            logger.warning(f"⚠️ Agent '{agent.name}' has no Google Sheets configuration")
-        # Return success anyway so Ultravox doesn't retry, but log the issue
-        return {"success": True, "message": "No Google Sheets configuration found. Data saved to call record only."}
+        # No configuration found, return failure
+        return {"success": False, "message": "No Google Sheets configuration found. Please check agent settings."}
 
     logger.info(f"📊 Appending to Google Sheets via API: {spreadsheet_id} / {sheet_name}")
     try:
         result = google_sheets_service.append_data_dict(spreadsheet_id, sheet_name, data)
         if not result.get("success"):
             logger.error(f"❌ Google Sheets API Error: {result.get('error')}")
-            # Return success anyway so Ultravox doesn't retry, but log the error
-            return {"success": True, "message": f"Data received but Google Sheets save failed: {result.get('error')}"}
+            return {"success": False, "message": f"Google Sheets save failed: {result.get('error')}"}
         logger.info(f"✅ Successfully appended data to Google Sheets")
         return result
     except Exception as e:
         logger.error(f"❌ Exception while saving to Google Sheets: {e}", exc_info=True)
-        # Return success anyway so Ultravox doesn't retry
-        return {"success": True, "message": f"Data received but Google Sheets save failed: {str(e)}"}
+        # Return success False to let the bot know it failed
+        return {"success": False, "message": f"Google Sheets save failed: {str(e)}"}
 
 @app.post("/api/calls/{call_id}/end")
 async def end_call(call_id: str, db: Session = Depends(get_db)):
@@ -1608,10 +1600,10 @@ async def end_call(call_id: str, db: Session = Depends(get_db)):
     api_key = os.getenv("ULTRAVOX_API_KEY")
     twilio_sid_env = os.getenv("TWILIO_ACCOUNT_SID")
     twilio_token_env = os.getenv("TWILIO_AUTH_TOKEN")
-    
+
     # Try to find the call in our DB to get Twilio SID
     db_call = db.query(Call).filter(Call.ultravox_call_id == call_id).first()
-    
+
     try:
         # 1. Try to end via Twilio if we have the SID
         if db_call and db_call.twilio_sid and twilio_sid_env and twilio_token_env:
@@ -1643,7 +1635,7 @@ async def end_call(call_id: str, db: Session = Depends(get_db)):
                 f"https://api.ultravox.ai/api/calls/{call_id}/end",
                 f"https://api.ultravox.ai/api/calls/{call_id}/hangup"
             ]
-            
+
             for endpoint in endpoints_to_try:
                 try:
                     resp = await client.post(endpoint, headers={"X-API-Key": api_key}, json={"status": "ended"})
@@ -1654,20 +1646,20 @@ async def end_call(call_id: str, db: Session = Depends(get_db)):
                         return {"success": True, "message": "Call ended successfully"}
                 except Exception as e:
                     print(f"POST endpoint error: {e}")
-            
+
             # If we reached here and it's a Twilio call, maybe it's already ended or we can't find it
             if db_call:
                 db_call.status = "ended"
                 db.commit()
                 return {"success": True, "message": "Call marked as ended in database"}
-                
+
             raise HTTPException(status_code=500, detail="Unable to end call")
-            
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error ending call: {str(e)}")
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1680,7 +1672,7 @@ async def upload_csv(file: UploadFile = File(...), user: User = Depends(get_curr
     """Upload CSV or Excel file with phone numbers"""
     try:
         contents = await file.read()
-        
+
         # Detect file type and parse
         if file.filename.endswith('.csv'):
             df = pd.read_csv(io.BytesIO(contents))
@@ -1688,22 +1680,22 @@ async def upload_csv(file: UploadFile = File(...), user: User = Depends(get_curr
             df = pd.read_excel(io.BytesIO(contents))
         else:
             raise HTTPException(status_code=400, detail="File must be CSV or Excel format")
-        
+
         # Extract phone numbers (look for common column names)
         phone_column = None
         for col in df.columns:
             if col.lower() in ['phone', 'phone_number', 'number', 'mobile', 'tel', 'telephone']:
                 phone_column = col
                 break
-        
+
         if phone_column is None:
             # If no standard column found, use first column
             phone_column = df.columns[0]
-        
+
         # Extract and clean phone numbers
         numbers = df[phone_column].astype(str).tolist()
         numbers = [n.strip() for n in numbers if n and n.strip() and n != 'nan']
-        
+
         return {
             "success": True,
             "count": len(numbers),
@@ -1718,29 +1710,29 @@ async def upload_csv(file: UploadFile = File(...), user: User = Depends(get_curr
 async def analyze_satisfaction(call_id: str):
     """Analyze call transcript and generate satisfaction score"""
     api_key = os.getenv("ULTRAVOX_API_KEY")
-    
+
     try:
         # Fetch call details with messages
         async with httpx.AsyncClient() as client:
             resp = await client.get(f"https://api.ultravox.ai/api/calls/{call_id}", headers={"X-API-Key": api_key})
             if resp.status_code != 200:
                 raise HTTPException(status_code=resp.status_code, detail="Failed to fetch call details")
-            
+
             call_data = resp.json()
-            
+
             # Fetch messages
             msg_resp = await client.get(f"https://api.ultravox.ai/api/calls/{call_id}/messages", headers={"X-API-Key": api_key})
             messages = msg_resp.json().get("results", []) if msg_resp.status_code == 200 else []
-        
+
         # Build transcript
         transcript = "\n".join([f"{msg['role']}: {msg.get('text', '')}" for msg in messages if msg.get('text')])
-        
+
         if not transcript:
             return {"score": 0, "analysis": "No transcript available"}
-        
+
         # Simple satisfaction analysis (you can enhance this with AI)
         score = calculate_satisfaction_score(transcript, call_data)
-        
+
         return {
             "score": score,
             "call_id": call_id,
@@ -1756,7 +1748,7 @@ async def analyze_satisfaction_ai(transcript: str, duration_seconds: float) -> i
     """Analyze satisfaction using AI logic (Groq preferred, then OpenAI, then heuristic)"""
     groq_key = os.getenv("GROQ_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
-    
+
     prompt = f"""
     Analyze the following call transcript and provide a satisfaction score from 1 to 10.
     Criteria:
@@ -1764,12 +1756,12 @@ async def analyze_satisfaction_ai(transcript: str, duration_seconds: float) -> i
     - Call longer than a minute: +3 marks
     - Sale/Agreement (customer agrees to offer): +3 marks
     - Customer happy at the end: +1 mark
-    
+
     Transcript:
     {transcript}
-    
+
     Duration: {duration_seconds} seconds
-    
+
     Return ONLY the integer score.
     """
 
@@ -1804,28 +1796,28 @@ async def analyze_satisfaction_ai(transcript: str, duration_seconds: float) -> i
     # Fallback to heuristic
     score = 1 # Base score
     transcript_lower = transcript.lower()
-    
+
     # 1. Human answered (not voicemail)
     voicemail_keywords = ["voicemail", "leave a message", "after the tone", "not available"]
     is_voicemail = any(kw in transcript_lower for kw in voicemail_keywords)
     if not is_voicemail and len(transcript) > 20:
         score += 3
-        
+
     # 2. Call longer than a minute
     if duration_seconds > 60:
         score += 3
-        
+
     # 3. Sale/Agreement
     sale_keywords = ["agree", "yes", "sign me up", "interested", "deal", "accept", "book", "order"]
     if any(kw in transcript_lower for kw in sale_keywords):
         score += 3
-        
+
     # 4. Customer happy at the end
     happy_keywords = ["thank", "great", "perfect", "excellent", "good", "appreciate", "bye"]
     last_part = transcript_lower[-200:] if len(transcript_lower) > 200 else transcript_lower
     if any(kw in last_part for kw in happy_keywords):
         score += 1
-        
+
     return max(1, min(10, score))
 
 def generate_satisfaction_analysis(transcript: str, score: int) -> str:
@@ -1858,7 +1850,7 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
     except ValueError:
         # If it's not an integer, try as ultravox agent ID
         agent = db.query(Agent).filter(Agent.ultravox_agent_id == req.agent_id).first()
-    
+
     if not agent:
         raise HTTPException(status_code=404, detail=f"Agent not found: {req.agent_id}")
 
@@ -1871,13 +1863,13 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
         twilio_sid = req.twilio_account_sid or os.getenv("TWILIO_ACCOUNT_SID")
         twilio_token = req.twilio_auth_token or os.getenv("TWILIO_AUTH_TOKEN")
         from_number = req.from_number or os.getenv("TWILIO_PHONE_NUMBER")
-    
+
     if not all([twilio_sid, twilio_token, from_number]):
         raise HTTPException(status_code=400, detail="Twilio credentials/number missing")
 
     # 1. Create Ultravox Call with agent configuration
     url = "https://api.ultravox.ai/api/calls"
-    
+
     # Build payload with agent's configuration
     payload = {
         "systemPrompt": agent.system_prompt,
@@ -1889,18 +1881,18 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
         "firstSpeakerSettings": {"user": {}},
         "recordingEnabled": True
     }
-    
+
     # Add tools if agent has them (with parameter overrides for transfer tools)
     selected_tools = build_selected_tools(agent, db, is_web_call=False)
     if selected_tools:
         payload["selectedTools"] = selected_tools
-    
+
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.post(url, headers={"X-API-Key": ultravox_api_key}, json=payload)
             if resp.status_code != 201:
                 raise HTTPException(status_code=resp.status_code, detail=f"Ultravox Error: {resp.text}")
-            
+
             data = resp.json()
             join_url = data["joinUrl"]
             call_id = data["callId"]
@@ -1913,16 +1905,16 @@ async def call_agent(req: AgentCallRequest, db: Session = Depends(get_db), user:
         host = req.server_host or os.getenv("SERVER_HOST")
         if not host:
              raise HTTPException(status_code=400, detail="Server Host required")
-        
+
         if not host.startswith("http"):
             host = f"https://{host}"
-            
+
         path_prefix = os.getenv("PATH_PREFIX", "")
         if path_prefix and path_prefix not in host:
              twiml_url = f"{host}{path_prefix}/api/twiml?joinUrl={join_url}"
         else:
              twiml_url = f"{host}/api/twiml?joinUrl={join_url}"
-        
+
         call = client.calls.create(
             to=req.to_number,
             from_=from_number,
@@ -1968,13 +1960,13 @@ async def create_web_call(agent_id: str, db: Session = Depends(get_db), user: Us
         agent = db.query(Agent).filter(Agent.id == agent_id_int).first()
     except ValueError:
         agent = db.query(Agent).filter(Agent.ultravox_agent_id == agent_id).first()
-    
+
     if not agent:
         raise HTTPException(status_code=404, detail=f"Agent not found: {agent_id}")
 
     # 1. Create Ultravox Call
     url = "https://api.ultravox.ai/api/calls"
-    
+
     payload = {
         "systemPrompt": agent.system_prompt,
         "model": agent.model,
@@ -1984,18 +1976,18 @@ async def create_web_call(agent_id: str, db: Session = Depends(get_db), user: Us
         "firstSpeakerSettings": {"agent": {}}, # Agent speaks first for test calls
         "recordingEnabled": True
     }
-    
+
     # Add tools (excluding transfer tools for web calls)
     selected_tools = build_selected_tools(agent, db, is_web_call=True)
     if selected_tools:
         payload["selectedTools"] = selected_tools
-    
+
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.post(url, headers={"X-API-Key": ultravox_api_key}, json=payload)
             if resp.status_code != 201:
                 raise HTTPException(status_code=resp.status_code, detail=f"Ultravox Error: {resp.text}")
-            
+
             data = resp.json()
             join_url = data["joinUrl"]
             call_id = data["callId"]
@@ -2032,25 +2024,25 @@ async def make_call(call_request: CallRequest, db: Session = Depends(get_db), us
     twilio_sid = call_request.twilio_account_sid or os.getenv("TWILIO_ACCOUNT_SID")
     twilio_token = call_request.twilio_auth_token or os.getenv("TWILIO_AUTH_TOKEN")
     from_number = call_request.from_number or os.getenv("TWILIO_PHONE_NUMBER")
-    
+
     if not all([twilio_sid, twilio_token, from_number]):
         raise HTTPException(status_code=400, detail="Twilio credentials/number missing")
 
     # 1. Create Ultravox Call
     ultravox_url = "https://api.ultravox.ai/api/calls"
     headers = {"X-API-Key": ultravox_api_key}
-    
+
     payload = {
         "systemPrompt": call_request.system_prompt,
         "model": "fixie-ai/ultravox",
         "voice": call_request.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
         "languageHint": "en",
         "temperature": call_request.temperature or 0.3,
-        "medium": {"twilio": {}}, 
+        "medium": {"twilio": {}},
         "firstSpeakerSettings": {"user": {}}, # User speaks first (answers phone)
         "recordingEnabled": True
     }
-    
+
     if call_request.tools:
         payload["selectedTools"] = call_request.tools
 
@@ -2063,7 +2055,7 @@ async def make_call(call_request: CallRequest, db: Session = Depends(get_db), us
             if resp.status_code != 201:
                 print(f"❌ Ultravox Error: {resp.status_code} - {resp.text}")
                 raise HTTPException(status_code=resp.status_code, detail=f"Ultravox Error: {resp.text}")
-            
+
             data = resp.json()
             join_url = data["joinUrl"]
             call_id = data["callId"]
@@ -2075,32 +2067,32 @@ async def make_call(call_request: CallRequest, db: Session = Depends(get_db), us
     # 2. Initiate Twilio Call
     try:
         client = Client(twilio_sid, twilio_token)
-        
+
         # Construct callback URL
         host = call_request.server_host or os.getenv("SERVER_HOST")
         if not host:
              # Fallback to request host if not provided, but this might be localhost
              raise HTTPException(status_code=400, detail="Server Host required for Twilio callback")
-        
+
         # Ensure protocol
         if not host.startswith("http"):
             host = f"https://{host}"
-            
+
         # IMPORTANT: Ensure we point to the /outbound path if using the main domain
         # If the host is just the domain, append /outbound
         # We assume if the user provides a host, it's the root domain.
         # We need to route to THIS service's /api/twiml endpoint.
         # Since Nginx routes /outbound/ -> localhost:8002/, the external URL is /outbound/api/twiml
-        
+
         # Check if we are already including /outbound in the host (unlikely)
         path_prefix = os.getenv("PATH_PREFIX", "")
         if path_prefix not in host:
              twiml_url = f"{host}{path_prefix}/api/twiml?joinUrl={join_url}"
         else:
              twiml_url = f"{host}/api/twiml?joinUrl={join_url}"
-        
+
         print(f"Initiating call to {call_request.to_number} from {from_number} with URL {twiml_url}")
-        
+
         call = client.calls.create(
             to=call_request.to_number,
             from_=from_number,
@@ -2133,7 +2125,7 @@ async def get_twiml(joinUrl: str):
     # Return TwiML to connect to Ultravox
     # Ultravox joinUrl is wss://...
     # Twilio <Stream> connects to wss
-    
+
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Connect>
@@ -2153,9 +2145,9 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
     to_number = form_data.get("To")
     from_number = form_data.get("From")
     call_sid = form_data.get("CallSid")
-    
+
     print(f"📞 Incoming call to {to_number} from {from_number} (SID: {call_sid})")
-    
+
     if not to_number:
         return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Error: No destination number.</Say></Response>', media_type="application/xml")
 
@@ -2163,10 +2155,10 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
     # We need to match the phone number. Twilio usually sends it with '+'.
     # We check both with and without '+' to be safe.
     agent = db.query(Agent).join(TwilioNumber).filter(
-        (TwilioNumber.phone_number == to_number) | 
+        (TwilioNumber.phone_number == to_number) |
         (TwilioNumber.phone_number == to_number.replace("+", ""))
     ).first()
-    
+
     if not agent:
         print(f"⚠️ No agent found for number {to_number}")
         # Try a more flexible search if needed, but for now exact match
@@ -2194,23 +2186,23 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
         "firstSpeakerSettings": {"agent": {}}, # Agent speaks first for inbound
         "recordingEnabled": True
     }
-    
+
     # Add tools if agent has them (with parameter overrides for transfer tools)
     selected_tools = build_selected_tools(agent, db, is_web_call=False)
     if selected_tools:
         payload["selectedTools"] = selected_tools
-        
+
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.post(url, headers={"X-API-Key": ultravox_api_key}, json=payload)
             if resp.status_code != 201:
                 print(f"❌ Ultravox Error: {resp.text}")
                 return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Error connecting to AI agent.</Say></Response>', media_type="application/xml")
-            
+
             data = resp.json()
             join_url = data["joinUrl"]
             ultravox_call_id = data["callId"]
-            
+
             # Save call to DB
             new_call = Call(
                 ultravox_call_id=ultravox_call_id,
@@ -2224,9 +2216,9 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
             )
             db.add(new_call)
             db.commit()
-            
+
             print(f"✅ Inbound call connected. Ultravox Call ID: {ultravox_call_id}")
-            
+
             # Return TwiML
             xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
@@ -2235,7 +2227,7 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
     </Connect>
 </Response>"""
             return Response(content=xml, media_type="application/xml")
-            
+
     except Exception as e:
         print(f"❌ Inbound error: {str(e)}")
         return Response(content='<?xml version="1.0" encoding="UTF-8"?><Response><Say>Internal server error.</Say></Response>', media_type="application/xml")
@@ -2247,21 +2239,21 @@ async def receive_sms(request: Request, db: Session = Depends(get_db)):
     try:
         # Twilio sends data as form parameters
         form_data = await request.form()
-        
+
         # Get and normalize phone numbers (handle URL encoding)
         sender_raw = form_data.get('From', 'Unknown')
         your_number_raw = form_data.get('To', 'Unknown')
-        
+
         # Decode URL encoding if present
         sender = unquote(sender_raw) if sender_raw else 'Unknown'
         your_number = unquote(your_number_raw) if your_number_raw else 'Unknown'
-        
+
         message_body = form_data.get('Body', '')
         message_sid = form_data.get('MessageSid', '')
         direction = form_data.get('MessageStatus', 'inbound')  # Usually 'inbound' for received messages
-        
+
         logger.info(f"📱 SMS received - From: {sender}, To: {your_number}, Body: {message_body[:50]}...")
-        
+
         # Normalize phone numbers for matching (remove +, spaces, dashes, etc.)
         def normalize_phone(phone):
             if not phone:
@@ -2349,7 +2341,7 @@ async def receive_sms(request: Request, db: Session = Depends(get_db)):
                             logger.info(f"✅ Found agent '{agent.name}' via fuzzy substring matching")
                             break
 
-        
+
         agent_id = agent.id if agent else None
         agent_name = agent.name if agent else "Unknown"
 
@@ -2375,7 +2367,7 @@ async def receive_sms(request: Request, db: Session = Depends(get_db)):
                 logger.warning(f"⚠️ Multiple agents with Twilio numbers found ({len(agents_with_numbers)}), cannot determine which one to use")
             else:
                 logger.warning(f"⚠️ No agents with Twilio numbers found in database")
-        
+
         # Save SMS to database
         sms_record = SMS(
             agent_id=agent_id,
@@ -2388,9 +2380,9 @@ async def receive_sms(request: Request, db: Session = Depends(get_db)):
         db.add(sms_record)
         db.commit()
         db.refresh(sms_record)
-        
+
         logger.info(f"✅ SMS saved to database with ID: {sms_record.id}, Agent: {agent_name}")
-        
+
         # Save to Google Sheets if agent is configured
         if agent:
             try:
@@ -2404,9 +2396,9 @@ async def receive_sms(request: Request, db: Session = Depends(get_db)):
                     "Date/Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "Message SID": message_sid
                 }
-                
+
                 logger.info(f"📊 Agent Google Sheets config - Webhook: {agent.google_webhook_url}, Spreadsheet ID: {agent.google_spreadsheet_id}, Sheet: {agent.google_sheet_name}")
-                
+
                 # Priority 1: Use Webhook URL if configured
                 if agent.google_webhook_url:
                     logger.info(f"🚀 Forwarding SMS data to Google Webhook: {agent.google_webhook_url}")
@@ -2416,7 +2408,7 @@ async def receive_sms(request: Request, db: Session = Depends(get_db)):
                             logger.info(f"✅ Webhook Response ({resp.status_code}): {resp.text}")
                         except Exception as e:
                             logger.error(f"❌ Webhook Error: {e}")
-                
+
                 # Priority 2: Use Direct API (requires service-account.json)
                 elif agent.google_spreadsheet_id:
                     sheet_name = agent.google_sheet_name or "Sheet1"
@@ -2435,12 +2427,12 @@ async def receive_sms(request: Request, db: Session = Depends(get_db)):
                 logger.error(f"❌ Error saving SMS to Google Sheets: {e}", exc_info=True)
         else:
             logger.warning(f"⚠️ No agent found, skipping Google Sheets save")
-        
+
         # Return TwiML response to Twilio
         from twilio.twiml.messaging_response import MessagingResponse
         resp = MessagingResponse()
         return Response(content=str(resp), media_type="text/xml", status_code=200)
-        
+
     except Exception as e:
         logger.error(f"❌ Error processing SMS: {e}")
         # Still return valid TwiML
@@ -2459,10 +2451,10 @@ async def get_sms_messages(
     try:
         # Get all agent IDs for this user
         user_agent_ids = [a.id for a in db.query(Agent.id).filter(Agent.user_id == user.id).all()]
-        
+
         # Get all SMS messages - use LEFT JOIN to include SMS without agents
         from sqlalchemy import or_
-        
+
         # Build filter condition
         if user_agent_ids:
             filter_condition = or_(
@@ -2472,9 +2464,9 @@ async def get_sms_messages(
         else:
             # If user has no agents, only show unassigned SMS
             filter_condition = SMS.agent_id == None
-        
+
         sms_list = db.query(SMS).outerjoin(Agent).filter(filter_condition).order_by(SMS.created_at.desc()).offset(skip).limit(limit).all()
-        
+
         results = []
         for sms in sms_list:
             # Double-check that SMS belongs to user's agent or has no agent
@@ -2490,12 +2482,12 @@ async def get_sms_messages(
                     "message_sid": sms.message_sid,
                     "created_at": sms.created_at.isoformat() if sms.created_at else None
                 })
-        
+
         # Count total
         total = db.query(SMS).filter(filter_condition).count()
-        
+
         logger.info(f"📱 Returning {len(results)} SMS messages for user {user.username} (total: {total}, user has {len(user_agent_ids)} agents)")
-        
+
         return {
             "results": results,
             "total": total,
@@ -2530,7 +2522,7 @@ def create_ultravox_agent(api_key: str, system_prompt: str, voice: str, tools: O
     }
     if tools:
         payload["tools"] = tools
-        
+
     resp = requests.post(url, headers=headers, json=payload)
     if resp.status_code != 201:
         raise Exception(f"Failed to create agent: {resp.text}")
@@ -2546,14 +2538,14 @@ async def schedule_calls(req: ScheduleRequest):
     twilio_sid = req.twilio_account_sid or os.getenv("TWILIO_ACCOUNT_SID")
     twilio_token = req.twilio_auth_token or os.getenv("TWILIO_AUTH_TOKEN")
     from_number = req.from_number or os.getenv("TWILIO_PHONE_NUMBER")
-    
+
     if not all([twilio_sid, twilio_token, from_number]):
         raise HTTPException(status_code=400, detail="Twilio credentials/number missing")
 
     try:
         # 1. Create an Agent for this batch
         agent_id = create_ultravox_agent(ultravox_api_key, req.system_prompt, req.voice, req.tools)
-        
+
         # 2. Prepare Calls
         calls = []
         for num in req.to_numbers:
@@ -2577,12 +2569,12 @@ async def schedule_calls(req: ScheduleRequest):
             batch_payload["windowStart"] = req.window_start
         if req.window_end:
             batch_payload["windowEnd"] = req.window_end
-            
+
         async with httpx.AsyncClient() as client:
             resp = await client.post(batch_url, headers={"X-API-Key": ultravox_api_key}, json=batch_payload)
             if resp.status_code != 201:
                 raise Exception(f"Failed to create batch: {resp.text}")
-            
+
             return {"status": "success", "batch_id": resp.json()["batchId"], "agent_id": agent_id}
 
     except Exception as e:
@@ -2592,22 +2584,22 @@ async def schedule_calls(req: ScheduleRequest):
 
 @app.get("/api/history")
 async def get_call_history(
-    limit: int = 20, 
-    page: int = 1, 
-    db: Session = Depends(get_db), 
+    limit: int = 20,
+    page: int = 1,
+    db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
     # Calculate offset
     offset = (page - 1) * limit
-    
+
     # Query local DB
     total_calls = db.query(Call).filter(Call.user_id == user.id).count()
     calls = db.query(Call).filter(Call.user_id == user.id).order_by(Call.created_at.desc()).offset(offset).limit(limit).all()
-    
+
     # Sync status/duration for calls that look incomplete
     # We do this in background or just await it here? Await for now to be accurate.
     # To avoid too many requests, we only check calls < 24h old that are 'started' or missing duration
-    
+
     async def sync_call(call):
         if call.status == "started" or call.duration is None:
             try:
@@ -2624,11 +2616,11 @@ async def get_call_history(
                             if isinstance(dur, str):
                                 dur = float(dur.replace("s", ""))
                             call.duration = int(dur)
-                        
+
                         # If call just ended, check for missed call
                         if data.get("ended") and not was_ended:
                             await check_and_handle_missed_call(call, data, db, logger)
-                        
+
                         return True
             except Exception as e:
                 print(f"Sync error for {call.ultravox_call_id}: {e}")
@@ -2648,7 +2640,7 @@ async def get_call_history(
             agent = db.query(Agent).filter(Agent.id == call.agent_id).first()
             if agent:
                 agent_name = agent.name
-        
+
         results.append({
             "callId": call.ultravox_call_id,
             "created": call.created_at.isoformat(),
@@ -2661,10 +2653,10 @@ async def get_call_history(
             "satisfactionScore": call.satisfaction_score,
             "medium": {"twilio": {"to": call.to_number, "from": call.from_number}} if call.to_number else {},
         })
-        
+
     has_next = (offset + limit) < total_calls
     has_prev = page > 1
-    
+
     return {
         "results": results,
         "pagination": {
@@ -2673,7 +2665,7 @@ async def get_call_history(
             "has_prev": has_prev,
             "total_pages": (total_calls + limit - 1) // limit if limit > 0 else 0,
             "total_items": total_calls,
-            "next_cursor": None 
+            "next_cursor": None
         }
     }
 
@@ -2682,9 +2674,9 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
     api_key = os.getenv("ULTRAVOX_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="ULTRAVOX_API_KEY not set")
-    
+
     url = f"https://api.ultravox.ai/api/calls/{call_id}"
-    
+
     try:
         async with httpx.AsyncClient() as client:
             # Fetch basic details
@@ -2692,23 +2684,23 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
             if resp.status_code != 200:
                 raise HTTPException(status_code=resp.status_code, detail=f"Failed to fetch call details: {resp.text}")
             data = resp.json()
-        
+
             # Fetch recording URL using the correct Ultravox API endpoint
             recording_url = None
             try:
                 # Try the recording endpoint with follow_redirects=True
                 recording_resp = await client.get(f"{url}/recording", headers={"X-API-Key": api_key}, follow_redirects=True)
                 print(f"🎵 Recording API response: {recording_resp.status_code}")
-                
+
                 if recording_resp.status_code == 200:
                     content_type = recording_resp.headers.get("content-type", "").lower()
                     print(f"🎵 Content-Type: {content_type}")
-                    
+
                     if "application/json" in content_type:
                         try:
                             recording_data = recording_resp.json()
                             print(f"🎵 Recording JSON data: {recording_data}")
-                            recording_url = (recording_data.get("url") or 
+                            recording_url = (recording_data.get("url") or
                                            recording_data.get("recordingUrl") or
                                            recording_data.get("recording_url") or
                                            recording_data.get("downloadUrl") or
@@ -2732,10 +2724,10 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
                         print(f"🎵 Redirect URL: {recording_url}")
                 else:
                     print(f"⚠️ Recording API returned {recording_resp.status_code}: {recording_resp.text}")
-                    
+
             except Exception as e:
                 print(f"⚠️ Could not fetch recording: {e}")
-            
+
             if recording_url:
                 # Skip validation to avoid potential issues, just set the URL
                 data["recordingUrl"] = recording_url
@@ -2745,14 +2737,14 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
                 # Clear recordingUrl if it exists in data but we couldn't verify/fetch it
                 if "recordingUrl" in data:
                     del data["recordingUrl"]
-        
+
             # Fetch messages/transcript
             try:
                 msg_resp = await client.get(f"{url}/messages", headers={"X-API-Key": api_key})
                 if msg_resp.status_code == 200:
                     messages = msg_resp.json().get("results", [])
                     data["messages"] = messages
-                    
+
                     # Calculate satisfaction score if call is completed
                     if data.get("ended"):
                         transcript = "\n".join([f"{msg['role']}: {msg.get('text', '')}" for msg in messages if msg.get('text')])
@@ -2764,7 +2756,7 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
                                 score = await analyze_satisfaction_ai(transcript, float(duration))
                                 data["satisfactionScore"] = score
                                 data["satisfactionAnalysis"] = generate_satisfaction_analysis(transcript, score)
-                                
+
                                 # Save to DB
                                 db_call = db.query(Call).filter(Call.ultravox_call_id == call_id).first()
                                 if db_call:
@@ -2772,7 +2764,7 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
                                     was_ended = db_call.status == "ended"
                                     db_call.status = "ended"
                                     db.commit()
-                                    
+
                                     # Check for missed call if call just ended
                                     if data.get("ended") and not was_ended:
                                         await check_and_handle_missed_call(db_call, data, db, logger)
@@ -2782,7 +2774,7 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
                     print(f"⚠️ Messages API returned {msg_resp.status_code}")
             except Exception as e:
                 print(f"⚠️ Could not fetch messages: {e}")
-        
+
             # Add cost information if available
             if "cost" not in data and "billedDuration" in data:
                 try:
@@ -2803,9 +2795,9 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
                     data["agentName"] = db_call.agent.name
                 else:
                     data["agentName"] = "Instant Call"
-            
+
             return data
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -2816,15 +2808,15 @@ async def get_call_details(call_id: str, db: Session = Depends(get_db)):
 async def get_recording_proxy(call_id: str):
     """Proxy endpoint to serve call recordings and avoid CORS issues"""
     api_key = os.getenv("ULTRAVOX_API_KEY")
-    
+
     try:
         async with httpx.AsyncClient() as client:
             # Try to get recording directly
             recording_resp = await client.get(f"https://api.ultravox.ai/api/calls/{call_id}/recording", headers={"X-API-Key": api_key}, follow_redirects=True)
-            
+
             if recording_resp.status_code == 200:
                 content_type = recording_resp.headers.get("content-type", "audio/mpeg")
-                
+
                 if "audio" in content_type or "video" in content_type:
                     # Stream the audio content directly
                     return Response(
@@ -2840,7 +2832,7 @@ async def get_recording_proxy(call_id: str):
                     # Try to parse JSON and get URL
                     try:
                         recording_data = recording_resp.json()
-                        recording_url = (recording_data.get("url") or 
+                        recording_url = (recording_data.get("url") or
                                        recording_data.get("recordingUrl") or
                                        recording_data.get("recording_url"))
                         if recording_url:
@@ -2858,9 +2850,9 @@ async def get_recording_proxy(call_id: str):
                                 )
                     except Exception:
                         pass
-            
+
             raise HTTPException(status_code=404, detail="Recording not available")
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -2894,22 +2886,22 @@ class BusinessCheckupRequest(BaseModel):
     openapi_extra={"security": []} # Mark as public in Swagger
 )
 async def search_business_checkup(
-    request: BusinessCheckupRequest, 
+    request: BusinessCheckupRequest,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db), 
+    db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user_optional)
 ):
     try:
         # Validate that we have location information
         if not request.business_address and not request.city_state:
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail="Either business_address or city_state is required for accurate search"
             )
 
         # If no user is logged in, use the guest user (id=0)
         current_user_id = user.id if user else 0
-        
+
         # Ensure guest user exists if needed
         if current_user_id == 0:
             guest_user = db.query(User).filter(User.id == 0).first()
@@ -2931,15 +2923,15 @@ async def search_business_checkup(
             business_address=request.business_address,
             city_state=request.city_state
         )
-        
+
         if "error" in report:
             if report["error"] == "Business not found":
                 raise HTTPException(status_code=404, detail="Business not found")
             return JSONResponse(status_code=500, content={"detail": report["error"]})
-        
+
         # Automatically save public leads
         if current_user_id == 0:
-            # We still need contact info for saving the lead internally, 
+            # We still need contact info for saving the lead internally,
             # but we won't return it in the API response if not requested.
             # Let's add it temporarily for saving then remove it.
             report_to_save = report.copy()
@@ -2954,12 +2946,12 @@ async def search_business_checkup(
                 logger.info(f"📊 Public search lead saved: {request.email} - {request.business_name}")
             except Exception as e:
                 logger.warning(f"Could not save public checkup lead: {e}")
-        
+
         # Schedule email sending
         background_tasks.add_task(send_checkup_email_report, request.email, report)
-        
+
         return report
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -2976,7 +2968,7 @@ async def save_business_checkup(request: Request, db: Session = Depends(get_db),
     service = BusinessCheckupService(db, user.id)
     report_data = data.get("report_data")
     is_starred = data.get("is_starred", True)
-    
+
     if not report_data:
         raise HTTPException(status_code=400, detail="Report data required")
 
@@ -2995,14 +2987,14 @@ async def save_business_checkup(request: Request, db: Session = Depends(get_db),
 async def list_business_checkups(skip: int = 0, limit: int = 50, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     service = BusinessCheckupService(db, user.id)
     results = service.list_starred_reports(skip, limit)
-    
+
     response = []
     for r in results:
         try:
              parsed_data = json.loads(r.report_data)
         except:
              parsed_data = {}
-        
+
         response.append({
             "id": r.id,
             "business_name": r.business_name,
