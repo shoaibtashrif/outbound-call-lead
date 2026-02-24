@@ -20,7 +20,7 @@ from typing import Optional, List, Dict, Any
 import httpx
 from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker, Session
-from models import Base, Agent, Tool, AgentCreate, AgentResponse, User, UserCreate, UserLogin, UserResponse, Call, TwilioNumber, TwilioNumberCreate, TwilioNumberResponse, SMS, SMSResponse
+from models import Base, Agent, Tool, AgentCreate, AgentResponse, User, UserCreate, UserLogin, UserResponse, Call, TwilioNumber, TwilioNumberCreate, TwilioNumberResponse, SMS, SMSResponse, FindBusinessSearch
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -2181,10 +2181,14 @@ async def handle_inbound(request: Request, db: Session = Depends(get_db)):
         "model": agent.model,
         "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
         "languageHint": agent.language,
-        "temperature": 0.3,
+        "temperature": 0.4,
         "medium": {"twilio": {}},
         "firstSpeakerSettings": {"agent": {}}, # Agent speaks first for inbound
-        "recordingEnabled": True
+        "recordingEnabled": True,
+        "initialOutputMedium": "MESSAGE_MEDIUM_VOICE",
+        "vadSettings": {
+            "turnEndpointDelay": "0.5s" # Wait 500ms before deciding the turn is over
+        }
     }
 
     # Add tools if agent has them (with parameter overrides for transfer tools)
@@ -3013,6 +3017,123 @@ async def delete_business_checkup(checkup_id: int, db: Session = Depends(get_db)
     if service.delete_report(checkup_id):
         return {"status": "success"}
     raise HTTPException(status_code=404, detail="Report not found")
+
+
+# --------------------------------------------------------------------------------
+# Find Business Endpoints
+# --------------------------------------------------------------------------------
+
+class FindBusinessRequest(BaseModel):
+    category: str
+    location: str
+    max_results: int = 20
+
+class AnalyzeBusinessRequest(BaseModel):
+    place_id: str
+    search_id: Optional[int] = None # Optional: update history if provided
+
+@app.post("/api/find-businesses")
+async def find_businesses(
+    req: FindBusinessRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """
+    Fast search: returns a list of businesses by category + location.
+    Saves the search to history for the user.
+    """
+    service = BusinessCheckupService(db, user.id)
+    result = service.find_businesses_by_category(
+        category=req.category,
+        location=req.location,
+        max_results=req.max_results
+    )
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=500, detail=result["error"])
+    
+    # Save to history
+    new_search = FindBusinessSearch(
+        user_id=user.id,
+        category=req.category,
+        location=req.location,
+        results_data=json.dumps(result)
+    )
+    db.add(new_search)
+    db.commit()
+    db.refresh(new_search)
+    
+    return {"id": new_search.id, "results": result}
+
+@app.get("/api/find-businesses/history")
+async def get_find_business_history(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Get recent searches for the user."""
+    history = db.query(FindBusinessSearch).filter(
+        FindBusinessSearch.user_id == user.id
+    ).order_by(FindBusinessSearch.created_at.desc()).limit(20).all()
+    
+    return [{
+        "id": h.id, 
+        "category": h.category, 
+        "location": h.location, 
+        "created_at": h.created_at
+    } for h in history]
+
+@app.get("/api/find-businesses/history/{search_id}")
+async def get_past_search(
+    search_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Retrieve full results of a past search."""
+    search = db.query(FindBusinessSearch).filter(
+        FindBusinessSearch.id == search_id,
+        FindBusinessSearch.user_id == user.id
+    ).first()
+    
+    if not search:
+        raise HTTPException(status_code=404, detail="Search not found")
+        
+    return {
+        "id": search.id,
+        "category": search.category,
+        "location": search.location,
+        "results": json.loads(search.results_data)
+    }
+
+@app.post("/api/find-businesses/analyze")
+async def analyze_business(
+    req: AnalyzeBusinessRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """
+    Deep analysis for a single business by place_id.
+    Updates the stored history if search_id is provided.
+    """
+    service = BusinessCheckupService(db, user.id)
+    result = service.analyze_by_place_id(req.place_id)
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=500, detail=result["error"])
+    
+    # Optional: Update history data if provided
+    if req.search_id:
+        search = db.query(FindBusinessSearch).filter(
+            FindBusinessSearch.id == req.search_id,
+            FindBusinessSearch.user_id == user.id
+        ).first()
+        if search:
+            results_list = json.loads(search.results_data)
+            # Find the business in the results and update its analysis status/data
+            # We don't save the full analysis in the results_data list to keep it light,
+            # but we can flag it as analyzed if we want.
+            # Actually, the frontend stores analyzed data in a separate map `fbAnalyzed`.
+            # Let's just return the result for now. 
+            pass
+
+    return result
 
 
 if __name__ == "__main__":

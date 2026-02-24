@@ -137,6 +137,18 @@ class BusinessCheckup(Base):
     # user = relationship("User", backref="business_checkups") # Already defined in User? No, adding backref here is fine or explicit relationship
     user = relationship("User", back_populates="business_checkups")
 
+class FindBusinessSearch(Base):
+    __tablename__ = 'find_business_searches'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    category = Column(String, nullable=False)
+    location = Column(String, nullable=False)
+    results_data = Column(Text, nullable=False) # JSON data
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
 # Pydantic models (Original comment)
 class UserCreate(BaseModel):
     username: str

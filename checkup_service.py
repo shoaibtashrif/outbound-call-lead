@@ -92,6 +92,103 @@ class BusinessCheckupService:
             logger.error(f"Error searching business: {e}")
             return {"error": str(e)}
 
+    def find_businesses_by_category(self, category: str, location: str, max_results: int = 20):
+        """
+        Searches for local businesses by category and location using Google Places Text Search.
+        Returns a lightweight list (no PageSpeed) for fast initial load.
+        """
+        if not self.gmaps:
+            return {"error": "Google API disabled (Missing Key)"}
+
+        query = f"{category} in {location}"
+        logger.info(f"Finding businesses: {query}")
+
+        all_results = []
+        next_page_token = None
+
+        try:
+            while len(all_results) < max_results:
+                kwargs = {"query": query, "type": "establishment"}
+                if next_page_token:
+                    kwargs["page_token"] = next_page_token
+
+                response = self.gmaps.places(**kwargs)
+                places = response.get("results", [])
+
+                for place in places:
+                    if len(all_results) >= max_results:
+                        break
+                    name = place.get("name", "")
+                    address = place.get("formatted_address", "")
+                    place_id = place.get("place_id", "")
+                    rating = place.get("rating", None)
+                    review_count = place.get("user_ratings_total", 0)
+                    # Get details for phone + website — split into required and optional fields
+                    # to prevent one bad field from killing the whole request
+                    phone = ""
+                    website = ""
+                    try:
+                        details = self.gmaps.place(
+                            place_id=place_id,
+                            fields=["formatted_phone_number", "website"]
+                        )
+                        detail_result = details.get("result", {})
+                        phone = detail_result.get("formatted_phone_number", "")
+                        website = detail_result.get("website", "")
+                    except Exception as e:
+                        logger.warning(f"Could not get details for {name}: {e}")
+
+                    all_results.append({
+                        "place_id": place_id,
+                        "name": name,
+                        "address": address,
+                        "phone": phone,
+                        "website": website,
+                        "rating": rating,
+                        "review_count": review_count,
+                        "has_website": bool(website),
+                    })
+
+                next_page_token = response.get("next_page_token")
+                if not next_page_token:
+                    break
+                # Google requires a short delay before using the next_page_token
+                import time
+                time.sleep(2)
+
+            return all_results
+
+        except Exception as e:
+            logger.error(f"Error finding businesses: {e}")
+            return {"error": str(e)}
+
+    def analyze_by_place_id(self, place_id: str):
+        """
+        Runs a full business checkup (PageSpeed + scoring) for a given Google Place ID.
+        Used by the lazy-load analyze button in the Find Business UI.
+        """
+        if not self.gmaps:
+            return {"error": "Google API disabled (Missing Key)"}
+        try:
+            place_details = self.gmaps.place(
+                place_id=place_id,
+                fields=[
+                    "name", "type", "rating", "user_ratings_total",
+                    "opening_hours", "photo", "reviews",
+                    "business_status", "formatted_address", "url",
+                    "formatted_phone_number", "website"
+                ]
+            )
+            if not place_details or not place_details.get("result"):
+                return {"error": "Place not found"}
+            result = place_details["result"]
+            has_photos = "photos" in result and len(result.get("photos", [])) > 0
+            website_url = result.get("website")
+            return self._build_report(result, has_photos, website_url)
+        except Exception as e:
+            logger.error(f"Error analyzing place {place_id}: {e}")
+            return {"error": str(e)}
+
     def _calculate_visibility_score(self, place_data, website_performance, has_photos):
         """
         Calculates Business Visibility Score (0-100) using deterministic weighted formula.
