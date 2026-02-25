@@ -26,6 +26,7 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from google_sheets_service import google_sheets_service
+from google_calendar_service import google_calendar_service
 from report_helper import send_checkup_email_report
 
 
@@ -419,56 +420,89 @@ async def startup_event():
             path_prefix = os.getenv("PATH_PREFIX", "")
             if path_prefix and path_prefix not in host:
                 tool_url = f"{host}{path_prefix}/api/tools/google-sheets/append"
+                cal_check_url = f"{host}{path_prefix}/api/tools/google-calendar/check"
+                cal_book_url = f"{host}{path_prefix}/api/tools/google-calendar/book"
             else:
                 tool_url = f"{host}/api/tools/google-sheets/append"
+                cal_check_url = f"{host}/api/tools/google-calendar/check"
+                cal_book_url = f"{host}/api/tools/google-calendar/book"
 
-            print(f"🛠️ Registering/Updating Google Sheets Tool at {tool_url}")
-
-            # Register/Update in Ultravox
+            print(f"🛠️ Registering/Updating Google Tools at {host}")
+            
             api_key = os.getenv("ULTRAVOX_API_KEY")
-            payload = {
-                "name": tool_name,
-                "definition": {
-                    "modelToolName": tool_name,
+
+            # Definitions for the 3 tools
+            tools_to_register = [
+                {
+                    "name": tool_name,
                     "description": "Append data to a Google Sheet. Use this to save contact info or lead data.",
-                    "dynamicParameters": [
+                    "url": tool_url,
+                    "params": [
                         {"name": "spreadsheet_id", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "string"}, "required": True},
                         {"name": "sheet_name", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "string"}, "required": True},
                         {"name": "data", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "object"}, "required": True}
-                    ],
-                    "http": {
-                        "baseUrlPattern": tool_url,
-                        "httpMethod": "POST"
+                    ]
+                },
+                {
+                    "name": "checkCalendarAvailability",
+                    "description": "Check if Sam has any events scheduled on a given date. ALWAYS use this before booking an appointment. Make sure to pass a valid date.",
+                    "url": cal_check_url,
+                    "params": [
+                        {"name": "date", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "string", "description": "Date to check in YYYY-MM-DD format (e.g. 2026-02-26)"}, "required": True}
+                    ]
+                },
+                {
+                    "name": "bookAppointment",
+                    "description": "Book a new appointment on Sam's calendar. ALWAYS check availability first.",
+                    "url": cal_book_url,
+                    "params": [
+                        {"name": "summary", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "string", "description": "Title of the meeting (e.g. Call with John)"}, "required": True},
+                        {"name": "description", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "string", "description": "Client's contact info or meeting details"}, "required": True},
+                        {"name": "start_time", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "string", "description": "Start time in ISO format (e.g. 2026-02-26T14:00:00Z)"}, "required": True},
+                        {"name": "end_time", "location": "PARAMETER_LOCATION_BODY", "schema": {"type": "string", "description": "End time in ISO format (e.g. 2026-02-26T14:30:00Z)"}, "required": True}
+                    ]
+                }
+            ]
+
+            for tinfo in tools_to_register:
+                payload = {
+                    "name": tinfo["name"],
+                    "definition": {
+                        "modelToolName": tinfo["name"],
+                        "description": tinfo["description"],
+                        "dynamicParameters": tinfo["params"],
+                        "http": {
+                            "baseUrlPattern": tinfo["url"],
+                            "httpMethod": "POST"
+                        }
                     }
                 }
-            }
-            async with httpx.AsyncClient() as client:
-                # Try to update first
-                resp = await client.patch(f"https://api.ultravox.ai/api/tools/{tool_name}", headers={"X-API-Key": api_key}, json=payload)
-                if resp.status_code == 404:
-                    # If not found, create it
-                    resp = await client.post("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key}, json=payload)
+                async with httpx.AsyncClient() as client:
+                    # Try to update first
+                    resp = await client.patch(f"https://api.ultravox.ai/api/tools/{tinfo['name']}", headers={"X-API-Key": api_key}, json=payload)
+                    if resp.status_code == 404:
+                        # If not found, create it
+                        resp = await client.post("https://api.ultravox.ai/api/tools", headers={"X-API-Key": api_key}, json=payload)
 
-                print(f"🛠️ Ultravox Tool Registration/Update Response: {resp.status_code}")
-                if resp.status_code not in [200, 201]:
-                    print(f"⚠️ Tool Registration Error: {resp.text}")
+                    if resp.status_code not in [200, 201]:
+                        print(f"⚠️ Tool Registration Error for {tinfo['name']}: {resp.text}")
 
-            # Update/Register in local DB
-            db_tool = db.query(Tool).filter(Tool.name == tool_name).first()
-            if not db_tool:
-                new_tool = Tool(
-                    name=tool_name,
-                    description="Append data (name, phone, email, etc.) to a Google Sheet. Requires spreadsheet_id and sheet_name.",
-                    base_url=tool_url,
-                    http_method="POST",
-                    is_builtin=False
-                )
-                db.add(new_tool)
-            else:
-                db_tool.base_url = tool_url
-            db.commit()
+                # Update/Register in local DB
+                db_tool = db.query(Tool).filter(Tool.name == tinfo["name"]).first()
+                if not db_tool:
+                    new_tool = Tool(
+                        name=tinfo["name"],
+                        description=tinfo["description"],
+                        base_url=tinfo["url"],
+                        http_method="POST",
+                        is_builtin=False
+                    )
+                    db.add(new_tool)
+                else:
+                    db_tool.base_url = tinfo["url"]
+                db.commit()
     except Exception as e:
-        print(f"Error registering tool: {e}")
+        print(f"Error registering tools: {e}")
     finally:
         db.close()
 
@@ -1593,6 +1627,36 @@ async def google_sheets_append(request: Request, db: Session = Depends(get_db)):
         logger.error(f"❌ Exception while saving to Google Sheets: {e}", exc_info=True)
         # Return success False to let the bot know it failed
         return {"success": False, "message": f"Google Sheets save failed: {str(e)}"}
+
+@app.post("/api/tools/google-calendar/check")
+async def google_calendar_check(request: Request):
+    """Tool endpoint to check Sam's calendar availability"""
+    body = await request.json()
+    date_str = body.get("date")
+
+    if not date_str:
+        return {"success": False, "message": "Missing 'date' parameter"}
+
+    logger.info(f"📅 Checking Google Calendar for date: {date_str}")
+    result = google_calendar_service.get_events(date_str)
+    return result
+
+@app.post("/api/tools/google-calendar/book")
+async def google_calendar_book(request: Request):
+    """Tool endpoint to book an appointment on Sam's calendar"""
+    body = await request.json()
+    
+    summary = body.get("summary")
+    description = body.get("description")
+    start_time = body.get("start_time")
+    end_time = body.get("end_time")
+
+    if not all([summary, start_time, end_time]):
+        return {"success": False, "message": "Missing required parameters (summary, start_time, or end_time)"}
+
+    logger.info(f"📅 Booking Google Calendar event: {summary} from {start_time} to {end_time}")
+    result = google_calendar_service.create_event(summary, description or "", start_time, end_time)
+    return result
 
 @app.post("/api/calls/{call_id}/end")
 async def end_call(call_id: str, db: Session = Depends(get_db)):
