@@ -12,4 +12,4 @@ echo "Installing requirements..."
 pip install -r requirements.txt
 
 echo "Starting service on port 8002..."
-python outbound_service.py
+./venv/bin/python3 outbound_service.py

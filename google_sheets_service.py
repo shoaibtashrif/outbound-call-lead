@@ -1,25 +1,22 @@
 import os
 import json
-from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from typing import List, Dict, Any, Optional
+from google_auth_service import get_google_credentials
 
 class GoogleSheetsService:
     def __init__(self):
-        self.scopes = ['https://www.googleapis.com/auth/spreadsheets']
-        self.service_account_file = os.path.join(os.path.dirname(__file__), 'service-account.json')
         self._service = None
 
     @property
     def service(self):
         if self._service is None:
-            if not os.path.exists(self.service_account_file):
-                print(f"⚠️ Google Service Account file not found at {self.service_account_file}")
+            creds = get_google_credentials()
+            if not creds:
+                print(f"⚠️ Google User Token file not found or invalid.")
                 return None
             
             try:
-                creds = service_account.Credentials.from_service_account_file(
-                    self.service_account_file, scopes=self.scopes)
                 self._service = build('sheets', 'v4', credentials=creds)
             except Exception as e:
                 print(f"❌ Error initializing Google Sheets service: {e}")

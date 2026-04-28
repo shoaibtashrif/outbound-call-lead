@@ -1,0 +1,3174 @@
+[
+  {
+    "voiceId": "9a4dd6eb-f2a9-47e9-8a18-3975df7bf1fb",
+    "name": "Svetlana",
+    "description": "Soft, high-pitched female voice, with a moderate pace and slightly breathy quality",
+    "primaryLanguage": "ru",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddfa Russian",
+    "previewUrl": "https://api.ultravox.ai/api/voices/9a4dd6eb-f2a9-47e9-8a18-3975df7bf1fb/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Svetlana",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "71b7fa51-1f21-4935-8275-863befd7d664",
+    "name": "Yael",
+    "description": "Mid-range female Hebrew voice, suitable for narrations, storytelling, and more",
+    "primaryLanguage": "he",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf1 Hebrew",
+    "previewUrl": "https://api.ultravox.ai/api/voices/71b7fa51-1f21-4935-8275-863befd7d664/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Yael",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "f90da51d-8133-4d19-aa0f-4ec99e14cb85",
+    "name": "Riya",
+    "description": "Professional and clean female voice, with a clear and articulate tone, moderate pace",
+    "primaryLanguage": "hi",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 Hindi",
+    "previewUrl": "https://api.ultravox.ai/api/voices/f90da51d-8133-4d19-aa0f-4ec99e14cb85/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Riya",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "f88eb366-df8e-4115-9f7c-ebf3abac7d1b",
+    "name": "Omar",
+    "description": "Bright, confident Arabic male voice, great for announcements, broadcasts, and voice overs",
+    "primaryLanguage": "ar",
+    "languageLabel": "\ud83c\uddea\ud83c\uddec Arabic",
+    "previewUrl": "https://api.ultravox.ai/api/voices/f88eb366-df8e-4115-9f7c-ebf3abac7d1b/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Omar",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "a4094bec-549c-40c7-87b2-a96f4da7b62b",
+    "name": "Oren",
+    "description": "Steady male Hebrew voice, great for podcasts, voice overs, or announcers",
+    "primaryLanguage": "he",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf1 Hebrew",
+    "previewUrl": "https://api.ultravox.ai/api/voices/a4094bec-549c-40c7-87b2-a96f4da7b62b/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Oren",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "d766b9e3-69df-4727-b62f-cd0b6772c2ad",
+    "name": "Nour",
+    "description": "Polished female Arabic voice with a friendly tone, great for voice over or support",
+    "primaryLanguage": "ar",
+    "languageLabel": "\ud83c\uddea\ud83c\uddec Arabic",
+    "previewUrl": "https://api.ultravox.ai/api/voices/d766b9e3-69df-4727-b62f-cd0b6772c2ad/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Nour",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "83b2a94f-8078-4321-935c-a0798b2ac621",
+    "name": "Nikolai",
+    "description": "Deep, resonant male voice, delivered at a measured pace with a clear, theatrical quality",
+    "primaryLanguage": "ru",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddfa Russian",
+    "previewUrl": "https://api.ultravox.ai/api/voices/83b2a94f-8078-4321-935c-a0798b2ac621/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Nikolai",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "fe97e374-20d0-4a24-8004-21f0827b79ec",
+    "name": "Manoj",
+    "description": "Clear, professional Hindi male voice. Great for narrations, news anchors, and customer service",
+    "primaryLanguage": "hi",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 Hindi",
+    "previewUrl": "https://api.ultravox.ai/api/voices/fe97e374-20d0-4a24-8004-21f0827b79ec/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Manoj",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "c6165754-25d4-421e-bac6-0a5fd38c4732",
+    "name": "Luna",
+    "description": "Calm, relaxing female voice, perfect for meditations, sleep stories, and mindfulness",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/c6165754-25d4-421e-bac6-0a5fd38c4732/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Luna",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "a8fd7fb9-dd89-45b0-ad46-f3603a248411",
+    "name": "Hana",
+    "description": "Bright, expressive young female voice, perfect for storytelling, gaming, and play",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/a8fd7fb9-dd89-45b0-ad46-f3603a248411/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Hana",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "ab53db3c-9415-483d-81e4-569b9cdcd25a",
+    "name": "Elena",
+    "description": "Clear, mid-range female voice, with a smooth texture and a neutral, informational tone",
+    "primaryLanguage": "ru",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddfa Russian",
+    "previewUrl": "https://api.ultravox.ai/api/voices/ab53db3c-9415-483d-81e4-569b9cdcd25a/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Elena",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "65c31466-7722-41df-9f10-4b9663cf0f21",
+    "name": "Dmitry",
+    "description": "Deep, gravelly male voice, delivered at a moderate pace with a commanding and natural tone",
+    "primaryLanguage": "ru",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddfa Russian",
+    "previewUrl": "https://api.ultravox.ai/api/voices/65c31466-7722-41df-9f10-4b9663cf0f21/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Dmitry",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "a6afd1fc-960f-45d3-9e46-e8182af650b9",
+    "name": "Clive",
+    "description": "British-accented English-language male voice with a calm, cordial quality",
+    "primaryLanguage": "en-GB",
+    "languageLabel": "\ud83c\uddec\ud83c\udde7 English (United Kingdom)",
+    "previewUrl": "https://api.ultravox.ai/api/voices/a6afd1fc-960f-45d3-9e46-e8182af650b9/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Clive",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "ff03ec40-b36a-47d9-8840-255f33755a45",
+    "name": "Carter (Inworld)",
+    "description": "Energetic, mature radio announcer-style male voice, great for storytelling, pep talks",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/ff03ec40-b36a-47d9-8840-255f33755a45/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Carter",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "d6d08b98-a4ff-49d4-a4c4-97800d182683",
+    "name": "Blake",
+    "description": "Rich, intimate male voice, perfect for audiobooks, romantic content, and reassuring",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/d6d08b98-a4ff-49d4-a4c4-97800d182683/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Blake",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.2
+      }
+    }
+  },
+  {
+    "voiceId": "6a1192b3-4f53-4c23-98d9-f913099b6b76",
+    "name": "Crhysa",
+    "description": "Professional female",
+    "primaryLanguage": "el",
+    "languageLabel": "\ud83c\uddec\ud83c\uddf7 Greek",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/sQtyZqZwmQZOsxKLCZDubUHqQi93/voices/4hx4668A4ljDTKS4m5oV/d0bf11e6-c697-42fd-84f8-41ac7422b8d4.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "4hx4668A4ljDTKS4m5oV",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "fc5fa615-2cc9-489e-8ae2-14b998a7f7e0",
+    "name": "Adedeji",
+    "description": "Middle-aged Nigerian male.",
+    "primaryLanguage": "en-NG",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddec English (Nigeria)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/GEIBxsbfcgVFlq2XftcGtsaVfpJ2/voices/ji8V21dyEPg5du75d9nX/000fb206-55c8-4568-a301-ce6019642b29.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "ji8V21dyEPg5du75d9nX",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "a06678f4-19dc-43c9-82e9-ce1af12ef528",
+    "name": "Paulina",
+    "description": "Casual Nigerian female.",
+    "primaryLanguage": "en-NG",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddec English (Nigeria)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/hxNeVmrgyIV6GJxPriYW4jGW6Jz2/voices/fGT7Mus3w81KxMRpFtGh/b3ebcaf3-23da-4917-89c5-cf216f6f10b7.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "fGT7Mus3w81KxMRpFtGh",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "105cf7e5-97ba-4a8e-a46c-de9ad0dd9e2c",
+    "name": "Anton",
+    "description": "",
+    "primaryLanguage": "uk",
+    "languageLabel": "\ud83c\uddfa\ud83c\udde6 Ukrainian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/GVRiwBELe0czFUAJj0nX/E7fsygZN4CLpuyugUzMg.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "GVRiwBELe0czFUAJj0nX",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "82d7d2b1-b6d4-46f5-97e7-b9168c9a753e",
+    "name": "Larisa",
+    "description": "",
+    "primaryLanguage": "ru",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddfa Russian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/ddlHYphssKY5fkGbtwue9a7Obfp1/voices/AB9XsbSA4eLG12t2myjN/4hputbU2TnFfBoUjn7CL.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "AB9XsbSA4eLG12t2myjN",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "7cf4711b-964a-4c84-96fc-0129f3e84282",
+    "name": "Abu Salem",
+    "description": "",
+    "primaryLanguage": "ar-KW",
+    "languageLabel": "\ud83c\uddf0\ud83c\uddfc Arabic (Kuwait)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/jlyyck0tuPM4XzE4529nyFekW912/voices/G1QUjBCuRBbLbAmYlTgl/gzwGqV6Zn8ET8cVVYk83.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "G1QUjBCuRBbLbAmYlTgl",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "d5594111-ddca-442a-8796-f0fced479a03",
+    "name": "Noushin",
+    "description": "Female voice with a Persian accent.",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/trk65esPwHW9egX9hfLL1m6xPzQ2/voices/NZiuR1C6kVMSWHG27sIM/4CD8RFZY5GU4sBQjBDqV.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "NZiuR1C6kVMSWHG27sIM",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "642f52fc-6a6c-4771-afee-433cb9e48166",
+    "name": "Raquel",
+    "description": "Young Spanish female voice.",
+    "primaryLanguage": "es-ES",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish (Spain)",
+    "previewUrl": "https://api.ultravox.ai/api/voices/642f52fc-6a6c-4771-afee-433cb9e48166/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "1eHrpOW5l98cxiSRjbzJ",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "f972fbf6-89f5-40a1-9ad7-ee0aa445e8c3",
+    "name": "Sara",
+    "description": "Young female Spanish-Castillian accent.",
+    "primaryLanguage": "es-ES",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish (Spain)",
+    "previewUrl": "https://api.ultravox.ai/api/voices/f972fbf6-89f5-40a1-9ad7-ee0aa445e8c3/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "gD1IexrzCvsXPHUuT0s3",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "ebeecabe-91d7-4dc2-8c0c-74cb0ec93cb7",
+    "name": "AverageJoe",
+    "description": "",
+    "primaryLanguage": null,
+    "languageLabel": null,
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/d8b693dd302c476ba895926ef3e60280/voices/D9Thk1W7FRMgiOhy3zVI/YbkLESdcC83jm5WCQFdR.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "D9Thk1W7FRMgiOhy3zVI",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "db9a10f6-7d9e-446d-8baf-128cb7cd3eb8",
+    "name": "Rafael",
+    "description": "Middle-aged Spanish-speaking male with a deep, composed voice. Great for narrations",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://api.ultravox.ai/api/voices/db9a10f6-7d9e-446d-8baf-128cb7cd3eb8/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Rafael",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "e165c167-0e72-452d-99f1-c90c650fdbf5",
+    "name": "Miguel",
+    "description": "A calm adult Spanish-speaking male voice, perfect for storytelling",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://api.ultravox.ai/api/voices/e165c167-0e72-452d-99f1-c90c650fdbf5/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Miguel",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "9995347b-5fb0-481f-8754-985aa7226a0f",
+    "name": "Lupita",
+    "description": "Vibrant, energetic young Spanish-speaking female voice",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://api.ultravox.ai/api/voices/9995347b-5fb0-481f-8754-985aa7226a0f/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Lupita",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "a9a6d98e-4307-46ff-b2db-8d91e3031d0f",
+    "name": "Diego",
+    "description": "Spanish-speaking male voice with a soothing, gentle quality",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://api.ultravox.ai/api/voices/a9a6d98e-4307-46ff-b2db-8d91e3031d0f/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Diego",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "9b775d73-7f66-4e06-94bd-476323c8ab9f",
+    "name": "Mait\u00ea",
+    "description": "Middle-aged Portuguese-speaking female voice",
+    "primaryLanguage": "pt",
+    "languageLabel": "\ud83c\udde7\ud83c\uddf7 Portuguese",
+    "previewUrl": "https://api.ultravox.ai/api/voices/9b775d73-7f66-4e06-94bd-476323c8ab9f/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Mait\u00ea",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "733ff897-266e-4f05-89cf-a199bd36a106",
+    "name": "Heitor",
+    "description": "Composed Portuguese-speaking male voice with a neutral tone",
+    "primaryLanguage": "pt",
+    "languageLabel": "\ud83c\udde7\ud83c\uddf7 Portuguese",
+    "previewUrl": "https://api.ultravox.ai/api/voices/733ff897-266e-4f05-89cf-a199bd36a106/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Heitor",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "2338b610-cfe8-4110-9c64-9ebadde2b509",
+    "name": "Wojciech",
+    "description": "A middle-aged Polish male voice",
+    "primaryLanguage": "pl",
+    "languageLabel": "\ud83c\uddf5\ud83c\uddf1 Polish",
+    "previewUrl": "https://api.ultravox.ai/api/voices/2338b610-cfe8-4110-9c64-9ebadde2b509/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Wojciech",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "a5d60752-0a88-4305-8b62-9a2b2413f960",
+    "name": "Szymon",
+    "description": "Polish adult male voice with a warm, friendly quality",
+    "primaryLanguage": "pl",
+    "languageLabel": "\ud83c\uddf5\ud83c\uddf1 Polish",
+    "previewUrl": "https://api.ultravox.ai/api/voices/a5d60752-0a88-4305-8b62-9a2b2413f960/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Szymon",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "02a19f46-b2b1-4b32-95cd-59b68f96b123",
+    "name": "Yoona",
+    "description": "Korean woman with a gentle, soothing voice",
+    "primaryLanguage": "ko",
+    "languageLabel": "\ud83c\uddf0\ud83c\uddf7 Korean",
+    "previewUrl": "https://api.ultravox.ai/api/voices/02a19f46-b2b1-4b32-95cd-59b68f96b123/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Yoona",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "839ecfe4-babc-4ca2-803c-8851c9b5872b",
+    "name": "Seojun",
+    "description": "Clear, deep mature Korean male voice",
+    "primaryLanguage": "ko",
+    "languageLabel": "\ud83c\uddf0\ud83c\uddf7 Korean",
+    "previewUrl": "https://api.ultravox.ai/api/voices/839ecfe4-babc-4ca2-803c-8851c9b5872b/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Seojun",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "8c071803-888a-458a-bcdb-26d911dde6a9",
+    "name": "Minji",
+    "description": "Energetic, friendly young Korean female voice",
+    "primaryLanguage": "ko",
+    "languageLabel": "\ud83c\uddf0\ud83c\uddf7 Korean",
+    "previewUrl": "https://api.ultravox.ai/api/voices/8c071803-888a-458a-bcdb-26d911dde6a9/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Minji",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "bcc5d0e9-c493-4e4a-86fc-74477211fad2",
+    "name": "Hyunwoo",
+    "description": "Young adult Korean male voice",
+    "primaryLanguage": "ko",
+    "languageLabel": "\ud83c\uddf0\ud83c\uddf7 Korean",
+    "previewUrl": "https://api.ultravox.ai/api/voices/bcc5d0e9-c493-4e4a-86fc-74477211fad2/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Hyunwoo",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "0496b58f-486f-452c-9ad7-a1f18700d376",
+    "name": "Satoshi",
+    "description": "Dramatic, expressive male Japanese voice filled with energy",
+    "primaryLanguage": "ja",
+    "languageLabel": "\ud83c\uddef\ud83c\uddf5 Japanese",
+    "previewUrl": "https://api.ultravox.ai/api/voices/0496b58f-486f-452c-9ad7-a1f18700d376/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Satoshi",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "22dc9bf3-a1bd-46ae-bc0a-fbe6bbc84a08",
+    "name": "Asuka",
+    "description": "Friendly, young adult Japanese female voice",
+    "primaryLanguage": "ja",
+    "languageLabel": "\ud83c\uddef\ud83c\uddf5 Japanese",
+    "previewUrl": "https://api.ultravox.ai/api/voices/22dc9bf3-a1bd-46ae-bc0a-fbe6bbc84a08/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Asuka",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "9a89ed86-048d-4982-94df-740a74706265",
+    "name": "Orietta",
+    "description": "Calm adult female Italian voice, with a soothing cadence",
+    "primaryLanguage": "it",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf9 Italian",
+    "previewUrl": "https://api.ultravox.ai/api/voices/9a89ed86-048d-4982-94df-740a74706265/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Orietta",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "82f9b3d0-575f-4eda-8079-9bdbf34675ea",
+    "name": "Gianni",
+    "description": "Deep, smooth Italian male voice that speaks rapidly",
+    "primaryLanguage": "it",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf9 Italian",
+    "previewUrl": "https://api.ultravox.ai/api/voices/82f9b3d0-575f-4eda-8079-9bdbf34675ea/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Gianni",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "7c56f21e-e0ed-46b3-bdcb-5b4e3b63345d",
+    "name": "Josef",
+    "description": "An articulate German male voice with an announcer-like quality",
+    "primaryLanguage": "de",
+    "languageLabel": "\ud83c\udde9\ud83c\uddea German",
+    "previewUrl": "https://api.ultravox.ai/api/voices/7c56f21e-e0ed-46b3-bdcb-5b4e3b63345d/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Josef",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "61c1704c-ad19-42a2-bad3-087c24445810",
+    "name": "Johanna",
+    "description": "A calm older German female with a low, smoky voice",
+    "primaryLanguage": "de",
+    "languageLabel": "\ud83c\udde9\ud83c\uddea German",
+    "previewUrl": "https://api.ultravox.ai/api/voices/61c1704c-ad19-42a2-bad3-087c24445810/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Johanna",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "dc10b07b-c86c-4a46-ad3f-8c5131acb172",
+    "name": "\u00c9tienne",
+    "description": "Calm young adult French male",
+    "primaryLanguage": "fr",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddf7 French",
+    "previewUrl": "https://api.ultravox.ai/api/voices/dc10b07b-c86c-4a46-ad3f-8c5131acb172/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "\u00c9tienne",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "59fdbba9-34de-47d8-869f-8d8e83931260",
+    "name": "Mathieu",
+    "description": "A French male voice carrying a nasal quality",
+    "primaryLanguage": "fr",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddf7 French",
+    "previewUrl": "https://api.ultravox.ai/api/voices/59fdbba9-34de-47d8-869f-8d8e83931260/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Mathieu",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "e46582dd-7a0a-4b24-bda3-06fa5d96deca",
+    "name": "H\u00e9l\u00e8ne",
+    "description": "Middle-aged French woman, with a smooth, musical, and graceful voice",
+    "primaryLanguage": "fr",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddf7 French",
+    "previewUrl": "https://api.ultravox.ai/api/voices/e46582dd-7a0a-4b24-bda3-06fa5d96deca/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "H\u00e9l\u00e8ne",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "6b132d3a-b711-4d27-a4f9-941f5035a3ac",
+    "name": "Alain",
+    "description": "Deep, smooth middle-aged male French voice. Composed and calm",
+    "primaryLanguage": "fr",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddf7 French",
+    "previewUrl": "https://api.ultravox.ai/api/voices/6b132d3a-b711-4d27-a4f9-941f5035a3ac/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Alain",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "69d5e568-f6cc-4883-9b5b-4791570c8040",
+    "name": "Lore",
+    "description": "Clear, calm Dutch female voice, great for narrations and professional use cases",
+    "primaryLanguage": "nl",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddf1 Dutch",
+    "previewUrl": "https://api.ultravox.ai/api/voices/69d5e568-f6cc-4883-9b5b-4791570c8040/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Lore",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "7864110b-84db-4177-bdc4-cb7514cdc468",
+    "name": "Lennart",
+    "description": "A confident Dutch male voice. Calm and relaxed",
+    "primaryLanguage": "nl",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddf1 Dutch",
+    "previewUrl": "https://api.ultravox.ai/api/voices/7864110b-84db-4177-bdc4-cb7514cdc468/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Lennart",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "0af1537b-9711-4aa5-b4af-1d7534b3b244",
+    "name": "Katrien",
+    "description": "Dutch woman with an expressive voice",
+    "primaryLanguage": "nl",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddf1 Dutch",
+    "previewUrl": "https://api.ultravox.ai/api/voices/0af1537b-9711-4aa5-b4af-1d7534b3b244/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Katrien",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "250976e6-0526-45d8-bd81-9fad4702df16",
+    "name": "Erik",
+    "description": "Older Dutch male voice with a weathered edge",
+    "primaryLanguage": "nl",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddf1 Dutch",
+    "previewUrl": "https://api.ultravox.ai/api/voices/250976e6-0526-45d8-bd81-9fad4702df16/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Erik",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "178a53fb-bd0c-43e4-8856-8fe8986bd13a",
+    "name": "Jing",
+    "description": "An energetic, fast-paced young Chinese female",
+    "primaryLanguage": "zh",
+    "languageLabel": "\ud83c\udde8\ud83c\uddf3 Chinese",
+    "previewUrl": "https://api.ultravox.ai/api/voices/178a53fb-bd0c-43e4-8856-8fe8986bd13a/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Jing",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "08bfaab9-5c25-4a91-84ba-7928db897009",
+    "name": "Xinyi",
+    "description": "A Chinese woman with a neutral tone, perfect for narrations",
+    "primaryLanguage": "zh",
+    "languageLabel": "\ud83c\udde8\ud83c\uddf3 Chinese",
+    "previewUrl": "https://api.ultravox.ai/api/voices/08bfaab9-5c25-4a91-84ba-7928db897009/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Xinyi",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "7ced4c2e-ea82-4121-91cf-120a71dfda7c",
+    "name": "Xiaoyin",
+    "description": "A youthful Chinese female voice with a gentle, sweet voice",
+    "primaryLanguage": "zh",
+    "languageLabel": "\ud83c\udde8\ud83c\uddf3 Chinese",
+    "previewUrl": "https://api.ultravox.ai/api/voices/7ced4c2e-ea82-4121-91cf-120a71dfda7c/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Xiaoyin",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "b147f2fa-11a6-4f58-85fa-6a569aa4d149",
+    "name": "Yichen",
+    "description": "A calm, flat young adult male Chinese voice",
+    "primaryLanguage": "zh",
+    "languageLabel": "\ud83c\udde8\ud83c\uddf3 Chinese",
+    "previewUrl": "https://api.ultravox.ai/api/voices/b147f2fa-11a6-4f58-85fa-6a569aa4d149/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Yichen",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "9bbd1c9e-8bda-4c35-bad4-81b7d66374a9",
+    "name": "Dominus",
+    "description": "Robotic, deep male voice with a menacing quality. Perfect for villains",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/9bbd1c9e-8bda-4c35-bad4-81b7d66374a9/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Dominus",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "39c66061-651a-44e1-8eed-78af9f4292c0",
+    "name": "Wendy",
+    "description": "Posh, middle-aged British female voice",
+    "primaryLanguage": "en-GB",
+    "languageLabel": "\ud83c\uddec\ud83c\udde7 English (United Kingdom)",
+    "previewUrl": "https://api.ultravox.ai/api/voices/39c66061-651a-44e1-8eed-78af9f4292c0/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Wendy",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "03e20d03-35e4-43c4-bb18-9b18a2cd3086",
+    "name": "Timothy",
+    "description": "Lively, upbeat American male voice",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/03e20d03-35e4-43c4-bb18-9b18a2cd3086/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Timothy",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "1418cc8f-e5fe-4f49-a6bd-73e85df3896d",
+    "name": "Theodore",
+    "description": "Gravelly male voice, with a time-worn quality",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/1418cc8f-e5fe-4f49-a6bd-73e85df3896d/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Theodore",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "16711bb9-33fd-43e9-8dd9-cbc969205b2e",
+    "name": "Shaun",
+    "description": "Friendly, dynamic male voice great for conversations",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/16711bb9-33fd-43e9-8dd9-cbc969205b2e/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Shaun",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "4fed8c41-bb30-45d6-bf65-47aa0b326523",
+    "name": "Sarah",
+    "description": "Fast-talking young adult woman, with a questioning and curious tone",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/4fed8c41-bb30-45d6-bf65-47aa0b326523/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Sarah",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "f26df223-b0e0-43dd-bb5b-9b40f110bdd8",
+    "name": "Ronald",
+    "description": "Confident, British man with a deep, gravelly voice",
+    "primaryLanguage": "en-GB",
+    "languageLabel": "\ud83c\uddec\ud83c\udde7 English (United Kingdom)",
+    "previewUrl": "https://api.ultravox.ai/api/voices/f26df223-b0e0-43dd-bb5b-9b40f110bdd8/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Ronald",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "73527457-256b-4291-a36e-10128315db4b",
+    "name": "Priya",
+    "description": "Even-toned female voice with an Indian accent",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/73527457-256b-4291-a36e-10128315db4b/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Priya",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "2217378a-cff0-4297-b074-cc82ca8a7670",
+    "name": "Olivia",
+    "description": "Young, British female with an upbeat, friendly tone",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/2217378a-cff0-4297-b074-cc82ca8a7670/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Olivia",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "f2c8eb8c-c407-4740-ab39-18bf85e163a3",
+    "name": "Mark (Inworld)",
+    "description": "Energetic, expressive man with a rapid-fire delivery",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/f2c8eb8c-c407-4740-ab39-18bf85e163a3/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Mark",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "ee93bbf5-b47d-4f0d-bc03-f7235ddd8ab1",
+    "name": "Pixie",
+    "description": "High-pitched, childlike female voice with a squeaky quality - great for a cartoon",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/ee93bbf5-b47d-4f0d-bc03-f7235ddd8ab1/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Pixie",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "413a13c6-f474-4912-8758-c51b40abaf76",
+    "name": "Julia",
+    "description": "Quirky, high-pitched female voice that delivers lines with playful energy",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/413a13c6-f474-4912-8758-c51b40abaf76/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Julia",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "c7acbd4a-8a1d-42b1-b358-0404a086f2a3",
+    "name": "Hades",
+    "description": "Commanding and gruff male voice, think an omniscient narrator or castle guard",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/c7acbd4a-8a1d-42b1-b358-0404a086f2a3/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Hades",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "87edc729-5ae4-477b-a5f6-028d3ca54d36",
+    "name": "Elizabeth",
+    "description": "Professional middle-aged woman, perfect for narrations and voiceovers",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/87edc729-5ae4-477b-a5f6-028d3ca54d36/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Elizabeth",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "e1a97a25-98d6-4aba-940e-7750ae8118fc",
+    "name": "Edward",
+    "description": "Male with a fast-talking, emphatic and streetwise tone",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/e1a97a25-98d6-4aba-940e-7750ae8118fc/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Edward",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "2b168123-3f42-444c-a0a7-b9bc777fc096",
+    "name": "Dennis",
+    "description": "Middle-aged man with a smooth, calm and friendly voice",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/2b168123-3f42-444c-a0a7-b9bc777fc096/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Dennis",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "e89fa8ed-ae2a-4875-a2a8-224c26f72735",
+    "name": "Deborah",
+    "description": "Gentle and elegant female voice",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/e89fa8ed-ae2a-4875-a2a8-224c26f72735/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Deborah",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "1a9fa887-1da1-48c9-8033-61b10f2f2cda",
+    "name": "Craig",
+    "description": "Older British male with a refined and articulate voice",
+    "primaryLanguage": "en-GB",
+    "languageLabel": "\ud83c\uddec\ud83c\udde7 English (United Kingdom)",
+    "previewUrl": "https://api.ultravox.ai/api/voices/1a9fa887-1da1-48c9-8033-61b10f2f2cda/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Craig",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "df0b14d7-945f-41b2-989a-7c8c57688ddf",
+    "name": "Ashley",
+    "description": "A warm, natural female voice",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/df0b14d7-945f-41b2-989a-7c8c57688ddf/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Ashley",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "2c2b65d1-dc0d-44fd-86cc-19f6e022bd5f",
+    "name": "Alex",
+    "description": "Energetic and expressive mid-range male voice, with a mildly nasal quality",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/2c2b65d1-dc0d-44fd-86cc-19f6e022bd5f/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Inworld",
+    "definition": {
+      "inworld": {
+        "voiceId": "Alex",
+        "modelId": "inworld-tts-1.5-max",
+        "speakingRate": 1.1
+      }
+    }
+  },
+  {
+    "voiceId": "053152c3-913f-4ff8-84b6-69626ac273f0",
+    "name": "Kylee-English-NewZealand",
+    "description": "",
+    "primaryLanguage": "en-NZ",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddff English (New Zealand)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/XBnQI7fZ7yQOMdFhBTuWs8e2uBf1/voices/pcKdPWtbF6bM9o7NHjCI/728c75ef-2d6c-4492-8b95-fe0a466def7e.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "pcKdPWtbF6bM9o7NHjCI",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "7e53b695-8c13-4861-bfbc-ff521f4ebacb",
+    "name": "Saavi-English-Indian",
+    "description": "",
+    "primaryLanguage": "en-IN",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 English (India)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/ed9b05e6324c457685490352e9a1ec90/voices/H8bdWZHK2OgZwTN7ponr/jhoBXyhQgwLjuRW2h420.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "H8bdWZHK2OgZwTN7ponr",
+        "model": "eleven_flash_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "a0faeabe-3777-4846-9439-48d19f2bfc3e",
+    "name": "Tiago-Portuguese",
+    "description": "",
+    "primaryLanguage": "pt-BR",
+    "languageLabel": "\ud83c\udde7\ud83c\uddf7 Portuguese (Brazil)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/aQEa8IiClZhXpQdStTPijviqbf83/voices/NdHRjGnnDKGnnm2c19le/DdtTQHbdtg9OddTAXDrj.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "NdHRjGnnDKGnnm2c19le",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "5d00d99b-7e89-4f5c-8103-2dea73cc38fe",
+    "name": "Paulo-Portuguese",
+    "description": "",
+    "primaryLanguage": "pt-PT",
+    "languageLabel": "\ud83c\uddf5\ud83c\uddf9 Portuguese (Portugal)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/0E6B6ie19OUzDa7czZ3bI8JhtPg2/voices/aLFUti4k8YKvtQGXv0UO/WnPjbKRVPLGOhGpm1s47.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "aLFUti4k8YKvtQGXv0UO",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "e41b75e5-3936-4a92-b635-63f4348f6ae5",
+    "name": "Carter",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://api.ultravox.ai/api/voices/e41b75e5-3936-4a92-b635-63f4348f6ae5/preview",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Cartesia",
+    "definition": {
+      "cartesia": {
+        "voiceId": "5ee9feff-1265-424a-9d7f-8e4d431a12c7",
+        "model": "sonic-2",
+        "speed": 0.0
+      }
+    }
+  },
+  {
+    "voiceId": "f0ed7e07-0e85-4853-a8f5-e09c627cf944",
+    "name": "Cassidy-English",
+    "description": "English. Female.",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/1da06ea679a54975ad96a2221fe6530d/voices/56AoDkrOh6qfVPDXZ7Pt/oEgVi6mikkKcpVcTFfj5.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "56AoDkrOh6qfVPDXZ7Pt",
+        "model": "eleven_flash_v2",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "c09f0a7d-97da-4041-9c50-6b92a19667da",
+    "name": "Mark2",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/y7Wmp2r8nCeGkLiXiwMOVWktro13/voices/UgBBYS2sOqTuMpoF3BR0/7ea3491c-5553-443f-874e-fae1dca9721a.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "UgBBYS2sOqTuMpoF3BR0",
+        "model": "eleven_flash_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "3a645332-ab59-485a-83ed-2fc0c79815f1",
+    "name": "David-English-British",
+    "description": "",
+    "primaryLanguage": "en-GB",
+    "languageLabel": "\ud83c\uddec\ud83c\udde7 English (United Kingdom)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/BNgbHR0DNeZixGQVzloa/40VSLvxrLAkmQgyrEA4t.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "BNgbHR0DNeZixGQVzloa",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "7bf77a8f-2ea8-4d0f-8d5f-cbac1271072a",
+    "name": "Alex-Spanish",
+    "description": "Peninsular accent. Works with Catalan. Male.",
+    "primaryLanguage": "es-ES",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish (Spain)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/Qb19OyvHcRUcbBQGoxYEhoYKFmg1/voices/7ilYbYb99yBZGMUUKSaf/Kw9ZUUyoze8OyV2kmCPw.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "7ilYbYb99yBZGMUUKSaf",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "a0df06e1-d90a-444a-906a-b9c873796f4e",
+    "name": "Amrut-English-Indian",
+    "description": "",
+    "primaryLanguage": "en-IN",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 English (India)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/vO7hjeAjmsdlGgUdvPpe/OjCTOjpdxyFPInvFYrxB.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "xnx6sPTtvU635ocDt2j7",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "ad69ddb2-363f-4279-adf4-5961f127ec2f",
+    "name": "Chinmay-English-Indian",
+    "description": "",
+    "primaryLanguage": "en-IN",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 English (India)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/xnx6sPTtvU635ocDt2j7/iWmWpwBvJNpwKr4KlYB8.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "xnx6sPTtvU635ocDt2j7",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "d17917ec-fd98-4c50-8c83-052c575cbf3e",
+    "name": "Riya-Rao-English-Indian",
+    "description": "",
+    "primaryLanguage": "en-IN",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 English (India)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/wlmwDR77ptH6bKHZui0l/vDP823KvNyKcS3acBpIF.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "wlmwDR77ptH6bKHZui0l",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "44504e63-59c5-4f69-9340-423231c79a03",
+    "name": "Anika-English-Indian",
+    "description": "",
+    "primaryLanguage": "en-IN",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 English (India)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/90ipbRoKi4CpHXvKVtl0/RHjv4PzQ8pTguUk1dcO5.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "90ipbRoKi4CpHXvKVtl0",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "5c66a578-7a4a-4bf9-b282-8c8a7ca3e6d8",
+    "name": "Mark-Slow",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/y7Wmp2r8nCeGkLiXiwMOVWktro13/voices/UgBBYS2sOqTuMpoF3BR0/0Oc7jiXwWN9kRTXfQsmw.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "UgBBYS2sOqTuMpoF3BR0",
+        "model": "eleven_turbo_v2_5",
+        "speed": 0.9
+      }
+    }
+  },
+  {
+    "voiceId": "2794bbac-088a-483d-9cfe-70b015fe6312",
+    "name": "Muyiwa-English",
+    "description": "Nigerian accent. Male.",
+    "primaryLanguage": "en-NG",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddec English (Nigeria)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/n0WL1sQpkqfb5wEBGUdA9Bs2OjW2/voices/LEvd0YiWkwZ6hTZOmdVE/a8e3b853-b0ee-4a71-9bc1-bd4d5935c427.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "LEvd0YiWkwZ6hTZOmdVE",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "441ec053-5566-4d18-9752-452dd5120071",
+    "name": "Elilhiz-English",
+    "description": "Nigerian accent. Female.",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/1da06ea679a54975ad96a2221fe6530d/voices/iehvjLbWf9WSnLRBuTuR/WkzpcUkOtqIXl0sdI6Mu.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "iehvjLbWf9WSnLRBuTuR",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "87edb04c-06d4-47c2-bd94-683bc47e8fbe",
+    "name": "Monika-English-Indian",
+    "description": "Indian English accent. Female.",
+    "primaryLanguage": "en-IN",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 English (India)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/2zRM7PkgwBPiau2jvVXc/NcEOQ9awTZvgwUoqtmU9.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "2zRM7PkgwBPiau2jvVXc",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "7c125579-a8b9-46ba-887b-60e4f0449e5d",
+    "name": "Raju-English-Indian",
+    "description": "",
+    "primaryLanguage": "en-IN",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 English (India)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/514d94e9241c48e8b7905375729c436f/voices/3gsg3cxXyFLcGIfNbM6C/rGzUET9JqnvDlrj9gNqJ.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "3gsg3cxXyFLcGIfNbM6C",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "e194185b-cb4e-43ab-9bef-e2a88530090d",
+    "name": "Francisco-Portuguese",
+    "description": "European (Portugal) accent. Male.",
+    "primaryLanguage": "pt-PT",
+    "languageLabel": "\ud83c\uddf5\ud83c\uddf9 Portuguese (Portugal)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/1da06ea679a54975ad96a2221fe6530d/voices/WsQeRzWJvoDvhPPJj5r7/2198749f-0444-4a8c-aba5-65d581483f86.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "WsQeRzWJvoDvhPPJj5r7",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "e396a010-bede-4c56-972a-e8cb56aadda8",
+    "name": "Haytham-Arabic-Egyptian",
+    "description": "",
+    "primaryLanguage": "ar-EG",
+    "languageLabel": "\ud83c\uddea\ud83c\uddec Arabic (Egypt)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/9QU6MqZNA2gQa3xJofEAkVetJtm1/voices/IES4nrmZdUBHByLBde0P/k0uwHjffW70gT6nJ9gW5.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "IES4nrmZdUBHByLBde0P",
+        "model": "eleven_flash_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "65de56b6-246b-434a-bbfd-d34f02fcd8e7",
+    "name": "Amr-Arabic-Egyptian",
+    "description": "",
+    "primaryLanguage": "ar-EG",
+    "languageLabel": "\ud83c\uddea\ud83c\uddec Arabic (Egypt)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/LVILbN7mtsfs9r3lTkU2UDUd4IU2/voices/yrPIy5b3iLnVLIBfUSw8/a680bb99-93a3-4be7-b3ae-260cc8364072.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "yrPIy5b3iLnVLIBfUSw8",
+        "model": "eleven_flash_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "905da14a-152e-45a1-a329-0bce2c37bcf2",
+    "name": "Flavia-Spanish",
+    "description": "",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/hyvhDTDDzpYx6ESCEkdL0uGPv6H3/voices/kvVjNZvtnCv3Sl1Hr70T/xaOAjbXCjXCHUEjawQLD.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "kvVjNZvtnCv3Sl1Hr70T",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "74d331a7-36d3-4efb-b596-9ba381a0c5d5",
+    "name": "Carolina-Spanish",
+    "description": "",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/UOIqAnmS11Reiei1Ytkc/iD8yOai01ygsrjOUknQ3.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "UOIqAnmS11Reiei1Ytkc",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "926ef3d0-686c-474a-8338-f64383eee5d1",
+    "name": "Miquel-Spanish",
+    "description": "",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/XRyFolBa3BVHE8hrw8V3Js8BIfR2/voices/nuzVc5hpXBWZjFEe4izg/02be0444-187f-4900-a083-32f6baa58730.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "nuzVc5hpXBWZjFEe4izg",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "325a57f4-6f8c-4b96-aa1c-cd0e4a541161",
+    "name": "Victor-Spanish",
+    "description": "",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/5ZYfqUKaxNSA9elGT1r7akdx69d2/voices/6VhI0BBMzbLqzPaeqUCz/HeqclfQuDDruKYAFk79m.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "6VhI0BBMzbLqzPaeqUCz",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "ecfa0ff5-55e1-45da-9646-5d6c6c780692",
+    "name": "Keren-Brazilian-Portuguese",
+    "description": "Brazilian accent. Female.",
+    "primaryLanguage": "pt-BR",
+    "languageLabel": "\ud83c\udde7\ud83c\uddf7 Portuguese (Brazil)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/33B4UnXyTNbgLmdEDh5P/ArnzDsFaz6KDoDcDD8V2.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "33B4UnXyTNbgLmdEDh5P",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "a0998448-6810-4b44-bc90-ccb69d2a26f5",
+    "name": "Srivi - Tamil",
+    "description": "Middle aged female.",
+    "primaryLanguage": "ta",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 Tamil",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/workspace/ed9b05e6324c457685490352e9a1ec90/voices/eh0hAHy3N3C9DE0uyHHD/8sHbDp3HBtO8pWje0TmV.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "eh0hAHy3N3C9DE0uyHHD",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "af750274-1a66-4b7c-ae41-e1a196fbe285",
+    "name": "Peter - Slovak",
+    "description": "Middle aged male.",
+    "primaryLanguage": "sk",
+    "languageLabel": "\ud83c\uddf8\ud83c\uddf0 Slovak",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/HOZrfHdrnpe9pZlWrIwZoq4cDsX2/voices/d6IbhdqAKkXCCVuJjbie/KdiAikWHzYiPnLKFP9Qv.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "d6IbhdqAKkXCCVuJjbie",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "3a312be1-29f0-4007-9ebf-7f7dcd6ba000",
+    "name": "Ciprian - Romanian",
+    "description": "Middle aged Romanian male voice.",
+    "primaryLanguage": "ro",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddf4 Romanian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/XcKZk1UpVPb5ZeTOw7u8UC2wE3g2/voices/h3aQ5g69oxB0wpernpfx/c2f74f19-37c7-4646-8f6e-63b75ccecdc7.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "h3aQ5g69oxB0wpernpfx",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "f3ded245-d53b-4bb9-b66e-f4bd214f2014",
+    "name": "Aurora - Finnish",
+    "description": "Young Finnish friendly and professional voice.",
+    "primaryLanguage": "fi",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddee Finnish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/YnvMFnsOz1gXpFGFWbhHNkyNHho2/voices/YSabzCJMvEHDduIDMdwV/2kWo0RqG5nwi2Mc8dP23.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "YSabzCJMvEHDduIDMdwV",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "028a1f66-250b-45fb-af2e-7e1ad8d1eef6",
+    "name": "Stefanos - Greek",
+    "description": "A youthful soft and calm voice, with athenian Greek accent.",
+    "primaryLanguage": "el",
+    "languageLabel": "\ud83c\uddec\ud83c\uddf7 Greek",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/sFRa14jQlVPYadW9ZSfUNemgxlt1/voices/czEPjbZ9jNJoQ7WzdyTa/6b772431-6b0b-4f02-b383-d13cdffe93eb.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "czEPjbZ9jNJoQ7WzdyTa",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "84db93a3-648c-4186-9bd6-c2177d5557d6",
+    "name": "Julian - Bulgarian",
+    "description": "Middle aged male Bulgarian voice.",
+    "primaryLanguage": "bg",
+    "languageLabel": "\ud83c\udde7\ud83c\uddec Bulgarian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/kzrsjZhHCumKqmkJl486/crgXryf0iMhFkAUXiLJq.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "kzrsjZhHCumKqmkJl486",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "81aa0d14-5b80-486b-8661-140b6c5820f2",
+    "name": "Huyen - Vietnamese",
+    "description": "Young middle aged female voice.",
+    "primaryLanguage": "vi",
+    "languageLabel": "\ud83c\uddfb\ud83c\uddf3 Vietnamese",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/QFYxhWzSETeiPXYPPlCEN3lJcKr1/voices/foH7s9fX31wFFH2yqrFa/XEIsoRs7xArbmUx1pJpp.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "foH7s9fX31wFFH2yqrFa",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "a6d71cd6-1204-4c8c-aabc-f679600cf0ae",
+    "name": "Trung Caha - Vietnamese",
+    "description": "Middle aged Vietnamese male voice.",
+    "primaryLanguage": "vi",
+    "languageLabel": "\ud83c\uddfb\ud83c\uddf3 Vietnamese",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/y6fKTFEG7Ee17Z1zDZHoGFNsVKY2/voices/ueSxRO0nLF1bj93J2hVt/de4ac6e9-75d7-44c5-bb50-2305dfdda280.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "ueSxRO0nLF1bj93J2hVt",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "4c6a414f-34d5-4633-9d47-f25949554ca2",
+    "name": "Ramaa - Tamil",
+    "description": "Middle aged male.",
+    "primaryLanguage": "ta",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 Tamil",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/TLzQBQZ61wQrytFwliQpe4LeshE3/voices/ZhJ5LanYnCmLKQUXvsV7/pooiLHNeBUPpS20ZzL5O.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "ZhJ5LanYnCmLKQUXvsV7",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "6202538c-04b0-41cb-b0a0-3c862b683d4f",
+    "name": "Corina - Romanian",
+    "description": "Middle aged Romanian female.",
+    "primaryLanguage": "ro",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddf4 Romanian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/gbLy9ep70G3JW53cTzFC/ORZ4ycrJb2N6RvCCndYi.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "gbLy9ep70G3JW53cTzFC",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "c6b6e4dc-f15b-44ef-8679-97247a295725",
+    "name": "Magyar - Hungarian",
+    "description": "Young Hungarian male.",
+    "primaryLanguage": "hu",
+    "languageLabel": "\ud83c\udded\ud83c\uddfa Hungarian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/HOZrfHdrnpe9pZlWrIwZoq4cDsX2/voices/TumdjBNWanlT3ysvclWh/UtdbtjoD1JNS4TtqyzwM.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "TumdjBNWanlT3ysvclWh",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "4da4cd48-9abf-4005-9ffd-ca829128e6e5",
+    "name": "Christoffer - Finnish",
+    "description": "Adult Finnish male.",
+    "primaryLanguage": "fi",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddee Finnish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/x5oDnHb3gcQVsz98Z9d02YR9nNq2/voices/3OArekHEkHv5XvmZirVD/26b3d232-c1b4-49f9-894d-e58a0b70b78f.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "3OArekHEkHv5XvmZirVD",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "3274a450-a199-4421-8b16-fdfa923ccf23",
+    "name": "Mathias - Danish",
+    "description": "Middle aged male.",
+    "primaryLanguage": "da",
+    "languageLabel": "\ud83c\udde9\ud83c\uddf0 Danish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/ygiXC2Oa1BiHksD3WkJZ/MV8Filx4M2vlCNaIVYQH.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "ygiXC2Oa1BiHksD3WkJZ",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "d2d3f512-55a1-4e14-8322-1626efd1c531",
+    "name": "Denisa - Czech",
+    "description": "Calm and soft young female voice.",
+    "primaryLanguage": "cs",
+    "languageLabel": "\ud83c\udde8\ud83c\uddff Czech",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/7G095XVHsmgoCnhxJhLJeLZUzAR2/voices/OAAjJsQDvpg3sVjiLgyl/4cc64654-5542-4ff8-bfa7-67cf38c8c906.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "OAAjJsQDvpg3sVjiLgyl",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "13b86f40-5ad9-4808-b9c3-c7f5419c95d5",
+    "name": "Adam - Czech",
+    "description": "Conversational, voice of a Czech male in his mid thirties.",
+    "primaryLanguage": "cs",
+    "languageLabel": "\ud83c\udde8\ud83c\uddff Czech",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/ZpYbCaSd2uMVjSr1tTgZPFLl0J92/voices/uYFJyGaibp4N2VwYQshk/P9QQG2a62C0lhe2HlcbL.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "uYFJyGaibp4N2VwYQshk",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "bef461b7-d234-4d31-b09d-b6a101f7c79c",
+    "name": "Bea - Polish",
+    "description": "Middle aged Polish female.",
+    "primaryLanguage": "pl",
+    "languageLabel": "\ud83c\uddf5\ud83c\uddf1 Polish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/4BtkyC9Cwbfff8b19psbv3eeWIf1/voices/HnsghscV3PKM5tLCzch5/72f9eb2a-0ec0-42d0-8e8a-c0f0528c4ea2.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "HnsghscV3PKM5tLCzch5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "49a97861-7bbb-486a-ba6f-6dec7f57b51d",
+    "name": "Pawel - Polish",
+    "description": "Middle aged male Polish voice.",
+    "primaryLanguage": "pl",
+    "languageLabel": "\ud83c\uddf5\ud83c\uddf1 Polish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/zzBTsLBFM6AOJtkr1e9b/jsLaAOqZnKHhKX1sJTWl.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "zzBTsLBFM6AOJtkr1e9b",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "d082550b-596a-42f7-9356-840b4a095d3f",
+    "name": "Emma-Norwegian",
+    "description": "",
+    "primaryLanguage": "no",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddf4 Norwegian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/OSbmAb1GKjNVlChP2UgZukCicWR2/voices/b3jcIbyC3BSnaRu8avEk/bZ5dFORSQeyFBQ7VAv9C.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "b3jcIbyC3BSnaRu8avEk",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "864c6a02-ee99-47a1-b7d8-a723aa754bf4",
+    "name": "Johannes-Norwegian",
+    "description": "",
+    "primaryLanguage": "no",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddf4 Norwegian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/2dhHLsmg0MVma2t041qT/fX3l7ljt7bx6zRPz8VdC.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "2dhHLsmg0MVma2t041qT",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "bd2118e8-84fc-4d6f-8038-bb5e25e3f398",
+    "name": "linny",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/yA8yDNUx4dZ4gwL9ztbTpUEIyR12/voices/g6xIsTj2HwM6VR4iXFCw/a1293f80-859a-49dd-9843-71466e57d046.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "g6xIsTj2HwM6VR4iXFCw",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "813f0a80-2dc5-4019-af72-11237a2b74d5",
+    "name": "Steve-English-Australian",
+    "description": "",
+    "primaryLanguage": "en-AU",
+    "languageLabel": "\ud83c\udde6\ud83c\uddfa English (Australia)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/aGkVQvWUZi16EH8aZJvT/hUdpJvUH4knIjWwEeGyu.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "aGkVQvWUZi16EH8aZJvT",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "87691b77-0174-4808-b73c-30000b334e14",
+    "name": "Emily-English",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/G7iiSdUpTxfaEQrlPlp1/kbXLLTvxoQERU2r4oV2i.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "G7iiSdUpTxfaEQrlPlp1",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "1769b283-36c6-4883-9c52-17bf75a29bc5",
+    "name": "Tanya-English",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/Bwff1jnzl1s94AEcntUq/qoI90uxNbUdjLpbz5RT4.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "Bwff1jnzl1s94AEcntUq",
+        "model": "eleven_flash_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "feccf00b-417e-4e7a-9f89-62f537280334",
+    "name": "Aaron-English",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/ZzIzVo9ATCeBEsjfTWa17GTKTtn1/voices/D9Thk1W7FRMgiOhy3zVI/9fcf61b2-9948-4e11-a052-badce36b10ae.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "D9Thk1W7FRMgiOhy3zVI",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0,
+        "pronunciationDictionaries": [
+          {
+            "dictionaryId": "SapryoHO904qlNQvcO4W",
+            "versionId": "UX237BDPHqlAcrTXjeht"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "voiceId": "e6fce4ac-da54-43e9-8fb2-66de86f72a5b",
+    "name": "Conversationalist-English",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/FZXW5ux1H3cSnvGSZg5birHPYZ53/voices/RNnkVeW25AwKYxZgnHBH/03006bf3-bf0b-403e-8325-0e1652aef2d1.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "RNnkVeW25AwKYxZgnHBH",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "876ac038-08f0-4485-8b20-02b42bcf3416",
+    "name": "Hugo-French",
+    "description": "",
+    "primaryLanguage": "fr",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddf7 French",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/CnqbtUuTI7c3c9tg8rabjLsxs392/voices/DbbNuBL7lf62XwY7arQb/SWJaCUjKugbzdtfB3K5g.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "DbbNuBL7lf62XwY7arQb",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "b084d8f2-c9f9-491c-8059-d39dde80d58b",
+    "name": "Andrea-Spanish",
+    "description": "",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/AUiOudcyrBgldqnAJhuGI9X0Ktn2/voices/qHkrJuifPpn95wK3rm2A/NWUHpjVjwbkaFDQy7fbX.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "qHkrJuifPpn95wK3rm2A",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "e1c11ba4-034f-4354-b492-0460b7bbb20d",
+    "name": "Damian-Spanish",
+    "description": "",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/f5KyudOMTbfPJNDbdODrSaS6spY2/voices/sdxJtmxpzgSLekrYUGIu/hkDBI9Ws0EEYbAWZh1no.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "sdxJtmxpzgSLekrYUGIu",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "33f2dab8-3836-4de2-985c-ef4928af64c9",
+    "name": "Muskaan-Hindi-Urdu",
+    "description": "Muskaan - Casual Hindi Voice",
+    "primaryLanguage": "hi",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 Hindi",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/xoV6iGVuOGYHLWjXhVC7/HLJ6hooUJSQwgFVGM32b.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "xoV6iGVuOGYHLWjXhVC7",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "ebae2397-0ba1-4222-9d5b-5313ddeb04b5",
+    "name": "Anjali-Hindi-Urdu",
+    "description": "",
+    "primaryLanguage": "hi",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 Hindi",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/TLzQBQZ61wQrytFwliQpe4LeshE3/voices/gHu9GtaHOXcSqFTK06ux/pI2RQaKcueXaen7zO23a.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "gHu9GtaHOXcSqFTK06ux",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "9f6262e3-1b03-4a0b-9921-50b9cff66a43",
+    "name": "Krishna-Hindi-Urdu",
+    "description": "",
+    "primaryLanguage": "hi",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 Hindi",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/TLzQBQZ61wQrytFwliQpe4LeshE3/voices/m5qndnI7u4OAdXhH0Mr5/3GqgqOGjRsluDRmsRcR7.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "m5qndnI7u4OAdXhH0Mr5",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "da0cbd17-c6aa-4df7-b5eb-092e3f52eff8",
+    "name": "Cristina-Romanian",
+    "description": "",
+    "primaryLanguage": "ro",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddf4 Romanian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/KkG8t3G5s4Y95N21t0D1tGtWtkP2/voices/uRxQlQMA1BPSSdj5gXIK/a588aa70-47b2-4a5a-a8d1-e5a117b71f59.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "uRxQlQMA1BPSSdj5gXIK",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "9815a9f0-ed7e-4d0b-9ace-dba62efcf658",
+    "name": "Antonia-Romanian",
+    "description": "",
+    "primaryLanguage": "ro",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddf4 Romanian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/3z9q8Y7plHbvhDZehEII/RizL5Q4u5cwB0Qrp02so.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "3z9q8Y7plHbvhDZehEII",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "9d7bc57b-2e1c-4622-acb7-39c4f32dacfb",
+    "name": "Salma-Arabic",
+    "description": "Salma - Conversational Expressive Voice. Dubai accent.",
+    "primaryLanguage": "ar",
+    "languageLabel": "\ud83c\uddea\ud83c\uddec Arabic",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/TLzQBQZ61wQrytFwliQpe4LeshE3/voices/aCChyB4P5WEomwRsOKRh/pwNKTCc35h8TdZeZNkAR.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "aCChyB4P5WEomwRsOKRh",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "73a8f736-e97e-4284-8a5b-9649eec6152c",
+    "name": "Raed-Arabic",
+    "description": "Raed - An Old Saudi Male with a slight hoarseness in Sound, Khaliji and Saudi Accent,",
+    "primaryLanguage": "ar-SA",
+    "languageLabel": "\ud83c\uddf8\ud83c\udde6 Arabic (Saudi Arabia)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/2IWzWT3G3sgilYJywwA1YhbUxU73/voices/IK7YYZcSpmlkjKrQxbSn/23430e54-d41e-4b40-b321-9e5a9f3018b4.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "IK7YYZcSpmlkjKrQxbSn",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "03ed40bf-90c7-42f3-becd-79fc816bbd84",
+    "name": "Ben-German",
+    "description": "",
+    "primaryLanguage": "de",
+    "languageLabel": "\ud83c\udde9\ud83c\uddea German",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/eGBxkfZBbNQjuI5DNbmSnnQpWab2/voices/aTTiK3YzK3dXETpuDE2h/361f0e9a-f91f-4003-a6d5-249f6935671b.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "aTTiK3YzK3dXETpuDE2h",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "806d4bad-38ed-49fd-91c8-e8aaa324c75e",
+    "name": "Frida - German",
+    "description": "Frida: Voice preview for Frida - Friendly German Voice",
+    "primaryLanguage": "de",
+    "languageLabel": "\ud83c\udde9\ud83c\uddea German",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/Ugu0tUnhweQjZLi9GZUX14rN1JG3/voices/PmkWuBgfgyHPLOeC499E/xpgyCdFNTFDg7Ce8PENZ.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "PmkWuBgfgyHPLOeC499E",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "885ac23b-883d-484a-b920-082f73dfec62",
+    "name": "Marcin-Polish",
+    "description": "",
+    "primaryLanguage": "pl",
+    "languageLabel": "\ud83c\uddf5\ud83c\uddf1 Polish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/JYKwbpTKxJXlJFd9CIZju6u73Ae2/voices/MXt9WArfiuiT7MmD6D61/60b10320-08e9-4958-8f1e-1b191af6d8fc.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "MXt9WArfiuiT7MmD6D61",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "9eb6a57b-e9b4-435c-8284-25f5d9594879",
+    "name": "Hanna-Polish",
+    "description": "",
+    "primaryLanguage": "pl",
+    "languageLabel": "\ud83c\uddf5\ud83c\uddf1 Polish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/OL55YKALeab7lyIfDKwe0l2b1bR2/voices/NacdHGUYR1k3M0FAbAia/d10ba6a4-e6b5-4ee6-b604-f68b5c2baa76.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "NacdHGUYR1k3M0FAbAia",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "ac329809-3b43-4ab7-a16a-b40448212e1c",
+    "name": "Dakota Flash V2",
+    "description": "",
+    "primaryLanguage": "en-US",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English (United States)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/P7x743VjyZEOihNNygQ9/IrAuSVGhpFcocJNZ4U0i.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "P7x743VjyZEOihNNygQ9",
+        "model": "eleven_flash_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "d5374ad9-8582-49da-84d6-78eb13e361af",
+    "name": "Coco-French",
+    "description": "",
+    "primaryLanguage": "fr",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddf7 French",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/koOonD4HAsSMVyHuP4QTaatQ9cA2/voices/MNiuKciqE420DCRJtdeb/71sD4WwmJjJM2b4oMC10.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "MNiuKciqE420DCRJtdeb",
+        "model": "eleven_multilingual_v2",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "216a9c86-06c2-416b-a03b-9884a57e6b4c",
+    "name": "Gabriel-French",
+    "description": "",
+    "primaryLanguage": "fr",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddf7 French",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/PBm6YPbx7WbrxFTZwj3E/D8U7C2MgPxZt3MVgeFjn.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "JdwJ7jL68CWmQZuo7KgG",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "e5c005d4-359d-4d25-b6ad-ab09ad8947f5",
+    "name": "Daniel-Dutch",
+    "description": "",
+    "primaryLanguage": "nl",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddf1 Dutch",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/UdwnkJaZxPCOeR3qITvA/2VfTAXu5u34vODRFiSEp.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "UdwnkJaZxPCOeR3qITvA",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "54ebeae1-88df-4d66-af13-6c41283b4332",
+    "name": "Chelsea",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/lT3exDSBW2XZ2SflZO48glfmDYE3/voices/NHRgOEwqx5WZNClv5sat/L1sWGVhCp2gf1PzyhaAb.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "NHRgOEwqx5WZNClv5sat",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "563d27d1-ca1d-4aec-bed9-5e04f690c465",
+    "name": "Vira-Ukrainian",
+    "description": "",
+    "primaryLanguage": "uk",
+    "languageLabel": "\ud83c\uddfa\ud83c\udde6 Ukrainian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/mGLUsH9ra4W6rflL9dtShIY2uUu2/voices/nCqaTnIbLdME87OuQaZY/lqEI9lFRXrUWBhRpXvJb.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "nCqaTnIbLdME87OuQaZY",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "d0a129d4-e5d8-4cca-8486-69cc15b328f5",
+    "name": "Dmytro-Ukrainian",
+    "description": "",
+    "primaryLanguage": "uk",
+    "languageLabel": "\ud83c\uddfa\ud83c\udde6 Ukrainian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/ElvE0cxMRNTJf8mJVdkEIT03v4j2/voices/NJGiMgVHtXSA1XYSuNKl/7fcf9ee6-b16a-41ec-b462-a1f41d6c5d5d.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "NJGiMgVHtXSA1XYSuNKl",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "68b87c10-3016-4607-9084-a4d5361e2507",
+    "name": "Cicek-Turkish",
+    "description": "",
+    "primaryLanguage": "tr",
+    "languageLabel": "\ud83c\uddf9\ud83c\uddf7 Turkish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/Gp7macCqIbcDzuRHmrksJ4SdQH02/voices/EJGs6dWlD5VrB3llhBqB/szhfZFAxWkMVrrhwqt5s.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "EJGs6dWlD5VrB3llhBqB",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "56db7055-b0cc-428c-9a12-eda90e3f671f",
+    "name": "Doga-Turkish",
+    "description": "",
+    "primaryLanguage": "tr",
+    "languageLabel": "\ud83c\uddf9\ud83c\uddf7 Turkish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/MGfltzGx2ufKbE2Khgf8i9Ud57p2/voices/IuRRIAcbQK5AQk1XevPj/A7zA5q6bsat2zGTgUIHM.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "IuRRIAcbQK5AQk1XevPj",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "f94d6f04-df7b-48e7-85a5-a21f4b5856d5",
+    "name": "Tatiana-Spanish",
+    "description": "",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/8RYUsFHsalUXjwVG0LjhNwH1j022/voices/2rigMbVWLdqtBSCahJFX/h42L452UXdOFeirGlerd.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "2rigMbVWLdqtBSCahJFX",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "806d5c1e-b5ae-46c8-8719-04f1bc67c0a3",
+    "name": "Mauricio-Spanish",
+    "description": "",
+    "primaryLanguage": "es",
+    "languageLabel": "\ud83c\uddea\ud83c\uddf8 Spanish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/aMFLZudGpbVyEMAcpCuGoohryKG2/voices/94zOad0g7T7K4oa7zhDq/18baea3b-d7ee-4863-994b-ac3f59315999.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "94zOad0g7T7K4oa7zhDq",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "9303a29e-578a-4953-a927-2e1921683d27",
+    "name": "Felix-Russian",
+    "description": "",
+    "primaryLanguage": "ru",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddfa Russian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/sRk0zCqhS2Cmv0bzx5wA/KWEN9Hb1bwDUDrwPLeG3.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "sRk0zCqhS2Cmv0bzx5wA",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "2e6148f5-4c06-49db-8fa5-57bc30b31eeb",
+    "name": "Rosa-Portuguese",
+    "description": "Brazilian accent. Female.",
+    "primaryLanguage": "pt-BR",
+    "languageLabel": "\ud83c\udde7\ud83c\uddf7 Portuguese (Brazil)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/UfR91GZFReU9KE7HWeOrpPEKpG73/voices/cyD08lEy76q03ER1jZ7y/4cb10850-1932-48bf-a88d-600839c19c80.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "cyD08lEy76q03ER1jZ7y",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "0644f584-9ce3-4957-99dc-98fa29a63075",
+    "name": "Samuel-Portuguese",
+    "description": "Brazilian accent. Male.",
+    "primaryLanguage": "pt-PT",
+    "languageLabel": "\ud83c\uddf5\ud83c\uddf9 Portuguese (Portugal)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/fiN6pMGfa8NSQWjlei57Ncv7p7s1/voices/ETf5cmpNIbpSiXmBaR2m/19e57542-4215-464d-8a46-0c59255d408d.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "ETf5cmpNIbpSiXmBaR2m",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "ae8735c7-ba49-46ac-915f-3751e89f0db3",
+    "name": "Morioki-Japanese",
+    "description": "",
+    "primaryLanguage": "ja",
+    "languageLabel": "\ud83c\uddef\ud83c\uddf5 Japanese",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/MwVnKyOTE3ZRdpgHUo84p20s9zw2/voices/8EkOjt4xTPGMclNlh1pk/09bd3d5e-755b-4046-8ace-c69f0dcc872f.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "8EkOjt4xTPGMclNlh1pk",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "0985443f-644b-47a5-942a-39b2daf230fd",
+    "name": "Asahi-Japanese",
+    "description": "",
+    "primaryLanguage": "ja",
+    "languageLabel": "\ud83c\uddef\ud83c\uddf5 Japanese",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/GKDaBI8TKSBJVhsCLD6n/kRQ5Gg7mqjJLf0Dary2z.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "GKDaBI8TKSBJVhsCLD6n",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "a8244028-72c3-4ae6-9fbe-3ad3da168dda",
+    "name": "Nadia-Russian",
+    "description": "",
+    "primaryLanguage": "ru",
+    "languageLabel": "\ud83c\uddf7\ud83c\uddfa Russian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/gedzfqL7OGdPbwm0ynTP/w3TZGiSgIypkSFp0lr0Q.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "gedzfqL7OGdPbwm0ynTP",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "ee16d0ab-a1fe-4ff1-a63c-3ad8a0fdee8a",
+    "name": "Linda-Italian",
+    "description": "",
+    "primaryLanguage": "it",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf9 Italian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/3DPhHWXDY263XJ1d2EPN/YcN8v5oIOX09iQfWoPXH.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "3DPhHWXDY263XJ1d2EPN",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "19f7e0c8-332b-4ff3-b33c-18a17290bcc7",
+    "name": "Giovanni-Italian",
+    "description": "",
+    "primaryLanguage": "it",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf9 Italian",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/fzDFBB4mgvMlL36gPXcz/9mWvFKGio04aGXSm7tbQ.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "fzDFBB4mgvMlL36gPXcz",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "c2c5cce4-72ec-4d8b-8cdb-f8a0f6610bd1",
+    "name": "Riya-Hindi-Urdu",
+    "description": "",
+    "primaryLanguage": "hi",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 Hindi",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/mActWQg9kibLro6Z2ouY/MUOtsgIuvSnfDxBuzdjY.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "mActWQg9kibLro6Z2ouY",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "82c9728c-e0fe-4bc2-b7a3-03bb271fafb9",
+    "name": "Aakash-Hindi",
+    "description": "",
+    "primaryLanguage": "hi",
+    "languageLabel": "\ud83c\uddee\ud83c\uddf3 Hindi",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/TLzQBQZ61wQrytFwliQpe4LeshE3/voices/Uyx98Ek4uMNmWN7E28CD/0Jj8GgmExU0pTp8xzybh.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "Uyx98Ek4uMNmWN7E28CD",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "0191cf63-44b7-4277-bffe-be2f5dcc950c",
+    "name": "Susi-German",
+    "description": "",
+    "primaryLanguage": "de",
+    "languageLabel": "\ud83c\udde9\ud83c\uddea German",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/1KI0h0RJuscE0Ta9tVvydENJ9JF3/voices/v3V1d2rk6528UrLKRuy8/8aab3a1d-2faf-4de4-b229-f3a2ebb21c43.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "v3V1d2rk6528UrLKRuy8",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "ab4eaa72-5cf3-40c1-a921-bca62a884bb4",
+    "name": "Alize-French",
+    "description": "",
+    "primaryLanguage": "fr",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddf7 French",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/koOonD4HAsSMVyHuP4QTaatQ9cA2/voices/MNKK2Wl2wbbsEPQTHZGt/LySJ82yLzuh7DjEQT5yG.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "MNKK2Wl2wbbsEPQTHZGt",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "6dedd91b-63a0-4e46-87ec-10ec36c2fffb",
+    "name": "Nicolas-French",
+    "description": "",
+    "primaryLanguage": "fr",
+    "languageLabel": "\ud83c\uddeb\ud83c\uddf7 French",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/ajGQb2hVVXdBWWu6HHJEkWasByJ3/voices/aQROLel5sQbj1vuIVi6B/gBM2dEXvQpEXbDwLodAU.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "aQROLel5sQbj1vuIVi6B",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "5a1e2cc2-f447-4c24-81fe-4a1951f2c5d0",
+    "name": "Ruth-Dutch",
+    "description": "",
+    "primaryLanguage": "nl",
+    "languageLabel": "\ud83c\uddf3\ud83c\uddf1 Dutch",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/YUdpWWny7k5yb4QCeweX/JSQ3bguKNWB0Mfhn18Ka.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "YUdpWWny7k5yb4QCeweX",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "1f5b5818-8797-44fd-8ce6-2cd20d41bd1d",
+    "name": "Sana-Arabic",
+    "description": "",
+    "primaryLanguage": "ar",
+    "languageLabel": "\ud83c\uddea\ud83c\uddec Arabic",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/k3cwQyUC1jgnRz4wTDCaJg9CSPj2/voices/tavIIPLplRB883FzWU0V/DWgPLUhwxtXvzQXVDAyk.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "mRdG9GYEjJmIzqbYTidv",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "7973800a-ebd5-4756-a211-d609c66e1b8f",
+    "name": "HerrGruber-German",
+    "description": "",
+    "primaryLanguage": "de",
+    "languageLabel": "\ud83c\udde9\ud83c\uddea German",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/GtmMih8Uc3gyDcO0MxuBXqKvLaX2/voices/J5U94vRbS9drxnawJcoc/79957411-9728-4881-8336-88043da5beaa.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "J5U94vRbS9drxnawJcoc",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "cd617a9a-8ce8-4b44-8306-300b6e55c0f3",
+    "name": "Sanna-Swedish",
+    "description": "",
+    "primaryLanguage": "sv",
+    "languageLabel": "\ud83c\uddf8\ud83c\uddea Swedish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/4xkUqaR9MYOJHoaC1Nak/l4PwfhXHwvKzA0G9XP46.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "4xkUqaR9MYOJHoaC1Nak",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "90dbf12f-9cb0-4da0-b51f-ad2d4c5d9995",
+    "name": "Adam-Swedish",
+    "description": "",
+    "primaryLanguage": "sv",
+    "languageLabel": "\ud83c\uddf8\ud83c\uddea Swedish",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/Clk6kdJ10yNzb14pOOqXKi1y5qW2/voices/x0u3EW21dbrORJzOq1m9/ffda0752-26f1-4341-8f31-161771679941.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "x0u3EW21dbrORJzOq1m9",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "508ad0ba-8fca-4633-8efb-da16af6976ec",
+    "name": "Anas-Arabic",
+    "description": "",
+    "primaryLanguage": "ar",
+    "languageLabel": "\ud83c\uddea\ud83c\uddec Arabic",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/COWGBw0EVLcZa92K5IDgvpaUttd2/voices/R6nda3uM038xEEKi7GFl/hyjPYHgaCHfuSSap6ALl.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "R6nda3uM038xEEKi7GFl",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "c7725456-7cf3-4cb1-88c0-45c1ef7e6111",
+    "name": "Martin-Chinese",
+    "description": "",
+    "primaryLanguage": "zh",
+    "languageLabel": "\ud83c\udde8\ud83c\uddf3 Chinese",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/custom/voices/WuLq5z7nEcrhppO0ZQJw/VQoMkMi8aSXSAwz6NHzh.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "WuLq5z7nEcrhppO0ZQJw",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "3abe60f5-13ed-4e82-ac15-4391d9e5cd9d",
+    "name": "Oliver",
+    "description": "",
+    "primaryLanguage": "en-GB",
+    "languageLabel": "\ud83c\uddec\ud83c\udde7 English (United Kingdom)",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/T7bhqxLyENgRaSgfnqhPa6vPSID2/voices/L1aJrPa7pLJEyYlh3Ilq/AwAwPn2G1wujoh4o4RGM.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "L1aJrPa7pLJEyYlh3Ilq",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "8b79b46f-3b1c-4280-9521-2cac1b6eabd5",
+    "name": "Maya-Chinese",
+    "description": "",
+    "primaryLanguage": "zh",
+    "languageLabel": "\ud83c\udde8\ud83c\uddf3 Chinese",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/9axODppOpDadFfxEDFYygFROdkh2/voices/GgmlugwQ4LYXBbEXENWm/AP0YhlW1zVxV5sXFTGF3.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "GgmlugwQ4LYXBbEXENWm",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "b0e6b5c1-3100-44d5-8578-9015aa3023ae",
+    "name": "Jessica",
+    "description": "Female, Middle-Aged, Conversational",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/yA8yDNUx4dZ4gwL9ztbTpUEIyR12/voices/g6xIsTj2HwM6VR4iXFCw/lATTwqV2Uqz9NmNtMCfO.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "g6xIsTj2HwM6VR4iXFCw",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "91fa9bcf-93c8-467c-8b29-973720e3f167",
+    "name": "Mark",
+    "description": "",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://storage.googleapis.com/eleven-public-prod/database/user/y7Wmp2r8nCeGkLiXiwMOVWktro13/voices/UgBBYS2sOqTuMpoF3BR0/0Oc7jiXwWN9kRTXfQsmw.mp3",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "UgBBYS2sOqTuMpoF3BR0",
+        "model": "eleven_turbo_v2_5",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "dcb65d6e-9a56-459e-bf6f-d97572e2fe64",
+    "name": "terrence",
+    "description": "Default Male",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://zfmrfvimiaqahezndsse.supabase.co/storage/v1/object/public/ultravox-voice-previews/terrence_preview.wav",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "UgBBYS2sOqTuMpoF3BR0",
+        "speed": 1.0
+      }
+    }
+  },
+  {
+    "voiceId": "ede629be-f7cf-48a2-a7e6-ee2c50785b5d",
+    "name": "lily",
+    "description": "Default Female",
+    "primaryLanguage": "en",
+    "languageLabel": "\ud83c\uddfa\ud83c\uddf8 English",
+    "previewUrl": "https://zfmrfvimiaqahezndsse.supabase.co/storage/v1/object/public/ultravox-voice-previews/lily_preview.wav",
+    "ownership": "public",
+    "billingStyle": "VOICE_BILLING_STYLE_INCLUDED",
+    "provider": "Eleven Labs",
+    "definition": {
+      "elevenLabs": {
+        "voiceId": "g6xIsTj2HwM6VR4iXFCw",
+        "speed": 1.0
+      }
+    }
+  }
+]

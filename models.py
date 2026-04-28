@@ -20,7 +20,10 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=True)
     full_name = Column(String, nullable=True)
-    business_type = Column(String, nullable=True)
+    business_name = Column(String, nullable=True)
+    mobile = Column(String, nullable=True)
+    industry = Column(String, nullable=True)
+    timezone = Column(String, nullable=True)
     subscription_type = Column(String, default="starter")
     hashed_password = Column(String, nullable=False)
     balance = Column(Float, default=10.0)
@@ -29,6 +32,7 @@ class User(Base):
     
     agents = relationship("Agent", back_populates="user")
     calls = relationship("Call", back_populates="user")
+    business_checkups = relationship("BusinessCheckup", back_populates="user")
 
 class Call(Base):
     __tablename__ = 'calls'
@@ -72,7 +76,7 @@ class Agent(Base):
     ultravox_agent_id = Column(String, unique=True, index=True)
     name = Column(String, nullable=False)
     system_prompt = Column(Text)
-    voice = Column(String, default="a656a751-b754-4621-b571-e1298cb7e5bb")
+    voice = Column(String, default="f0ed7e07-0e85-4853-a8f5-e09c627cf944")
     language = Column(String, default="en")
     model = Column(String, default="fixie-ai/ultravox")
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -82,6 +86,8 @@ class Agent(Base):
     google_sheet_name = Column(String, default="Sheet1")
     google_webhook_url = Column(String, nullable=True)
     transfer_number = Column(String, nullable=True)  # Phone number for call transfer (coldTransfer/warmTransfer)
+    temperature = Column(Float, default=0.3)
+    speed = Column(Float, default=1.0)
     
     user = relationship("User", back_populates="agents")
     tools = relationship("Tool", secondary=agent_tools, back_populates="agents")
@@ -117,12 +123,44 @@ class SMS(Base):
     agent = relationship("Agent")
 
 # Pydantic models
+class BusinessCheckup(Base):
+    __tablename__ = 'business_checkups'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    business_name = Column(String, nullable=False)
+    address = Column(String, nullable=True) # Full address or City/State
+    website = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    report_data = Column(Text, nullable=False) # JSON data
+    is_starred = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # user = relationship("User", backref="business_checkups") # Already defined in User? No, adding backref here is fine or explicit relationship
+    user = relationship("User", back_populates="business_checkups")
+
+class FindBusinessSearch(Base):
+    __tablename__ = 'find_business_searches'
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    category = Column(String, nullable=False)
+    location = Column(String, nullable=False)
+    results_data = Column(Text, nullable=False) # JSON data
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+
+# Pydantic models (Original comment)
 class UserCreate(BaseModel):
-    username: str
+    email: str
     password: str
-    email: Optional[str] = None
-    full_name: Optional[str] = None
-    business_type: Optional[str] = None
+    full_name: str
+    business_name: str
+    mobile: str
+    industry: str
+    timezone: str
     subscription_type: Optional[str] = "starter"
 
 class UserLogin(BaseModel):
@@ -134,7 +172,10 @@ class UserResponse(BaseModel):
     username: str
     email: Optional[str]
     full_name: Optional[str]
-    business_type: Optional[str]
+    business_name: Optional[str]
+    mobile: Optional[str]
+    industry: Optional[str]
+    timezone: Optional[str]
     subscription_type: Optional[str]
     balance: float
     created_at: datetime
@@ -161,7 +202,7 @@ class TwilioNumberResponse(BaseModel):
 class AgentCreate(BaseModel):
     name: str
     system_prompt: str
-    voice: Optional[str] = "a656a751-b754-4621-b571-e1298cb7e5bb"
+    voice: Optional[str] = "f0ed7e07-0e85-4853-a8f5-e09c627cf944"
     language: Optional[str] = "en"
     tool_names: Optional[List[str]] = None
     twilio_number_id: Optional[int] = None
@@ -169,6 +210,8 @@ class AgentCreate(BaseModel):
     google_sheet_name: Optional[str] = "Sheet1"
     google_webhook_url: Optional[str] = None
     transfer_number: Optional[str] = None
+    temperature: Optional[float] = 0.3
+    speed: Optional[float] = 1.0
 
 class AgentResponse(BaseModel):
     id: int
@@ -185,6 +228,8 @@ class AgentResponse(BaseModel):
     google_sheet_name: Optional[str]
     google_webhook_url: Optional[str]
     transfer_number: Optional[str]
+    temperature: float
+    speed: float
     
     class Config:
         from_attributes = True
@@ -200,5 +245,28 @@ class SMSResponse(BaseModel):
     message_sid: Optional[str]
     created_at: datetime
     
+    class Config:
+        from_attributes = True
+    class Config:
+        from_attributes = True
+
+class BusinessCheckupBase(BaseModel):
+    business_name: str
+    address: Optional[str] = None
+    website: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+
+class BusinessCheckupCreate(BusinessCheckupBase):
+    report_data: dict # Will be stored as JSON string
+    is_starred: bool = False
+
+class BusinessCheckupResponse(BusinessCheckupBase):
+    id: int
+    user_id: int
+    report_data: dict # Parsed from JSON string in service or here (Pydantic can handle dict <-> json str if customized, but usually we handle it in service)
+    is_starred: bool
+    created_at: datetime
+
     class Config:
         from_attributes = True

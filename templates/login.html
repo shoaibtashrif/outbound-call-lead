@@ -173,43 +173,76 @@
             </form>
 
             <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="regFullName" required>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Your Name</label>
+                        <input type="text" id="regFullName" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Business Name</label>
+                        <input type="text" id="regBusinessName" placeholder="Acme Inc" required>
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label>Username <span id="usernameCheck" style="font-size: 12px; margin-left: 10px;"></span></label>
-                    <input type="text" id="regUsername" required onblur="checkUsernameAvailability()">
+                    <label>Email Address</label>
+                    <input type="email" id="regEmail" placeholder="john@example.com" required>
                 </div>
+
                 <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="regEmail" required>
+                    <label>Mobile (for SMS)</label>
+                    <input type="tel" id="regMobile" placeholder="+44 7123 456789" required>
                 </div>
-                <div class="form-group">
-                    <label>Business Type</label>
-                    <select id="regBusinessType"
-                        style="width: 100%; padding: 12px 16px; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--glass-border); border-radius: 12px; color: white; font-size: 15px; outline: none;">
-                        <option value="retail">Retail</option>
-                        <option value="service">Service</option>
-                        <option value="tech">Technology</option>
-                        <option value="healthcare">Healthcare</option>
-                        <option value="other">Other</option>
-                    </select>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Industry</label>
+                        <select id="regIndustry"
+                            style="width: 100%; padding: 12px 16px; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--glass-border); border-radius: 12px; color: white; font-size: 15px; outline: none; appearance: none;">
+                            <option value="retail">Retail</option>
+                            <option value="service">Service</option>
+                            <option value="tech">Technology</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="real_estate">Real Estate</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Timezone</label>
+                        <select id="regTimezone"
+                            style="width: 100%; padding: 12px 16px; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--glass-border); border-radius: 12px; color: white; font-size: 15px; outline: none; appearance: none;">
+                            <option value="UTC">UTC / GMT</option>
+                            <option value="Europe/London">London (BST)</option>
+                            <option value="America/New_York">New York (EST)</option>
+                            <option value="America/Los_Angeles">Los Angeles (PST)</option>
+                            <option value="Asia/Dubai">Dubai (GST)</option>
+                            <option value="Asia/Karachi">Karachi (PKT)</option>
+                        </select>
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label>Subscription Plan</label>
+                    <label>Package</label>
                     <select id="regSubscription"
-                        style="width: 100%; padding: 12px 16px; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--glass-border); border-radius: 12px; color: white; font-size: 15px; outline: none;">
-                        <option value="starter">Starter ($29/mo)</option>
-                        <option value="pro">Pro ($99/mo)</option>
-                        <option value="enterprise">Enterprise</option>
+                        style="width: 100%; padding: 12px 16px; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--glass-border); border-radius: 12px; color: white; font-size: 15px; outline: none; appearance: none;">
+                        <option value="starter">Starter Plan ($29/mo)</option>
+                        <option value="pro">Pro Plan ($99/mo)</option>
+                        <option value="enterprise">Enterprise Plan</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="regPassword" required>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm</label>
+                        <input type="password" id="regConfirmPassword" placeholder="••••••••" required>
+                    </div>
                 </div>
-                <button type="submit">Create Account</button>
+
+                <button type="submit" style="margin-top: 10px;">Create Premium Account</button>
             </form>
 
             <div id="errorMsg" class="error-msg"></div>
@@ -217,7 +250,6 @@
     </div>
 
     <script>
-        // Check if already logged in
         // Check if already logged in
         // if (localStorage.getItem('token')) {
         //     window.location.href = 'dashboard';
@@ -228,37 +260,16 @@
             document.querySelectorAll('form').forEach(f => f.classList.add('hidden'));
             document.getElementById('errorMsg').style.display = 'none';
 
+            const card = document.querySelector('.glass-card');
+
             if (tab === 'login') {
                 document.querySelector('.tab:nth-child(1)').classList.add('active');
                 document.getElementById('loginForm').classList.remove('hidden');
+                card.style.maxWidth = '400px';
             } else {
                 document.querySelector('.tab:nth-child(2)').classList.add('active');
                 document.getElementById('registerForm').classList.remove('hidden');
-            }
-        }
-
-        async function checkUsernameAvailability() {
-            const username = document.getElementById('regUsername').value;
-            const checkSpan = document.getElementById('usernameCheck');
-
-            if (username.length < 3) {
-                checkSpan.textContent = '';
-                return;
-            }
-
-            try {
-                const resp = await fetch(`api/check-username?username=${username}`);
-                const data = await resp.json();
-
-                if (data.available) {
-                    checkSpan.textContent = 'Available';
-                    checkSpan.style.color = '#4ade80';
-                } else {
-                    checkSpan.textContent = 'Taken';
-                    checkSpan.style.color = '#ef4444';
-                }
-            } catch (e) {
-                console.error("Error checking username", e);
+                card.style.maxWidth = '550px'; // Wider for registration
             }
         }
 
@@ -273,7 +284,6 @@
                 formData.append('username', username);
                 formData.append('password', password);
 
-                // Use relative path 'token' to respect current base path
                 const response = await fetch('token', {
                     method: 'POST',
                     body: formData
@@ -296,28 +306,38 @@
 
         async function handleRegister(e) {
             e.preventDefault();
-            const username = document.getElementById('regUsername').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
             const fullName = document.getElementById('regFullName').value;
-            const businessType = document.getElementById('regBusinessType').value;
+            const businessName = document.getElementById('regBusinessName').value;
+            const mobile = document.getElementById('regMobile').value;
+            const industry = document.getElementById('regIndustry').value;
+            const timezone = document.getElementById('regTimezone').value;
             const subscription = document.getElementById('regSubscription').value;
 
             const errorMsg = document.getElementById('errorMsg');
 
+            if (password !== confirmPassword) {
+                errorMsg.textContent = 'Passwords do not match';
+                errorMsg.style.display = 'block';
+                return;
+            }
+
             try {
-                // Use relative path 'api/register'
                 const response = await fetch('api/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        username,
                         email,
                         password,
                         full_name: fullName,
-                        business_type: businessType,
+                        business_name: businessName,
+                        mobile,
+                        industry,
+                        timezone,
                         subscription_type: subscription
                     })
                 });
@@ -327,7 +347,7 @@
                 if (response.ok) {
                     // Auto login after register
                     const formData = new FormData();
-                    formData.append('username', username);
+                    formData.append('username', email); // Use email as username
                     formData.append('password', password);
 
                     const loginResp = await fetch('token', {
