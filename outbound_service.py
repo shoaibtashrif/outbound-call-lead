@@ -11,6 +11,7 @@ import io
 import pandas as pd
 from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File, Depends, Body, Header, BackgroundTasks
 from fastapi.responses import HTMLResponse, Response, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from twilio.rest import Client
@@ -65,7 +66,21 @@ def get_db():
     finally:
         db.close()
 
-app = FastAPI(title="Outbound Call Service")
+path_prefix = os.getenv("PATH_PREFIX", "/outbound")
+app = FastAPI(title="Outbound Call Service", root_path=path_prefix)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://agent.cabex.co.uk",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -968,11 +983,11 @@ class BatchScheduleRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="login.html")
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard_page(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="dashboard.html")
 
 @app.get("/health")
 async def health_check():
@@ -998,16 +1013,20 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
 @app.post("/api/register", response_model=UserResponse)
 async def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.username == user.username).first()
+    # Check if email already exists (we use email as username)
+    db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_password = get_password_hash(user.password)
     new_user = User(
-        username=user.username,
+        username=user.email,  # Use email as username for login
         email=user.email,
         full_name=user.full_name,
-        business_type=user.business_type,
+        business_name=user.business_name,
+        mobile=user.mobile,
+        industry=user.industry,
+        timezone=user.timezone,
         subscription_type=user.subscription_type,
         hashed_password=hashed_password,
         balance=10.0 # Free trial balance
@@ -1064,7 +1083,10 @@ async def get_dashboard_data(user: User = Depends(get_current_user), db: Session
         "username": user.username,
         "full_name": user.full_name,
         "email": user.email,
-        "business_type": user.business_type,
+        "business_name": user.business_name,
+        "industry": user.industry,
+        "mobile": user.mobile,
+        "timezone": user.timezone,
         "balance": user.balance,
         "agent_count": agent_count,
         "live_calls": live_calls,
@@ -1117,7 +1139,10 @@ async def get_user_profile(user: User = Depends(get_current_user)):
 async def update_user_profile(req: Dict[str, Any], db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     if "full_name" in req: user.full_name = req["full_name"]
     if "email" in req: user.email = req["email"]
-    if "business_type" in req: user.business_type = req["business_type"]
+    if "business_name" in req: user.business_name = req["business_name"]
+    if "industry" in req: user.industry = req["industry"]
+    if "mobile" in req: user.mobile = req["mobile"]
+    if "timezone" in req: user.timezone = req["timezone"]
 
     db.commit()
     db.refresh(user)
@@ -1290,11 +1315,30 @@ async def create_agent(req: AgentCreate, db: Session = Depends(get_db), user: Us
     }
 
 @app.get("/api/agents/{agent_id}")
-async def get_agent(agent_id: str):
-    api_key = os.getenv("ULTRAVOX_API_KEY")
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(f"https://api.ultravox.ai/api/agents/{agent_id}", headers={"X-API-Key": api_key})
-        return resp.json()
+async def get_agent(agent_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    agent = db.query(Agent).filter(Agent.id == agent_id, Agent.user_id == user.id).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+        
+    return {
+        "agentId": agent.ultravox_agent_id or str(agent.id),
+        "id": str(agent.id),
+        "name": agent.name,
+        "systemPrompt": agent.system_prompt,
+        "model": agent.model,
+        "voice": agent.voice or os.getenv("ULTRAVOX_VOICE_ID", "f0ed7e07-0e85-4853-a8f5-e09c627cf944"),
+        "languageHint": agent.language,
+        "twilio_number_id": agent.twilio_number_id,
+        "twilio_phone_number": agent.twilio_number.phone_number if agent.twilio_number else None,
+        "google_spreadsheet_id": agent.google_spreadsheet_id,
+        "google_sheet_name": agent.google_sheet_name,
+        "google_webhook_url": agent.google_webhook_url,
+        "transfer_number": agent.transfer_number,
+        "temperature": agent.temperature,
+        "speed": agent.speed,
+        "selectedTools": [{"toolName": t.name} for t in agent.tools],
+        "created": agent.created_at.isoformat() if agent.created_at else None
+    }
 
 @app.put("/api/agents/{agent_id}")
 async def update_agent_full(agent_id: int, req: AgentCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):

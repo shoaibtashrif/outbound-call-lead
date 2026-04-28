@@ -20,7 +20,10 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=True)
     full_name = Column(String, nullable=True)
-    business_type = Column(String, nullable=True)
+    business_name = Column(String, nullable=True)
+    mobile = Column(String, nullable=True)
+    industry = Column(String, nullable=True)
+    timezone = Column(String, nullable=True)
     subscription_type = Column(String, default="starter")
     hashed_password = Column(String, nullable=False)
     balance = Column(Float, default=10.0)
@@ -151,11 +154,13 @@ class FindBusinessSearch(Base):
 
 # Pydantic models (Original comment)
 class UserCreate(BaseModel):
-    username: str
+    email: str
     password: str
-    email: Optional[str] = None
-    full_name: Optional[str] = None
-    business_type: Optional[str] = None
+    full_name: str
+    business_name: str
+    mobile: str
+    industry: str
+    timezone: str
     subscription_type: Optional[str] = "starter"
 
 class UserLogin(BaseModel):
@@ -167,7 +172,10 @@ class UserResponse(BaseModel):
     username: str
     email: Optional[str]
     full_name: Optional[str]
-    business_type: Optional[str]
+    business_name: Optional[str]
+    mobile: Optional[str]
+    industry: Optional[str]
+    timezone: Optional[str]
     subscription_type: Optional[str]
     balance: float
     created_at: datetime
